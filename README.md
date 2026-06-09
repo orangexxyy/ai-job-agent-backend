@@ -1,4 +1,4 @@
-# AI Job Agent
+﻿# AI Job Agent
 
 AI Job Agent is a human-in-the-loop assistant for AI application and LLM application job search workflows. The project helps a candidate keep profile facts explicit, answer HR questions safely, and prepare future job matching and proposal workflows without becoming an automatic mass-apply bot.
 
@@ -39,13 +39,13 @@ pip install -r requirements.txt
 Create a local `.env` from `.env.example` if needed. Do not commit real API keys.
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8001/docs
 ```
 
 ## Environment Variables
@@ -65,13 +65,13 @@ Step 3 still does not make real DeepSeek calls. `app/services/llm_service.py` on
 Health check:
 
 ```bash
-curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8001/health
 ```
 
 Save profile:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/profile \
+curl -X POST http://127.0.0.1:8001/profile \
   -H "Content-Type: application/json" \
   -d "{\"expected_salary_min\":15000,\"expected_salary_max\":20000,\"minimum_salary\":13000,\"preferred_cities\":[\"Hangzhou\",\"Shanghai\"],\"target_roles\":[\"AI Application Developer\"],\"available_projects\":[\"FastAPI + RAG knowledge base\"],\"truth_boundaries\":[\"No production-grade multi-agent platform experience\"]}"
 ```
@@ -79,13 +79,13 @@ curl -X POST http://127.0.0.1:8000/profile \
 Read profile:
 
 ```bash
-curl http://127.0.0.1:8000/profile
+curl http://127.0.0.1:8001/profile
 ```
 
 Analyze HR message intent:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/hr/analyze \
+curl -X POST http://127.0.0.1:8001/hr/analyze \
   -H "Content-Type: application/json" \
   -d "{\"message\":\"What salary package do you expect? Are you available within one week? Can you relocate?\",\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\"}"
 ```
@@ -93,7 +93,7 @@ curl -X POST http://127.0.0.1:8000/hr/analyze \
 Generate HR reply draft:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/hr/reply \
+curl -X POST http://127.0.0.1:8001/hr/reply \
   -H "Content-Type: application/json" \
   -d "{\"message\":\"What salary package do you expect? Are you available within one week? Can you relocate?\",\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\"}"
 ```
@@ -123,3 +123,4 @@ Interview times, salary negotiation, whether to accept a role, and all outbound 
 - Step 8: project-experience RAG
 - Step 9: Playwright dry-run job collection with no auto-apply
 - Step 10: user-confirmed semi-automation
+
