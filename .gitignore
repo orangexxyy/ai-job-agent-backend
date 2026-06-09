@@ -1,8 +1,11 @@
-﻿.venv/
+﻿@'
+.venv/
 .env
 __pycache__/
 *.pyc
 data/
 *.db
 *.sqlite
-.vscode/
+.vscode/*
+!.vscode/launch.json
+'@ | Set-Content .gitignore -Encoding UTF8
