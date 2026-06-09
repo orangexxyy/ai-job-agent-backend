@@ -1,0 +1,268 @@
+import re
+from typing import Any, Dict, List, Optional
+
+from app.schemas.profile_schema import CandidateProfile
+from app.services.hr_intent_service import analyze_hr_message
+from app.services.profile_service import get_candidate_profile
+from app.services.truth_boundary_service import check_truth_boundary
+
+
+HIGH_RISK_INTENTS = {
+    "project_experience",
+    "technical_question",
+    "business_proposal",
+}
+
+
+def generate_hr_reply(
+    message: str,
+    company_name: Optional[str] = None,
+    job_title: Optional[str] = None,
+    extra_context: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    analysis = analyze_hr_message(message, company_name, job_title)
+    profile = get_candidate_profile()
+    if profile is None:
+        return None
+
+    reply_parts: List[str] = []
+    used_sources = [
+        "candidate_profile",
+        "hr_intent_rules",
+        "truth_boundary_rules",
+    ]
+
+    rendered_high_risk = False
+    for intent in analysis["intents"]:
+        if intent in HIGH_RISK_INTENTS:
+            if rendered_high_risk:
+                continue
+            rendered_high_risk = True
+        part = _render_intent_reply(intent, profile)
+        if part:
+            reply_parts.append(part)
+
+    if extra_context:
+        reply_parts.append(f"补充说明：{extra_context}")
+
+    reply_draft = _combine_reply_parts(reply_parts)
+    truth_result = check_truth_boundary(reply_draft, profile)
+    has_high_risk_intent = any(intent in HIGH_RISK_INTENTS for intent in analysis["intents"])
+    has_unknown_intent = "unknown" in analysis["intents"]
+    missing_required_profile_data = _has_missing_required_profile_data(
+        analysis["intents"], profile
+    )
+
+    safe_to_send = bool(truth_result["safe_to_send"])
+    if has_high_risk_intent or has_unknown_intent or missing_required_profile_data:
+        safe_to_send = False
+
+    if analysis["need_resume_context"]:
+        used_sources.append("resume_text")
+    if analysis["need_project_context"]:
+        used_sources.append("project_context")
+
+    return {
+        "original_message": message,
+        "company_name": company_name,
+        "job_title": job_title,
+        "intents": analysis["intents"],
+        "primary_intent": analysis["primary_intent"],
+        "reply_draft": reply_draft,
+        "safe_to_send": safe_to_send,
+        "used_sources": _dedupe(used_sources),
+        "truth_boundary": _build_truth_boundary_notes(
+            truth_result["risk_points"], missing_required_profile_data
+        ),
+        "cannot_claim": truth_result["cannot_claim"],
+        "risk_level": "high" if has_high_risk_intent else analysis["risk_level"],
+        "suggested_followup": _build_suggested_followup(
+            analysis["intents"],
+            truth_result["suggested_revision"],
+            missing_required_profile_data,
+        ),
+        "agent_steps": [
+            "Received HR message.",
+            "Analyzed HR message with rule-based intent analyzer.",
+            "Loaded candidate_profile from SQLite.",
+            "Selected profile-based reply templates by intents.",
+            "Generated reply draft for human approval.",
+            "Applied truth boundary rule checks.",
+            "Returned reply draft without sending.",
+        ],
+        "debug": {
+            "need_profile": analysis["need_profile"],
+            "need_resume_context": analysis["need_resume_context"],
+            "need_project_context": analysis["need_project_context"],
+            "need_application_history": analysis["need_application_history"],
+            "need_llm": analysis["need_llm"],
+            "matched_keywords": analysis["matched_keywords"],
+        },
+    }
+
+
+def _render_intent_reply(intent: str, profile: CandidateProfile) -> str:
+    renderers = {
+        "salary_expectation": _salary_reply,
+        "availability": _availability_reply,
+        "location_preference": _location_reply,
+        "relocation": lambda p: p.relocation_policy,
+        "outsourcing": lambda p: p.outsourcing_policy,
+        "onsite": lambda p: p.onsite_policy,
+        "remote": lambda p: p.remote_policy,
+        "overtime": lambda p: p.overtime_policy,
+        "business_trip": lambda p: p.business_trip_policy,
+        "interview_schedule": _interview_schedule_reply,
+        "resume_request": _resume_request_reply,
+        "github_request": _github_request_reply,
+        "project_experience": _high_risk_context_reply,
+        "technical_question": _high_risk_context_reply,
+        "business_proposal": _high_risk_context_reply,
+        "unknown": _unknown_reply,
+    }
+    renderer = renderers.get(intent)
+    if renderer is None:
+        return ""
+    return renderer(profile).strip()
+
+
+def _salary_reply(profile: CandidateProfile) -> str:
+    if profile.expected_salary_min and profile.expected_salary_max:
+        salary = (
+            f"我的期望薪资大概在 {profile.expected_salary_min // 1000}K-"
+            f"{profile.expected_salary_max // 1000}K 区间"
+        )
+    elif profile.expected_salary_min:
+        salary = f"我的期望薪资从 {profile.expected_salary_min // 1000}K 左右开始沟通"
+    else:
+        return "薪资部分我需要先补充 candidate_profile 后再给出更准确回复。"
+
+    minimum = (
+        f"，最低可接受薪资大概是 {profile.minimum_salary // 1000}K"
+        if profile.minimum_salary
+        else ""
+    )
+    note = f" {profile.salary_note}" if profile.salary_note else ""
+    return (
+        f"{salary}{minimum}，具体也会结合岗位职责、技术方向、薪资结构和后续面试情况综合沟通。"
+        f"{note}"
+    )
+
+
+def _availability_reply(profile: CandidateProfile) -> str:
+    if profile.availability_note:
+        return f"到岗时间这边可以按目前安排沟通：{profile.availability_note}。"
+    return "到岗时间我需要先补充 candidate_profile 后再给出更准确回复。"
+
+
+def _location_reply(profile: CandidateProfile) -> str:
+    preferred = "、".join(profile.preferred_cities)
+    acceptable = "、".join(profile.acceptable_cities)
+    parts = []
+    if preferred:
+        parts.append(f"我目前优先考虑 {preferred}")
+    if profile.remote_policy:
+        parts.append(f"远程/混合办公方面：{profile.remote_policy}")
+    if acceptable:
+        parts.append(f"其他城市也可以结合岗位匹配度进一步沟通：{acceptable}")
+    return "。".join(parts) + "。" if parts else "城市偏好需要先补充 candidate_profile 后再回复。"
+
+
+def _interview_schedule_reply(profile: CandidateProfile) -> str:
+    return (
+        "面试时间我这边需要确认一下具体安排，可以麻烦您先发一下可选时间段吗？"
+        "我确认后尽快回复。"
+    )
+
+
+def _resume_request_reply(profile: CandidateProfile) -> str:
+    return (
+        "可以的，我稍后可以发您一份简历。也方便问一下这个岗位目前更看重 "
+        "AI 应用开发、RAG 项目，还是 Agent / Workflow 相关经验？"
+    )
+
+
+def _github_request_reply(profile: CandidateProfile) -> str:
+    urls = _extract_urls(profile.resume_text + "\n" + profile.project_context)
+    if urls:
+        return "可以的，我这边可以先发这些项目地址：" + "、".join(urls)
+    projects = "、".join(profile.available_projects)
+    if projects:
+        return f"可以的，我稍后整理项目地址发您。主要项目包括 {projects}。"
+    return "可以的，我稍后整理 GitHub 项目地址发您。"
+
+
+def _high_risk_context_reply(profile: CandidateProfile) -> str:
+    projects = "、".join(profile.available_projects)
+    if not projects:
+        projects = "用户已提供的真实项目经历"
+    return (
+        "这个问题涉及项目经历和技术方案，我需要结合自己的真实项目经历来回答。"
+        f"目前可以基于 {projects} 这些内容展开，但完整回答建议后续接入 "
+        "resume_text / project_context 或 LLM 后再生成，以避免夸大未实现能力。"
+    )
+
+
+def _unknown_reply(profile: CandidateProfile) -> str:
+    return "这条消息的意图还不够明确，建议用户补充上下文后再生成回复。"
+
+
+def _combine_reply_parts(reply_parts: List[str]) -> str:
+    cleaned = [part.rstrip("。") for part in reply_parts if part.strip()]
+    if not cleaned:
+        return "这条消息暂时无法生成可靠回复草稿，建议用户补充上下文。"
+    return "。".join(cleaned) + "。"
+
+
+def _has_missing_required_profile_data(
+    intents: List[str],
+    profile: CandidateProfile,
+) -> bool:
+    checks = {
+        "salary_expectation": bool(profile.expected_salary_min),
+        "availability": bool(profile.availability_note),
+        "location_preference": bool(profile.preferred_cities or profile.acceptable_cities),
+    }
+    return any(not checks[intent] for intent in intents if intent in checks)
+
+
+def _build_truth_boundary_notes(
+    risk_points: List[str],
+    missing_required_profile_data: bool,
+) -> List[str]:
+    notes = ["Reply draft must be reviewed by the user before sending."]
+    if risk_points:
+        notes.append("Forbidden or high-risk claims detected: " + "、".join(risk_points))
+    if missing_required_profile_data:
+        notes.append("Required candidate_profile fields are missing for at least one intent.")
+    return notes
+
+
+def _build_suggested_followup(
+    intents: List[str],
+    suggested_revision: str,
+    missing_required_profile_data: bool,
+) -> str:
+    if suggested_revision:
+        return suggested_revision
+    if missing_required_profile_data:
+        return "Please complete candidate_profile before sending this reply."
+    if "interview_schedule" in intents:
+        return "面试时间需要用户最终确认。"
+    if "resume_request" in intents:
+        return "简历文件需要用户自己确认后发送。"
+    if "github_request" in intents:
+        return "GitHub 链接需要用户确认真实可公开后发送。"
+    if any(intent in HIGH_RISK_INTENTS for intent in intents):
+        return "This intent should be handled by future LLM/RAG-enhanced reply generation."
+    if "unknown" in intents:
+        return "Please clarify the HR message before drafting a reply."
+    return "Please review and confirm before sending."
+
+
+def _extract_urls(text: str) -> List[str]:
+    return re.findall(r"https?://[^\s，。；;]+", text)
+
+
+def _dedupe(items: List[str]) -> List[str]:
+    return list(dict.fromkeys(items))
