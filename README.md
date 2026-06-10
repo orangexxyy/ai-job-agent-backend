@@ -4,21 +4,28 @@ AI Job Agent is a human-in-the-loop assistant for AI application and LLM applica
 
 ## Current Stage
 
-Step 3 builds on the runnable FastAPI skeleton with rule-based HR intent analysis and profile-based HR reply draft generation:
+Step 4 builds on the runnable FastAPI skeleton with rule-based HR intent analysis, profile-based HR reply draft generation, and manual application tracking:
 
 - `GET /health`
 - `POST /profile`
 - `GET /profile`
 - `POST /hr/analyze`
 - `POST /hr/reply`
+- `POST /applications`
+- `GET /applications`
+- `GET /applications/{application_id}`
+- `PATCH /applications/{application_id}`
 - SQLite initialization
 - `candidate_profile` table
+- `applications` table
 - DeepSeek configuration placeholders
 - Documentation for project boundaries and next steps
 
 The first version of `/hr/analyze` uses local keyword rules only. The first version of `/hr/reply` uses those rules plus `candidate_profile` templates. Neither endpoint calls DeepSeek, calls any LLM, or consumes API tokens.
 
 `/hr/reply` only returns a reply draft for human approval. It does not send messages. For project experience, technical solution, and business proposal questions, Step 3 returns a conservative high-risk draft instead of a complete answer.
+
+The first version of `/applications` supports manual recording and updating of application records. It does not apply to jobs, connect to real recruitment platforms, scrape job posts, send HR messages, or run matching logic. These records are intended to support later job matching, HR communication history, interview status tracking, and job-search review workflows.
 
 ## Tech Stack
 
@@ -98,9 +105,31 @@ curl -X POST http://127.0.0.1:8001/hr/reply \
   -d "{\"message\":\"What salary package do you expect? Are you available within one week? Can you relocate?\",\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\"}"
 ```
 
+Create an application record:
+
+```bash
+curl -X POST http://127.0.0.1:8001/applications \
+  -H "Content-Type: application/json" \
+  -d "{\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\",\"job_source\":\"Manual\",\"job_url\":\"https://example.com/job/123\",\"jd_text\":\"Build AI application workflows with FastAPI and LLM tools.\",\"status\":\"saved\",\"next_action\":\"Review JD fit\",\"notes\":\"Manual tracking record only.\",\"risk_flags\":[]}"
+```
+
+List application records:
+
+```bash
+curl "http://127.0.0.1:8001/applications?status=saved&limit=50"
+```
+
+Update application status:
+
+```bash
+curl -X PATCH http://127.0.0.1:8001/applications/1 \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"hr_contacted\",\"last_hr_message\":\"HR asked about availability.\"}"
+```
+
 ## Explicit Boundaries
 
-Step 3 does not:
+Step 4 does not:
 
 - Automatically apply to jobs
 - Automatically send HR messages
@@ -108,6 +137,9 @@ Step 3 does not:
 - Implement Playwright
 - Implement RAG
 - Implement a frontend
+- Scrape job posts
+- Call DeepSeek or any LLM from `/applications`
+- Implement job matching scores or business proposal logic
 - Fabricate resume experience, education, salary, address, work years, or project history
 - Bypass CAPTCHA, anti-crawling, risk control, or platform restrictions
 - Generate complete high-risk project, technical, or business proposal answers
@@ -116,8 +148,7 @@ Interview times, salary negotiation, whether to accept a role, and all outbound 
 
 ## Roadmap
 
-- Step 4: applications tracking or LLM/project-context enhanced reply drafts
-- Step 5: truth boundary expansion
+- Step 5: truth boundary expansion or LLM/project-context enhanced reply drafts
 - Step 6: job match scoring
 - Step 7: business proposal generation
 - Step 8: project-experience RAG

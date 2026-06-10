@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.database import init_database
-from app.routes import health_routes, hr_routes, profile_routes
+from app.routes import application_routes, health_routes, hr_routes, profile_routes
 
 
 app = FastAPI(
@@ -19,3 +19,4 @@ def on_startup() -> None:
 app.include_router(health_routes.router)
 app.include_router(profile_routes.router)
 app.include_router(hr_routes.router)
+app.include_router(application_routes.router)

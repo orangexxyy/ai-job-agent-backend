@@ -272,3 +272,147 @@ Expected key result:
   }
 }
 ```
+
+## POST /applications
+
+Creates a manual application tracking record. This endpoint does not apply to a job, connect to a recruitment platform, scrape a JD, send an HR message, or call an LLM.
+
+```bash
+curl -X POST http://127.0.0.1:8000/applications \
+  -H "Content-Type: application/json" \
+  -d "{\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\",\"job_source\":\"Manual\",\"job_url\":\"https://example.com/job/123\",\"jd_text\":\"Build AI application workflows with FastAPI and LLM tools.\",\"status\":\"saved\",\"match_score\":null,\"hr_contact_name\":\"\",\"hr_contact_channel\":\"\",\"last_hr_message\":\"\",\"next_action\":\"Review JD fit\",\"next_action_due_date\":\"\",\"notes\":\"Manual tracking record only.\",\"risk_flags\":[]}"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "application created",
+  "data": {
+    "company_name": "Example AI Company",
+    "job_title": "AI Application Developer",
+    "job_source": "Manual",
+    "job_url": "https://example.com/job/123",
+    "jd_text": "Build AI application workflows with FastAPI and LLM tools.",
+    "status": "saved",
+    "match_score": null,
+    "hr_contact_name": "",
+    "hr_contact_channel": "",
+    "last_hr_message": "",
+    "next_action": "Review JD fit",
+    "next_action_due_date": "",
+    "notes": "Manual tracking record only.",
+    "risk_flags": [],
+    "id": 1,
+    "created_at": "2026-06-10T00:00:00+00:00",
+    "updated_at": "2026-06-10T00:00:00+00:00"
+  }
+}
+```
+
+Invalid status example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/applications \
+  -H "Content-Type: application/json" \
+  -d "{\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\",\"status\":\"unknown\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": false,
+  "message": "invalid status 'unknown'. allowed values: applied, closed, hr_contacted, interview_done, interview_scheduled, offer, rejected, saved",
+  "data": null
+}
+```
+
+## GET /applications
+
+Lists application records ordered by `updated_at DESC, id DESC`. Optional filters are `status`, `company_name`, `job_title`, and `limit`. `limit` defaults to 50 and has a maximum of 100.
+
+```bash
+curl "http://127.0.0.1:8000/applications?status=saved&company_name=AI&limit=50"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "applications listed",
+  "data": [
+    {
+      "id": 1,
+      "company_name": "Example AI Company",
+      "job_title": "AI Application Developer",
+      "status": "saved",
+      "risk_flags": [],
+      "created_at": "2026-06-10T00:00:00+00:00",
+      "updated_at": "2026-06-10T00:00:00+00:00"
+    }
+  ]
+}
+```
+
+## GET /applications/{application_id}
+
+```bash
+curl http://127.0.0.1:8000/applications/1
+```
+
+Response when the record exists:
+
+```json
+{
+  "success": true,
+  "message": "application found",
+  "data": {
+    "id": 1,
+    "company_name": "Example AI Company",
+    "job_title": "AI Application Developer",
+    "status": "saved",
+    "risk_flags": []
+  }
+}
+```
+
+Response when the record does not exist:
+
+```json
+{
+  "success": false,
+  "message": "application not found",
+  "data": null
+}
+```
+
+## PATCH /applications/{application_id}
+
+Updates only the fields included in the request body.
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/applications/1 \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"hr_contacted\",\"last_hr_message\":\"HR asked about availability.\",\"next_action\":\"Prepare human-approved reply draft\",\"risk_flags\":[\"needs_manual_review\"]}"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "application updated",
+  "data": {
+    "id": 1,
+    "company_name": "Example AI Company",
+    "job_title": "AI Application Developer",
+    "status": "hr_contacted",
+    "last_hr_message": "HR asked about availability.",
+    "next_action": "Prepare human-approved reply draft",
+    "risk_flags": ["needs_manual_review"]
+  }
+}
+```

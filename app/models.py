@@ -23,3 +23,26 @@ CREATE TABLE IF NOT EXISTS candidate_profile (
     updated_at TEXT NOT NULL
 );
 """
+
+
+APPLICATIONS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS applications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    job_title TEXT NOT NULL,
+    job_source TEXT,
+    job_url TEXT,
+    jd_text TEXT,
+    status TEXT NOT NULL,
+    match_score INTEGER,
+    hr_contact_name TEXT,
+    hr_contact_channel TEXT,
+    last_hr_message TEXT,
+    next_action TEXT,
+    next_action_due_date TEXT,
+    notes TEXT,
+    risk_flags TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+"""

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterator
 
 from app.config import settings
-from app.models import CANDIDATE_PROFILE_TABLE_SQL
+from app.models import APPLICATIONS_TABLE_SQL, CANDIDATE_PROFILE_TABLE_SQL
 
 
 def get_database_path() -> Path:
@@ -21,6 +21,7 @@ def get_connection() -> sqlite3.Connection:
 def init_database() -> None:
     with get_connection() as connection:
         connection.execute(CANDIDATE_PROFILE_TABLE_SQL)
+        connection.execute(APPLICATIONS_TABLE_SQL)
         connection.commit()
 
 
