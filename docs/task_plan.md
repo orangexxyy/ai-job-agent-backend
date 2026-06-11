@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 7: rule-based job_match.
+Step 8: profile context enhanced HR reply.
 
 ## Completed In Step 1
 
@@ -92,12 +92,23 @@ Step 7: rule-based job_match.
 - This is a candidate-side job prioritization helper, not a recruitment decision system.
 - It does not call DeepSeek, call any LLM, implement RAG, apply to jobs, send HR messages, connect to recruitment platforms, use Playwright, add ML models, or add a frontend.
 
+## Completed In Step 8
+
+- Enhanced `POST /hr/reply` for `project_experience`, `technical_question`, and `business_proposal` intents.
+- Added local context snippet selection from `candidate_profile.resume_text`, `candidate_profile.project_context`, and `candidate_profile.available_projects`.
+- Added `context_used`, `selected_context_snippets`, and `context_reply_mode` to HR reply responses.
+- Added conservative fallback when no profile context snippets are available.
+- Kept existing truth boundary checks and forced project/technical/business proposal replies to remain human-reviewed.
+- Added `app/services/context_reply_service.py` for lightweight keyword-based context selection and conservative reply rendering.
+- Updated `scripts/api_smoke_test.py` to cover context-enhanced HR replies.
+- This is not RAG, not Embedding, not vector search, and not an LLM call.
+- The feature does not fabricate candidate experience and does not claim complete production-grade recruitment systems, automatic HR sending, or automatic recruitment decisions.
+
 ## Next Suggested Steps
 
-1. Step 8: use `resume_text` / `project_context` to enhance reply drafts while staying truthful.
-2. Step 9: add RAG for project experience material.
-3. Step 10: add Playwright dry-run job collection with no auto-apply.
-4. Step 11: design user-confirmed semi-automation.
+1. Step 9: add RAG for project experience material.
+2. Step 10: add Playwright dry-run job collection with no auto-apply.
+3. Step 11: design user-confirmed semi-automation.
 
 ## Do Not Do Yet
 
@@ -106,9 +117,10 @@ Step 7: rule-based job_match.
 - Do not implement automatic HR sending.
 - Do not implement automatic job application.
 - Do not implement RAG.
+- Do not implement Embedding or vector search.
 - Do not implement a frontend.
-- Do not implement LLM-based or recruitment-decision job matching in Step 7.
-- Do not implement `/business_proposal` in Step 7.
+- Do not implement LLM-based or recruitment-decision job matching in Step 8.
+- Do not implement a standalone `/business_proposal` endpoint in Step 8.
 - Do not call DeepSeek or any LLM from `/hr/analyze`, `/hr/reply`, or `/applications`.
 - Do not automatically send HR messages.
 - Do not automatically confirm interview times.

@@ -288,6 +288,44 @@ Expected key result:
 
 The first version is template-based. It reads `candidate_profile`, reuses `/hr/analyze` logic, applies rule-based truth boundary checks, and returns a draft for human approval. It does not call an LLM and does not send any message.
 
+### Project Context Enhanced Reply
+
+For `project_experience`, `technical_question`, and `business_proposal` intents, `/hr/reply` can use local profile context from `resume_text`, `project_context`, and `available_projects`. This is keyword-based snippet selection only. It is not RAG, does not use Embedding/vector search, and does not call an LLM.
+
+```bash
+curl -X POST http://127.0.0.1:8001/hr/reply \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"Which RAG or Agent related projects have you built?\",\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\",\"extra_context\":\"\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "hr reply draft generated",
+  "data": {
+    "primary_intent": "project_experience",
+    "reply_draft": "关于项目经历，我目前更适合从自己做过的 AI 应用 / RAG / Agent Demo 项目角度来说明...",
+    "safe_to_send": false,
+    "context_used": ["project_context", "resume_text"],
+    "selected_context_snippets": [
+      {
+        "source": "project_context",
+        "text": "RAG project uses FastAPI, txt/PDF/Excel ingestion, FAISS + BM25 + RRF hybrid retrieval..."
+      }
+    ],
+    "context_reply_mode": "profile_context_enhanced",
+    "debug": {
+      "need_project_context": true,
+      "need_llm": true
+    }
+  }
+}
+```
+
+When profile context is missing, the endpoint returns a conservative fallback asking the user to supplement `resume_text / project_context`; it does not fabricate candidate experience.
+
 ### With application_id Context
 
 When `application_id` is provided, `/hr/reply` loads the matching application record, uses its company and job title as context, returns `application_context`, and safely updates only `last_hr_message` and `next_action`. It does not send messages, confirm interviews, or update application `status`.

@@ -52,6 +52,9 @@ class HrReplyData(BaseModel):
     reply_draft: str
     safe_to_send: bool
     used_sources: List[str]
+    context_used: List[str] = Field(default_factory=list)
+    selected_context_snippets: List[Dict[str, Any]] = Field(default_factory=list)
+    context_reply_mode: str = "template_only"
     truth_boundary: List[str]
     cannot_claim: List[str]
     risk_level: str

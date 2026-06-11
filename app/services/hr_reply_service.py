@@ -4,6 +4,12 @@ from typing import Any, Dict, List, Optional
 from app.schemas.application_schema import ApplicationItem, ApplicationUpdateRequest
 from app.schemas.profile_schema import CandidateProfile
 from app.services.application_service import get_application, update_application
+from app.services.context_reply_service import (
+    PROJECT_CONTEXT_INTENTS,
+    build_context_enhanced_reply,
+    context_sources,
+    select_relevant_context_snippets,
+)
 from app.services.hr_intent_service import analyze_hr_message
 from app.services.profile_service import get_candidate_profile
 from app.services.truth_boundary_service import check_truth_boundary
@@ -41,6 +47,26 @@ def generate_hr_reply(
     if profile is None:
         return None
 
+    has_context_intent = any(
+        intent in PROJECT_CONTEXT_INTENTS for intent in analysis["intents"]
+    )
+    selected_context_snippets: List[Dict[str, Any]] = []
+    context_used: List[str] = []
+    context_reply_mode = "template_only"
+    if has_context_intent:
+        selected_context_snippets = select_relevant_context_snippets(
+            message=message,
+            resume_text=profile.resume_text,
+            project_context=profile.project_context,
+            available_projects=profile.available_projects,
+        )
+        context_used = context_sources(selected_context_snippets)
+        context_reply_mode = (
+            "profile_context_enhanced"
+            if selected_context_snippets
+            else "profile_context_missing"
+        )
+
     reply_parts: List[str] = []
     used_sources = [
         "candidate_profile",
@@ -56,7 +82,13 @@ def generate_hr_reply(
             if rendered_high_risk:
                 continue
             rendered_high_risk = True
-        part = _render_intent_reply(intent, profile)
+            part = build_context_enhanced_reply(
+                intent=intent,
+                snippets=selected_context_snippets,
+                truth_boundaries=profile.truth_boundaries,
+            )
+        else:
+            part = _render_intent_reply(intent, profile)
         if part:
             reply_parts.append(part)
 
@@ -93,6 +125,16 @@ def generate_hr_reply(
             application_update_fields,
         )
 
+    suggested_followup = _build_suggested_followup(
+        analysis["intents"],
+        truth_result["suggested_revision"],
+        missing_required_profile_data,
+    )
+    if has_context_intent and not selected_context_snippets:
+        suggested_followup = "请先补充 resume_text / project_context 后再生成项目经历或技术方案类回复。"
+    elif has_context_intent:
+        suggested_followup = "请用户确认项目上下文和 truth boundary 后再发送。"
+
     return {
         "original_message": message,
         "application_id": application_id,
@@ -106,16 +148,15 @@ def generate_hr_reply(
         "reply_draft": reply_draft,
         "safe_to_send": safe_to_send,
         "used_sources": _dedupe(used_sources),
+        "context_used": context_used,
+        "selected_context_snippets": selected_context_snippets,
+        "context_reply_mode": context_reply_mode,
         "truth_boundary": _build_truth_boundary_notes(
             truth_result["risk_points"], missing_required_profile_data
         ),
         "cannot_claim": truth_result["cannot_claim"],
         "risk_level": "high" if has_high_risk_intent else analysis["risk_level"],
-        "suggested_followup": _build_suggested_followup(
-            analysis["intents"],
-            truth_result["suggested_revision"],
-            missing_required_profile_data,
-        ),
+        "suggested_followup": suggested_followup,
         "agent_steps": [
             "Received HR message.",
             "Analyzed HR message with rule-based intent analyzer.",

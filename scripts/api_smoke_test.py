@@ -64,6 +64,10 @@ class SmokeTestHarness:
         self._run_step("analyze HR message", self._test_hr_analyze)
         self._run_step("old HR reply", self._test_old_hr_reply)
         self._run_step(
+            "context-enhanced HR reply",
+            self._test_context_enhanced_hr_reply,
+        )
+        self._run_step(
             "application-context HR reply",
             self._test_application_context_hr_reply,
         )
@@ -280,6 +284,35 @@ class SmokeTestHarness:
         data = response.json().get("data", {})
         return bool(data.get("reply_draft")) and data.get("safe_to_send") is True
 
+    def _test_context_enhanced_hr_reply(self) -> bool:
+        response = self._request(
+            "POST",
+            "/hr/reply",
+            json_body={
+                "message": "Which RAG or Agent related projects have you built?",
+                "company_name": "HARNESS Demo Company",
+                "job_title": "AI Application Developer",
+                "extra_context": "",
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        reply_draft = data.get("reply_draft", "")
+        context_used = set(data.get("context_used", []))
+        forbidden_phrases = [
+            "完整生产级智能招聘系统",
+            "自动发送 HR 消息",
+            "自动招聘决策",
+        ]
+        return (
+            bool(reply_draft)
+            and bool(data.get("selected_context_snippets"))
+            and data.get("context_reply_mode") == "profile_context_enhanced"
+            and bool(context_used.intersection({"resume_text", "project_context"}))
+            and all(phrase not in reply_draft for phrase in forbidden_phrases)
+        )
+
     def _test_application_context_hr_reply(self) -> bool:
         if self.application_id is None:
             return False
@@ -412,8 +445,19 @@ class SmokeTestHarness:
                 "没有做过完整生产级智能招聘系统",
                 "不会自动发送 HR 消息",
             ],
-            "resume_text": "",
-            "project_context": "",
+            "resume_text": (
+                "Candidate built a FastAPI + RAG enterprise knowledge base demo "
+                "with document ingestion, hybrid retrieval, reranker, SQLite "
+                "conversation records, and human review. Candidate also built "
+                "AI Job Agent for HR intent analysis, reply drafts, and "
+                "application tracking."
+            ),
+            "project_context": (
+                "RAG project uses FastAPI, txt/PDF/Excel ingestion, FAISS + BM25 "
+                "+ RRF hybrid retrieval, reranker, low_confidence handling, and "
+                "SQLite records. AI Job Agent supports candidate_profile, "
+                "applications, HR reply, job_match, and API smoke test harness."
+            ),
         }
 
     def _test_application(self) -> Dict[str, Any]:
