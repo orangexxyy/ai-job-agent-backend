@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 5: `/hr/reply` application context.
+Step 6: API smoke test harness.
 
 ## Completed In Step 1
 
@@ -62,13 +62,27 @@ Step 5: `/hr/reply` application context.
 - Returns `success=false`, `message="application not found"`, and `data=null` when the provided application does not exist.
 - Kept the feature local and deterministic: no DeepSeek call, no LLM call, no Playwright, no RAG, no frontend, no automatic sending, and no automatic application.
 
+## Completed In Step 6
+
+- Added `scripts/api_smoke_test.py` as a local API integration smoke test harness.
+- The harness assumes FastAPI is already running and defaults to `http://127.0.0.1:8001`.
+- Added optional `--base-url` support for testing another local base URL.
+- Covered the main API chain: `/health`, `/profile`, `/applications`, `/hr/analyze`, and `/hr/reply`.
+- Added application-context `/hr/reply` verification for `application_id`, `application_context`, `application_updated`, and `application_update_fields`.
+- Added invalid status verification for `/applications/{application_id}`.
+- Added missing application verification for `/hr/reply`.
+- The harness backs up the current single-user `candidate_profile`, writes a test profile, and attempts to restore the original profile at the end.
+- The harness creates one `HARNESS Demo Company <timestamp>` application and attempts to mark it `closed` at the end.
+- This is a development verification tool, not a business feature.
+- It does not add business endpoints, call DeepSeek, call any LLM, send HR messages, apply to jobs, use Playwright, implement RAG, or add a frontend.
+
 ## Next Suggested Steps
 
-1. Step 6: add job match scoring after the manual application records are stable.
-2. Step 7: use `resume_text` / `project_context` to enhance reply drafts while staying truthful.
-3. Step 8: add RAG for project experience material.
-4. Step 9: add Playwright dry-run job collection with no auto-apply.
-5. Step 10: design user-confirmed semi-automation.
+1. Step 7: add job match scoring after the manual application records are stable.
+2. Step 8: use `resume_text` / `project_context` to enhance reply drafts while staying truthful.
+3. Step 9: add RAG for project experience material.
+4. Step 10: add Playwright dry-run job collection with no auto-apply.
+5. Step 11: design user-confirmed semi-automation.
 
 ## Do Not Do Yet
 
@@ -78,11 +92,12 @@ Step 5: `/hr/reply` application context.
 - Do not implement automatic job application.
 - Do not implement RAG.
 - Do not implement a frontend.
-- Do not implement `/job_match` or `/business_proposal` in Step 5.
+- Do not implement `/job_match` or `/business_proposal` in Step 6.
 - Do not call DeepSeek or any LLM from `/hr/analyze`, `/hr/reply`, or `/applications`.
 - Do not automatically send HR messages.
 - Do not automatically confirm interview times.
 - Do not automatically update application status from `/hr/reply`.
 - Do not add conversations or messages tables.
+- Do not add business endpoints for the smoke test harness.
 - Do not scrape job posts.
 - Do not fabricate application, resume, salary, education, or project history facts.

@@ -1,5 +1,43 @@
 # API Examples
 
+## API Smoke Test Harness
+
+`scripts/api_smoke_test.py` is a local API integration smoke test harness. It assumes the FastAPI server is already running and does not start uvicorn by itself.
+
+Start the API server first:
+
+```bash
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+```
+
+Run the smoke test:
+
+```bash
+python scripts/api_smoke_test.py
+```
+
+Or pass a custom local base URL:
+
+```bash
+python scripts/api_smoke_test.py --base-url http://127.0.0.1:8001
+```
+
+The harness covers:
+
+- `GET /health`
+- `POST /profile`
+- `GET /profile`
+- `POST /applications`
+- `GET /applications/{application_id}`
+- `PATCH /applications/{application_id}`
+- invalid application status handling
+- `POST /hr/analyze`
+- old `POST /hr/reply` without `application_id`
+- new `POST /hr/reply` with `application_id`
+- missing `application_id` handling
+
+It temporarily writes a test `candidate_profile`, attempts to restore the original profile, creates one `HARNESS Demo Company <timestamp>` application, and attempts to mark that application as `closed` at the end. It does not call DeepSeek / LLM, does not apply to jobs, and does not send HR messages.
+
 ## GET /health
 
 ```bash
