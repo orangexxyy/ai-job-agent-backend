@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HrAnalyzeRequest(BaseModel):
@@ -33,6 +33,7 @@ class HrAnalyzeResponse(BaseModel):
 
 class HrReplyRequest(BaseModel):
     message: str
+    application_id: Optional[int] = None
     company_name: Optional[str] = None
     job_title: Optional[str] = None
     extra_context: Optional[str] = None
@@ -40,6 +41,10 @@ class HrReplyRequest(BaseModel):
 
 class HrReplyData(BaseModel):
     original_message: str
+    application_id: Optional[int] = None
+    application_context: Optional[Dict[str, Any]] = None
+    application_updated: bool = False
+    application_update_fields: Dict[str, Any] = Field(default_factory=dict)
     company_name: Optional[str] = None
     job_title: Optional[str] = None
     intents: List[str]

@@ -29,12 +29,22 @@ def analyze_hr_intent(request: HrAnalyzeRequest) -> HrAnalyzeResponse:
 
 @router.post("/reply", response_model=HrReplyResponse)
 def generate_hr_reply_draft(request: HrReplyRequest) -> HrReplyResponse:
-    data = generate_hr_reply(
-        message=request.message,
-        company_name=request.company_name,
-        job_title=request.job_title,
-        extra_context=request.extra_context,
-    )
+    try:
+        data = generate_hr_reply(
+            message=request.message,
+            application_id=request.application_id,
+            company_name=request.company_name,
+            job_title=request.job_title,
+            extra_context=request.extra_context,
+        )
+    except ValueError as exc:
+        if str(exc) == "application not found":
+            return HrReplyResponse(
+                success=False,
+                message="application not found",
+                data=None,
+            )
+        raise
     if data is None:
         return HrReplyResponse(
             success=False,

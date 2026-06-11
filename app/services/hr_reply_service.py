@@ -1,7 +1,9 @@
 import re
 from typing import Any, Dict, List, Optional
 
+from app.schemas.application_schema import ApplicationItem, ApplicationUpdateRequest
 from app.schemas.profile_schema import CandidateProfile
+from app.services.application_service import get_application, update_application
 from app.services.hr_intent_service import analyze_hr_message
 from app.services.profile_service import get_candidate_profile
 from app.services.truth_boundary_service import check_truth_boundary
@@ -16,11 +18,25 @@ HIGH_RISK_INTENTS = {
 
 def generate_hr_reply(
     message: str,
+    application_id: Optional[int] = None,
     company_name: Optional[str] = None,
     job_title: Optional[str] = None,
     extra_context: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    analysis = analyze_hr_message(message, company_name, job_title)
+    application = None
+    application_context = None
+    effective_company_name = company_name
+    effective_job_title = job_title
+
+    if application_id is not None:
+        application = get_application(application_id)
+        if application is None:
+            raise ValueError("application not found")
+        application_context = _build_application_context(application)
+        effective_company_name = application.company_name or company_name
+        effective_job_title = application.job_title or job_title
+
+    analysis = analyze_hr_message(message, effective_company_name, effective_job_title)
     profile = get_candidate_profile()
     if profile is None:
         return None
@@ -31,6 +47,8 @@ def generate_hr_reply(
         "hr_intent_rules",
         "truth_boundary_rules",
     ]
+    if application_context is not None:
+        used_sources.append("application_context")
 
     rendered_high_risk = False
     for intent in analysis["intents"]:
@@ -46,6 +64,7 @@ def generate_hr_reply(
         reply_parts.append(f"补充说明：{extra_context}")
 
     reply_draft = _combine_reply_parts(reply_parts)
+    reply_draft = _add_application_reply_prefix(reply_draft, application_context)
     truth_result = check_truth_boundary(reply_draft, profile)
     has_high_risk_intent = any(intent in HIGH_RISK_INTENTS for intent in analysis["intents"])
     has_unknown_intent = "unknown" in analysis["intents"]
@@ -62,10 +81,26 @@ def generate_hr_reply(
     if analysis["need_project_context"]:
         used_sources.append("project_context")
 
+    application_update_fields: Dict[str, Any] = {}
+    application_updated = False
+    if application is not None:
+        application_update_fields = {
+            "last_hr_message": message,
+            "next_action": _next_action_for_intent(analysis["primary_intent"]),
+        }
+        application_updated = _update_application_after_reply(
+            application.id,
+            application_update_fields,
+        )
+
     return {
         "original_message": message,
-        "company_name": company_name,
-        "job_title": job_title,
+        "application_id": application_id,
+        "application_context": application_context,
+        "application_updated": application_updated,
+        "application_update_fields": application_update_fields,
+        "company_name": effective_company_name,
+        "job_title": effective_job_title,
         "intents": analysis["intents"],
         "primary_intent": analysis["primary_intent"],
         "reply_draft": reply_draft,
@@ -97,8 +132,69 @@ def generate_hr_reply(
             "need_application_history": analysis["need_application_history"],
             "need_llm": analysis["need_llm"],
             "matched_keywords": analysis["matched_keywords"],
+            "application_update_error": not application_updated
+            if application is not None
+            else False,
         },
     }
+
+
+def _build_application_context(application: ApplicationItem) -> Dict[str, Any]:
+    return {
+        "id": application.id,
+        "company_name": application.company_name,
+        "job_title": application.job_title,
+        "status": application.status,
+        "job_source": application.job_source,
+        "job_url": application.job_url,
+        "next_action": application.next_action,
+        "last_hr_message": application.last_hr_message,
+        "jd_text_preview": (application.jd_text or "")[:120],
+        "notes": application.notes,
+        "risk_flags": application.risk_flags,
+    }
+
+
+def _add_application_reply_prefix(
+    reply_draft: str,
+    application_context: Optional[Dict[str, Any]],
+) -> str:
+    if not application_context:
+        return reply_draft
+    company_name = application_context.get("company_name") or "当前公司"
+    job_title = application_context.get("job_title") or "当前岗位"
+    return f"针对「{company_name}」的「{job_title}」岗位，{reply_draft}"
+
+
+def _next_action_for_intent(primary_intent: str) -> str:
+    next_actions = {
+        "interview_schedule": "确认面试时间",
+        "resume_request": "确认并发送简历",
+        "github_request": "确认 GitHub 链接后发送",
+        "project_experience": "准备项目经历回复",
+        "technical_question": "准备技术问题回复",
+        "business_proposal": "准备业务方案回复",
+        "salary_expectation": "确认薪资回复",
+        "availability": "确认到岗时间回复",
+        "relocation": "确认异地/外地接受度",
+        "outsourcing": "确认外包岗位接受度",
+        "unknown": "请用户补充 HR 问题背景",
+    }
+    return next_actions.get(primary_intent, "请用户补充 HR 问题背景")
+
+
+def _update_application_after_reply(
+    application_id: int,
+    update_fields: Dict[str, Any],
+) -> bool:
+    try:
+        updated = update_application(
+            application_id,
+            ApplicationUpdateRequest(**update_fields),
+        )
+    except Exception:
+        return False
+    return updated is not None
 
 
 def _render_intent_reply(intent: str, profile: CandidateProfile) -> str:

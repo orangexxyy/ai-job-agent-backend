@@ -182,6 +182,74 @@ Expected key result:
 
 The first version is template-based. It reads `candidate_profile`, reuses `/hr/analyze` logic, applies rule-based truth boundary checks, and returns a draft for human approval. It does not call an LLM and does not send any message.
 
+### With application_id Context
+
+When `application_id` is provided, `/hr/reply` loads the matching application record, uses its company and job title as context, returns `application_context`, and safely updates only `last_hr_message` and `next_action`. It does not send messages, confirm interviews, or update application `status`.
+
+```bash
+curl -X POST http://127.0.0.1:8001/hr/reply \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"message\":\"方便明天下午视频面试吗？\",\"company_name\":\"\",\"job_title\":\"\",\"extra_context\":\"\"}"
+```
+
+Request body:
+
+```json
+{
+  "application_id": 1,
+  "message": "方便明天下午视频面试吗？",
+  "company_name": "",
+  "job_title": "",
+  "extra_context": ""
+}
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "hr reply draft generated",
+  "data": {
+    "application_id": 1,
+    "application_context": {
+      "id": 1,
+      "company_name": "Example AI Company",
+      "job_title": "AI Application Developer",
+      "status": "saved",
+      "job_source": "Manual",
+      "job_url": "https://example.com/job/123",
+      "next_action": "Review JD fit",
+      "last_hr_message": "",
+      "jd_text_preview": "Build AI application workflows with FastAPI and LLM tools."
+    },
+    "application_updated": true,
+    "application_update_fields": {
+      "last_hr_message": "方便明天下午视频面试吗？",
+      "next_action": "确认面试时间"
+    },
+    "primary_intent": "interview_schedule",
+    "safe_to_send": true
+  }
+}
+```
+
+Missing application result:
+
+```bash
+curl -X POST http://127.0.0.1:8001/hr/reply \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":999999,\"message\":\"方便明天下午视频面试吗？\"}"
+```
+
+```json
+{
+  "success": false,
+  "message": "application not found",
+  "data": null
+}
+```
+
 ### Salary, Availability, Relocation
 
 ```bash
