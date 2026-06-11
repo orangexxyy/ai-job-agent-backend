@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 6: API smoke test harness.
+Step 7: rule-based job_match.
 
 ## Completed In Step 1
 
@@ -76,13 +76,28 @@ Step 6: API smoke test harness.
 - This is a development verification tool, not a business feature.
 - It does not add business endpoints, call DeepSeek, call any LLM, send HR messages, apply to jobs, use Playwright, implement RAG, or add a frontend.
 
+## Completed In Step 7
+
+- Added `POST /job_match`.
+- Added `JobMatchRequest`, `JobMatchDimension`, `JobMatchData`, and `JobMatchResponse`.
+- Added rule-based `analyze_job_match(application_id, update_application=True)`.
+- The matcher loads `candidate_profile` and the target `applications` record.
+- The matcher combines `job_title`, `jd_text`, and `notes` as the job text for scoring.
+- Added four scoring dimensions: `role_fit`, `tech_stack_fit`, `project_relevance`, and `preference_fit`.
+- Added `match_score`, `match_level`, Chinese recommendation text, matched signals, missing signals, risk flags, and suggested next action.
+- Added safe application write-back when `update_application=true`.
+- Write-back is limited to `match_score`, `next_action`, and `risk_flags`.
+- The matcher does not update `status` or `last_hr_message`.
+- Added `/job_match` coverage to `scripts/api_smoke_test.py`.
+- This is a candidate-side job prioritization helper, not a recruitment decision system.
+- It does not call DeepSeek, call any LLM, implement RAG, apply to jobs, send HR messages, connect to recruitment platforms, use Playwright, add ML models, or add a frontend.
+
 ## Next Suggested Steps
 
-1. Step 7: add job match scoring after the manual application records are stable.
-2. Step 8: use `resume_text` / `project_context` to enhance reply drafts while staying truthful.
-3. Step 9: add RAG for project experience material.
-4. Step 10: add Playwright dry-run job collection with no auto-apply.
-5. Step 11: design user-confirmed semi-automation.
+1. Step 8: use `resume_text` / `project_context` to enhance reply drafts while staying truthful.
+2. Step 9: add RAG for project experience material.
+3. Step 10: add Playwright dry-run job collection with no auto-apply.
+4. Step 11: design user-confirmed semi-automation.
 
 ## Do Not Do Yet
 
@@ -92,7 +107,8 @@ Step 6: API smoke test harness.
 - Do not implement automatic job application.
 - Do not implement RAG.
 - Do not implement a frontend.
-- Do not implement `/job_match` or `/business_proposal` in Step 6.
+- Do not implement LLM-based or recruitment-decision job matching in Step 7.
+- Do not implement `/business_proposal` in Step 7.
 - Do not call DeepSeek or any LLM from `/hr/analyze`, `/hr/reply`, or `/applications`.
 - Do not automatically send HR messages.
 - Do not automatically confirm interview times.

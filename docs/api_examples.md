@@ -31,12 +31,80 @@ The harness covers:
 - `GET /applications/{application_id}`
 - `PATCH /applications/{application_id}`
 - invalid application status handling
+- `POST /job_match`
 - `POST /hr/analyze`
 - old `POST /hr/reply` without `application_id`
 - new `POST /hr/reply` with `application_id`
 - missing `application_id` handling
 
 It temporarily writes a test `candidate_profile`, attempts to restore the original profile, creates one `HARNESS Demo Company <timestamp>` application, and attempts to mark that application as `closed` at the end. It does not call DeepSeek / LLM, does not apply to jobs, and does not send HR messages.
+
+## POST /job_match
+
+Analyzes one application record with local rule-based scoring. This endpoint is a candidate-side prioritization helper. It does not call DeepSeek / LLM and does not represent a recruitment decision.
+
+```bash
+curl -X POST http://127.0.0.1:8001/job_match \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"update_application\":true}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "job match analyzed",
+  "data": {
+    "application_id": 1,
+    "match_score": 82,
+    "match_level": "strong_match",
+    "recommendation": "建议优先跟进",
+    "dimensions": [
+      {
+        "name": "role_fit",
+        "score": 23,
+        "max_score": 25,
+        "matched_signals": ["RAG", "Agent"],
+        "missing_signals": []
+      }
+    ],
+    "application_updated": true,
+    "application_update_fields": {
+      "match_score": 82,
+      "next_action": "优先跟进，并准备 AI 应用 / RAG / Agent 项目讲法",
+      "risk_flags": []
+    },
+    "debug": {
+      "scoring_version": "rule_based_v1",
+      "used_sources": ["candidate_profile", "application"],
+      "llm_used": false
+    }
+  }
+}
+```
+
+When `update_application=true`, only `match_score`, `next_action`, and `risk_flags` are written back to the application. `status` and `last_hr_message` are not modified.
+
+Missing application result:
+
+```json
+{
+  "success": false,
+  "message": "application not found",
+  "data": null
+}
+```
+
+Missing profile result:
+
+```json
+{
+  "success": false,
+  "message": "candidate_profile not found. Please create profile first.",
+  "data": null
+}
+```
 
 ## GET /health
 

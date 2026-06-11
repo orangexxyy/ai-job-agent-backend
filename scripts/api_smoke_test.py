@@ -50,6 +50,15 @@ class SmokeTestHarness:
         self._run_step("read test profile", self._test_read_profile)
         self._run_step("create application", self._test_create_application)
         self._run_step("read application", self._test_read_application)
+        self._run_step("analyze job match", self._test_job_match)
+        self._run_step(
+            "verify application updated by job match",
+            self._test_application_after_job_match,
+        )
+        self._run_step(
+            "missing application_id job match",
+            self._test_missing_application_job_match,
+        )
         self._run_step("patch application", self._test_patch_application)
         self._run_step("reject invalid application status", self._test_invalid_status)
         self._run_step("analyze HR message", self._test_hr_analyze)
@@ -156,6 +165,62 @@ class SmokeTestHarness:
             return False
         response = self._request("GET", f"/applications/{self.application_id}")
         return self._success(response) and response.json().get("data", {}).get("id") == self.application_id
+
+    def _test_job_match(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/job_match",
+            json_body={
+                "application_id": self.application_id,
+                "update_application": True,
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        match_score = data.get("match_score")
+        return (
+            data.get("application_id") == self.application_id
+            and isinstance(match_score, int)
+            and 0 <= match_score <= 100
+            and data.get("match_level")
+            in {"strong_match", "possible_match", "weak_match", "not_recommended"}
+            and bool(data.get("dimensions"))
+            and data.get("debug", {}).get("llm_used") is False
+        )
+
+    def _test_application_after_job_match(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        return (
+            isinstance(data.get("match_score"), int)
+            and bool(data.get("next_action"))
+            and data.get("status") == "saved"
+        )
+
+    def _test_missing_application_job_match(self) -> bool:
+        response = self._request(
+            "POST",
+            "/job_match",
+            json_body={
+                "application_id": 999999999,
+                "update_application": True,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        return (
+            payload.get("success") is False
+            and payload.get("message") == "application not found"
+            and payload.get("data") is None
+        )
 
     def _test_patch_application(self) -> bool:
         if self.application_id is None:
