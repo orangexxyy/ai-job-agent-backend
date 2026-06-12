@@ -40,6 +40,12 @@ def _row_to_profile(row: Row) -> CandidateProfile:
 
 
 def save_candidate_profile(profile: CandidateProfileInput) -> int:
+    """保存单用户 candidate_profile。
+
+    主要输入：API 或 workflow 传入的 CandidateProfileInput。
+    主要输出：固定 profile id 1。
+    副作用：会写入 SQLite；不调用 LLM，不自动发送 HR 消息，不自动投递。
+    """
     data = _serialize_profile(profile)
     now = _now_iso()
     columns = [
@@ -98,6 +104,12 @@ def save_candidate_profile(profile: CandidateProfileInput) -> int:
 
 
 def get_candidate_profile() -> Optional[CandidateProfile]:
+    """读取单用户 candidate_profile。
+
+    主要输入：无。
+    主要输出：存在时返回 CandidateProfile，否则返回 None。
+    副作用：只读数据库；不调用 LLM，不自动发送 HR 消息，不自动投递。
+    """
     connection = get_connection()
     try:
         row = connection.execute(

@@ -145,6 +145,13 @@ python scripts/api_smoke_test.py --base-url http://127.0.0.1:8001
 
 Step 9 只做文档收口，没有修改业务代码，也没有实现 LangGraph / RAG / Playwright。
 
+## 代码结构与阅读指南
+
+- [Project Structure](docs/project_structure.md)
+- [Code Reading Guide](docs/code_reading_guide.md)
+
+这两份文档用于说明 route / schema / service / database 的分层职责、典型调用链，以及未来 workflow / LangGraph 为什么应该优先复用 service 函数，而不是在后端内部再调用自己的 HTTP API。
+
 ## 明确边界
 
 当前未实现：

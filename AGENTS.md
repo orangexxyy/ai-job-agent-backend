@@ -101,3 +101,31 @@ After each Step, output:
 - The project may reference third-party GitHub projects for feature ideas, but must not copy source code.
 - The project should primarily support AI application development / LLM application development job-search presentation.
 - All resume, README, interview, and project-presentation wording must remain truthful and must not exaggerate implemented capabilities or user experience.
+
+## Code Documentation and Project Structure Rules
+
+1. Project docstrings and project documentation should use Chinese by default, while keeping technical terms such as FastAPI, SQLite, LLM, RAG, LangGraph, Playwright, and Human-in-the-loop in English.
+
+2. Variable names, function names, class names, and file names must remain in English.
+
+3. Every new public service function must include a concise Chinese docstring explaining the function purpose, main inputs, main outputs, and whether it writes to the database or has other side effects.
+
+4. Every time an existing core service function's responsibility changes, update its docstring in the same change.
+
+5. If a function touches Human-in-the-loop boundaries, database writes, external communication, LLM, RAG, LangGraph, Playwright, automatic application, or automatic HR messaging, mention the relevant boundary in the docstring or a nearby concise comment.
+
+6. Every time a new route, schema, service, or workflow file is added, update `docs/project_structure.md`.
+
+7. If a new file changes the recommended code reading order, update `docs/code_reading_guide.md`.
+
+8. Every time an API endpoint is added or changed, update `README.md`, `docs/api_examples.md`, and `docs/demo_script.md`.
+
+9. If the API endpoint belongs to the main workflow path, update `scripts/api_smoke_test.py`.
+
+10. Every time a new project Step is added, update the current stage section in `README.md` and update `docs/task_plan.md`.
+
+11. Every time Agent workflow or LangGraph-related capability is added, update `docs/agent_workflow_design.md` and `docs/interview_talking_points.md`.
+
+12. Keep comments concise. Do not comment every line. Focus comments and docstrings on core functions, complex business rules, state transitions, permission boundaries, and Human-in-the-loop boundaries.
+
+13. Do not implement code without updating the corresponding documentation, unless the task is explicitly a one-off experiment and will not enter the main project line.

@@ -83,6 +83,12 @@ def _row_to_application(row: Row) -> ApplicationItem:
 
 
 def create_application(request: ApplicationCreateRequest) -> ApplicationItem:
+    """创建一条手动投递记录。
+
+    主要输入：包含公司、岗位、JD、状态和备注的 ApplicationCreateRequest。
+    主要输出：创建后的 ApplicationItem。
+    副作用：会写入 SQLite；不自动投递，不自动发送 HR 消息，不调用 LLM。
+    """
     _validate_status(request.status)
     now = _now_iso()
     data = _serialize_risk_flags(_dump_model(request))
@@ -117,6 +123,12 @@ def list_applications(
     job_title: Optional[str] = None,
     limit: int = 50,
 ) -> List[ApplicationItem]:
+    """查询投递记录列表。
+
+    主要输入：可选的 status、company_name、job_title 和 limit 过滤条件。
+    主要输出：按更新时间排序的 ApplicationItem 列表。
+    副作用：只读数据库；不修改 application，不调用 LLM。
+    """
     if status is not None:
         _validate_status(status)
 
@@ -151,6 +163,12 @@ def list_applications(
 
 
 def get_application(application_id: int) -> Optional[ApplicationItem]:
+    """按 id 读取一条投递记录。
+
+    主要输入：application_id。
+    主要输出：找到时返回 ApplicationItem，否则返回 None。
+    副作用：只读数据库；不修改 application，不调用 LLM。
+    """
     connection = get_connection()
     try:
         row = connection.execute(
@@ -168,6 +186,12 @@ def update_application(
     application_id: int,
     request: ApplicationUpdateRequest,
 ) -> Optional[ApplicationItem]:
+    """局部更新一条投递记录。
+
+    主要输入：application_id 和 ApplicationUpdateRequest 中允许更新的字段。
+    主要输出：更新后的 ApplicationItem；空更新返回当前记录；不存在返回 None。
+    副作用：会更新 application 并写入 SQLite；不自动投递，不自动发送 HR 消息，不调用 LLM。
+    """
     data = _dump_model(request, exclude_unset=True)
     data = {key: value for key, value in data.items() if key in UPDATABLE_FIELDS}
     if not data:

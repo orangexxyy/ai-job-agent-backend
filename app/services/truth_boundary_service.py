@@ -35,6 +35,12 @@ def check_truth_boundary(
     reply_draft: str,
     profile: CandidateProfile,
 ) -> Dict[str, object]:
+    """检查回复草稿是否触碰候选人 truth boundary。
+
+    主要输入：reply_draft 文本和 CandidateProfile 中的 truth_boundaries。
+    主要输出：safe_to_send、risk_points、cannot_claim 和 suggested_revision。
+    副作用：无数据库读写；仅做内存校验，不调用 LLM，不自动发送 HR 消息。
+    """
     risk_points = [
         claim for claim in FORBIDDEN_CLAIMS if claim.lower() in reply_draft.lower()
     ]

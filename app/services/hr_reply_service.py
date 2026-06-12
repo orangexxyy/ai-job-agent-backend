@@ -29,6 +29,12 @@ def generate_hr_reply(
     job_title: Optional[str] = None,
     extra_context: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
+    """生成 Human-in-the-loop 的 HR 回复草稿。
+
+    主要输入：HR message、可选 application_id、公司/岗位上下文和 extra_context。
+    主要输出：回复草稿数据；candidate_profile 缺失时返回 None。
+    副作用：可能更新 application 的 last_hr_message 和 next_action；不自动发送 HR 消息，不自动投递，不调用 LLM。
+    """
     application = None
     application_context = None
     effective_company_name = company_name

@@ -116,9 +116,21 @@ Step 9: Agent Workflow Design + interview demo docs.
 - Updated `README.md` with Step 9 documentation entry links and roadmap changes.
 - This step is docs-only: no business code changes, no new API endpoints, no database tables, no LangGraph implementation, no RAG, no Playwright, no LLM calls.
 
+## Completed In Step 9.5
+
+- Added `docs/project_structure.md`.
+- Added `docs/code_reading_guide.md`.
+- Added concise docstrings to key public service functions.
+- Standardized key function docstrings to Chinese-first wording while keeping technical terms in English.
+- Documented route / schema / service / database layering.
+- Documented why future workflow / LangGraph nodes should call service functions directly instead of calling internal HTTP APIs.
+- Updated `README.md` with code structure and reading guide links.
+- Updated `AGENTS.md` with long-term code documentation and project structure maintenance rules.
+- This step does not add business features, APIs, database tables, RAG, LangGraph code, Playwright, or LLM calls.
+
 ## Next Suggested Steps
 
-1. Step 10: build a minimal LangGraph Workflow Demo.
+1. Step 10: build a minimal workflow_preview or LangGraph Workflow Demo.
 2. Step 11: add job source import / manual JD import improvements.
 3. Step 12: add Playwright dry-run job collection with no auto-apply.
 4. Step 13: design user-confirmed semi-automatic application flow.

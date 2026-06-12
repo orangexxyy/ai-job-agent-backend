@@ -308,6 +308,12 @@ def analyze_hr_message(
     company_name: Optional[str] = None,
     job_title: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """使用本地规则分析一条 HR message。
+
+    主要输入：HR message，以及可选的 company_name / job_title 上下文。
+    主要输出：包含 intents、primary_intent、风险级别和下一步建议的分析结果。
+    副作用：无数据库写入；不调用 LLM，不自动发送 HR 消息，不自动投递。
+    """
     normalized_message = message.lower()
     matched_keywords: Dict[str, List[str]] = {}
 

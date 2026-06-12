@@ -46,6 +46,12 @@ def select_relevant_context_snippets(
     available_projects: List[str],
     max_snippets: int = 3,
 ) -> List[Dict[str, str]]:
+    """为项目类 HR 问题选择短上下文片段。
+
+    主要输入：HR message、resume_text、project_context 和 available_projects。
+    主要输出：包含 source 和 text 的 snippet 列表。
+    副作用：无数据库读写；仅做规则字符串匹配，不调用 LLM，不做 RAG / Embedding。
+    """
     candidates = []
     candidates.extend(_split_source("resume_text", resume_text))
     candidates.extend(_split_source("project_context", project_context))
@@ -90,6 +96,12 @@ def build_context_enhanced_reply(
     snippets: List[Dict[str, str]],
     truth_boundaries: List[str],
 ) -> str:
+    """生成保守的上下文增强回复草稿。
+
+    主要输入：高风险 intent、已选择的 snippets 和 truth_boundaries。
+    主要输出：供用户审核的 reply draft 文本。
+    副作用：无数据库写入；不自动发送 HR 消息，不自动投递，不调用 LLM。
+    """
     if not snippets:
         return (
             "这类问题涉及项目经历、技术细节或方案设计。当前 candidate_profile 里还缺少足够的 "

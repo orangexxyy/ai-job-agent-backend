@@ -92,6 +92,12 @@ def analyze_job_match(
     application_id: int,
     update_application: bool = True,
 ) -> Dict[str, Any]:
+    """分析某条 application 的求职者侧岗位匹配度。
+
+    主要输入：application_id，以及是否回写 update_application。
+    主要输出：match_score、match_level、维度评分、风险标记和回写信息。
+    副作用：可能更新 application 的 match_score、next_action 和 risk_flags；不修改 status，不自动投递，不调用 LLM。
+    """
     application = get_application(application_id)
     if application is None:
         raise ValueError("application not found")
