@@ -253,6 +253,11 @@ class SmokeTestHarness:
             return False
         data = response.json().get("data", {})
         step_names = {step.get("name") for step in data.get("workflow_steps", [])}
+        graph_structure = data.get("graph_structure") or {}
+        graph_nodes = set(graph_structure.get("nodes", []))
+        state_snapshots = data.get("state_snapshots") or []
+        snapshot_nodes = {snapshot.get("after_node") for snapshot in state_snapshots}
+        edge_trace = data.get("edge_trace") or []
         debug = data.get("debug", {})
         hr_reply = data.get("hr_reply") or {}
         return (
@@ -275,6 +280,22 @@ class SmokeTestHarness:
             and debug.get("auto_apply") is False
             and debug.get("auto_send_message") is False
             and debug.get("database_write_intended") is False
+            and {
+                "load_profile_node",
+                "load_application_node",
+                "run_job_match_node",
+                "require_user_approval_node",
+            }.issubset(graph_nodes)
+            and bool(graph_structure.get("conditional_edges"))
+            and bool(state_snapshots)
+            and "load_profile_node" in snapshot_nodes
+            and "require_user_approval_node" in snapshot_nodes
+            and bool(edge_trace)
+            and any(edge.get("from") == "load_profile_node" for edge in edge_trace)
+            and any(
+                edge.get("to") in {"require_user_approval_node", "END"}
+                for edge in edge_trace
+            )
             and bool(hr_reply.get("reply_draft"))
             and hr_reply.get("application_updated") is False
             and hr_reply.get("debug", {}).get("application_update_skipped") is True

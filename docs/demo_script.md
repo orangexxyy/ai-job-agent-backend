@@ -293,3 +293,20 @@ pip install -r requirements.txt
 - Step 10 证明业务链路可以用普通 Python service 串起来。
 - Step 11 把同一条链路迁移到 LangGraph StateGraph，显式表达 State、Node、Edge 和 Conditional Edge。
 - 当前没有循环、没有 human interrupt resume，只做最小可运行 demo。
+## Step 11.5 demo: LangGraph observability
+
+演示顺序建议：
+
+1. 先调用 `POST /agent/workflow_preview`，说明这是普通 Python workflow baseline。
+2. 再调用 `POST /agent/langgraph_workflow_preview`，说明业务结果接近，但 LangGraph 版本额外暴露 workflow 编排结构。
+3. 在返回结果里重点展开：
+   - `graph_structure`
+   - `state_snapshots`
+   - `edge_trace`
+
+讲法：
+
+- `graph_structure` 用来展示 Node、Edge、Conditional Edge。
+- `state_snapshots` 用来展示每个关键 Node 后 state 的变化。
+- `edge_trace` 用来展示本次实际执行路径和条件判断。
+- `require_user_approval_node` 到 `END` 的 trace 说明流程停在 Human-in-the-loop，不会自动发送或投递。

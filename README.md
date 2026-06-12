@@ -234,3 +234,12 @@ LangGraph 版本会返回：
   "hr_message": "方便介绍一下你做过的 RAG 或 Agent 项目吗？"
 }
 ```
+## Step 11.5: LangGraph observability
+
+`POST /agent/langgraph_workflow_preview` 已增强可观测性，返回中额外暴露：
+
+- `graph_structure`：展示 LangGraph nodes、普通 edges、conditional edges
+- `state_snapshots`：展示每个关键 node 执行后的轻量 state 变化
+- `edge_trace`：展示本次 workflow 实际走过的边和条件判断结果
+
+这些字段用于学习 LangGraph 编排、Swagger 调试和面试展示。当前仍然不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。

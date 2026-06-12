@@ -745,3 +745,62 @@ Expected key result:
   }
 }
 ```
+### LangGraph observability fields
+
+`POST /agent/langgraph_workflow_preview` 还会返回 LangGraph 可观测性字段，方便从 Swagger 直接看出它和普通 Python workflow 的区别。
+
+```json
+{
+  "graph_structure": {
+    "nodes": [
+      "load_profile_node",
+      "load_application_node",
+      "run_job_match_node",
+      "analyze_hr_intent_node",
+      "generate_reply_draft_node",
+      "require_user_approval_node",
+      "handle_error_node"
+    ],
+    "edges": [
+      "START -> load_profile_node",
+      "run_job_match_node -> analyze_hr_intent_node",
+      "require_user_approval_node -> END"
+    ],
+    "conditional_edges": [
+      {
+        "from": "load_profile_node",
+        "condition": "error_message exists ? handle_error_node : load_application_node"
+      }
+    ]
+  },
+  "state_snapshots": [
+    {
+      "after_node": "load_profile_node",
+      "candidate_profile_loaded": true,
+      "application_loaded": false,
+      "has_job_match": false,
+      "approval_required": false,
+      "error_message": null
+    },
+    {
+      "after_node": "require_user_approval_node",
+      "approval_required": true,
+      "approved_by_user": false
+    }
+  ],
+  "edge_trace": [
+    {
+      "from": "load_profile_node",
+      "decision": "continue",
+      "to": "load_application_node",
+      "reason": "error_message is empty"
+    },
+    {
+      "from": "require_user_approval_node",
+      "decision": "stop_for_human",
+      "to": "END",
+      "reason": "approval_required is true and approved_by_user is false"
+    }
+  ]
+}
+```

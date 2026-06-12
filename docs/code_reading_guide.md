@@ -149,3 +149,18 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 - 重点看 `WorkflowState` 如何保存跨 node 状态。
 - 重点看 `load_profile_node` 和 `load_application_node` 后面的 Conditional Edge 如何处理错误。
 - 重点确认 `analyze_job_match(update_application=False)` 和 `generate_hr_reply(update_application=False)` 如何保证预览链路只读。
+## Step 11.5 阅读补充：observability
+
+阅读 LangGraph 可观测性增强时，建议顺序：
+
+1. 先看 `WorkflowState`，理解 state 中新增的 `state_snapshots` 和 `edge_trace`。
+2. 再看 `_build_graph()`，理解真实 LangGraph Node / Edge / Conditional Edge。
+3. 再看各个 node function，观察它们如何调用 `_record_state_snapshot()` 和 `_add_edge_trace()`。
+4. 最后看 `_build_response_data()`，确认 `graph_structure`、`state_snapshots`、`edge_trace` 如何暴露到 API response。
+
+阅读重点：
+
+- `graph_structure` 是静态图结构说明。
+- `state_snapshots` 是执行过程中的状态摘要。
+- `edge_trace` 是本次请求的执行路径。
+- 这些字段是观测增强，不是新业务能力。

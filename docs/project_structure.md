@@ -203,3 +203,15 @@ load_application_node -> handle_error_node | run_job_match_node
 | 函数 | 文件 | 作用 |
 | --- | --- | --- |
 | `run_langgraph_workflow_preview` | `app/services/langgraph_workflow_service.py` | 使用 LangGraph StateGraph 串联只读 workflow preview |
+## Step 11.5 可观测性字段
+
+`app/services/langgraph_workflow_service.py` 现在除了执行最小 `StateGraph`，还负责生成面向 Swagger 和面试展示的观测数据：
+
+- `_graph_structure()`  
+  返回 nodes、edges、conditional_edges。
+- `_record_state_snapshot()`  
+  在关键 node 后记录轻量 state snapshot。
+- `_add_edge_trace()`  
+  记录本次 workflow 实际走过的边和条件判断原因。
+
+这些字段只用于调试和展示，不改变业务行为，不写数据库。

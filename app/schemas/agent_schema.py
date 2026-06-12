@@ -37,6 +37,9 @@ class WorkflowPreviewData(BaseModel):
     approval_required: bool
     approved_by_user: bool
     next_action: str
+    graph_structure: Optional[Dict[str, Any]] = None
+    state_snapshots: Optional[List[Dict[str, Any]]] = None
+    edge_trace: Optional[List[Dict[str, Any]]] = None
     debug: Dict[str, Any] = Field(default_factory=dict)
 
 

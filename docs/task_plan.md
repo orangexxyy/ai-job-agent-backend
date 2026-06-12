@@ -180,3 +180,12 @@ Step 9: Agent Workflow Design + interview demo docs.
 - Kept `POST /agent/workflow_preview` unchanged for comparison with the LangGraph version.
 - Added smoke test coverage for LangGraph workflow preview and read-only application verification.
 - The LangGraph preview does not write application data, does not call DeepSeek / LLM, does not implement RAG / Embedding / Playwright, does not connect to recruitment platforms, does not auto-apply, and does not auto-send HR messages.
+## Completed In Step 11.5
+
+- Enhanced `POST /agent/langgraph_workflow_preview` observability.
+- Added optional response fields: `graph_structure`, `state_snapshots`, and `edge_trace`.
+- `graph_structure` exposes LangGraph nodes, normal edges, and conditional edges.
+- `state_snapshots` records lightweight state changes after key nodes.
+- `edge_trace` records the actual execution path and conditional decisions.
+- Updated smoke test assertions for LangGraph observability fields.
+- This step does not add business capability, does not add a new API, does not write application data, and does not call DeepSeek / LLM / RAG / Playwright.

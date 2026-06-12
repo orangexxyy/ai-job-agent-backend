@@ -261,3 +261,23 @@ handle_error_node -> END
 - 不写 `match_score`
 
 当前仍然不调用 DeepSeek / LLM，不实现 RAG / Embedding，不使用 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，不自动确认面试时间。
+## Step 11.5: LangGraph 可观测性
+
+为了让 Swagger 返回结果能直接体现 LangGraph 编排，`/agent/langgraph_workflow_preview` 新增了三个观测字段：
+
+- `graph_structure`  
+  展示当前 StateGraph 的 nodes、普通 edges 和 conditional edges。
+- `state_snapshots`  
+  在关键 node 执行后记录轻量 state，例如 profile 是否已加载、application 是否已加载、是否已有 job_match / hr_intent / hr_reply、是否进入 approval。
+- `edge_trace`  
+  记录本次请求实际走过的边，包括 conditional edge 的 decision、to node 和 reason。
+
+这三个字段让接口返回同时体现：
+
+- Node：业务步骤如何拆分。
+- Edge：普通流程如何串联。
+- Conditional Edge：缺少 profile / application 时如何进入 `handle_error_node`。
+- State：每个 node 后状态如何变化。
+- Human-in-the-loop：`require_user_approval_node` 设置 `approval_required=true`、`approved_by_user=false` 后停止到 `END`。
+
+这只是观测增强，不新增业务能力，不写数据库，不调用 LLM，不自动发送 HR 消息，不自动投递。
