@@ -246,3 +246,23 @@ pip install -r requirements.txt
 ### 中文显示异常
 
 如果 PowerShell 输出中文乱码，可以优先在 Swagger 中查看 JSON 响应，或使用支持 UTF-8 的终端。
+## Step 10 demo: POST /agent/workflow_preview
+
+建议在 `POST /applications` 创建记录之后演示：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "方便介绍一下你做过的 RAG 或 Agent 项目吗？"
+}
+```
+
+演示重点：
+
+- `workflow_mode` 是 `rule_based_preview`
+- `workflow_steps` 展示 load profile、load application、job match、HR intent、reply draft、等待用户确认
+- `job_match` 来自现有规则评分能力，但 `update_application=False`
+- `hr_reply` 来自现有回复草稿能力，但 `update_application=False`
+- `approval_required=true` 且 `approved_by_user=false`
+- `debug.llm_used=false`、`debug.langgraph_used=false`、`debug.rag_used=false`
+- 不自动投递、不自动发送 HR 消息、不自动确认面试时间、不写入 application

@@ -112,3 +112,21 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 - 理解 `application_id` 上下文后，再看 `job_match`。
 - 最后看 `agent_workflow_design.md`，理解为什么这些 service 可以被未来 workflow 编排。
 - 阅读 service 时优先看 public function 的中文 docstring；技术名词会保留英文，重点关注输入、输出、副作用和 Human-in-the-loop 边界。
+## Step 10 阅读补充：workflow_preview
+
+阅读 `POST /agent/workflow_preview` 时，建议顺序：
+
+1. `app/routes/agent_routes.py`
+2. `app/schemas/agent_schema.py`
+3. `app/services/workflow_service.py`
+4. `app/services/job_match_service.py`
+5. `app/services/hr_reply_service.py`
+6. `scripts/api_smoke_test.py`
+
+重点关注：
+
+- workflow preview 内部直接调用 service function，不通过 HTTP 调用自己的后端接口。
+- `analyze_job_match(update_application=False)` 用来避免预览时写入 `match_score`、`next_action`、`risk_flags`。
+- `generate_hr_reply(update_application=False)` 用来避免预览时写入 `last_hr_message` 和 `next_action`。
+- `approval_required=true` 和 `approved_by_user=false` 表示流程停在 Human-in-the-loop 节点。
+- 当前不是 LangGraph，只是 rule-based workflow baseline。

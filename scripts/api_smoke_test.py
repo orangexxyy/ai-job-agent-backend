@@ -50,6 +50,11 @@ class SmokeTestHarness:
         self._run_step("read test profile", self._test_read_profile)
         self._run_step("create application", self._test_create_application)
         self._run_step("read application", self._test_read_application)
+        self._run_step("workflow preview", self._test_workflow_preview)
+        self._run_step(
+            "verify workflow preview is read-only",
+            self._test_application_after_workflow_preview,
+        )
         self._run_step("analyze job match", self._test_job_match)
         self._run_step(
             "verify application updated by job match",
@@ -169,6 +174,61 @@ class SmokeTestHarness:
             return False
         response = self._request("GET", f"/applications/{self.application_id}")
         return self._success(response) and response.json().get("data", {}).get("id") == self.application_id
+
+    def _test_workflow_preview(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/agent/workflow_preview",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "Which RAG or Agent related projects have you built?",
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        step_names = {step.get("name") for step in data.get("workflow_steps", [])}
+        debug = data.get("debug", {})
+        hr_reply = data.get("hr_reply") or {}
+        return (
+            data.get("workflow_mode") == "rule_based_preview"
+            and data.get("application_id") == self.application_id
+            and {
+                "load_candidate_profile",
+                "load_application",
+                "run_job_match",
+                "analyze_hr_intent",
+                "generate_reply_draft",
+                "require_user_approval",
+            }.issubset(step_names)
+            and data.get("approval_required") is True
+            and data.get("approved_by_user") is False
+            and debug.get("llm_used") is False
+            and debug.get("langgraph_used") is False
+            and debug.get("rag_used") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_send_message") is False
+            and debug.get("database_write_intended") is False
+            and bool(hr_reply.get("reply_draft"))
+            and hr_reply.get("application_updated") is False
+            and hr_reply.get("debug", {}).get("application_update_skipped") is True
+        )
+
+    def _test_application_after_workflow_preview(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        return (
+            data.get("status") == "saved"
+            and data.get("next_action") == "Harness initial action"
+            and not data.get("last_hr_message")
+            and data.get("match_score") is None
+        )
 
     def _test_job_match(self) -> bool:
         if self.application_id is None:

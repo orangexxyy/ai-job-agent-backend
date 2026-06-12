@@ -628,3 +628,72 @@ Response:
   }
 }
 ```
+## POST /agent/workflow_preview
+
+`/agent/workflow_preview` 是 Step 10 的规则版工作流预览接口。它会串联 `candidate_profile`、`application`、`job_match`、可选 HR intent 和可选 HR reply draft，但只做预览，不写入 application。
+
+它不是 LangGraph，不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间。
+
+```bash
+curl -X POST http://127.0.0.1:8001/agent/workflow_preview \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"hr_message\":\"方便介绍一下你做过的 RAG 或 Agent 项目吗？\"}"
+```
+
+Request body:
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "方便介绍一下你做过的 RAG 或 Agent 项目吗？"
+}
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "workflow preview generated",
+  "data": {
+    "workflow_mode": "rule_based_preview",
+    "application_id": 1,
+    "workflow_steps": [
+      {
+        "name": "load_candidate_profile",
+        "status": "completed"
+      },
+      {
+        "name": "require_user_approval",
+        "status": "waiting"
+      }
+    ],
+    "state_summary": {
+      "has_candidate_profile": true,
+      "has_application": true,
+      "has_hr_message": true,
+      "reply_draft_generated": true
+    },
+    "approval_required": true,
+    "approved_by_user": false,
+    "debug": {
+      "llm_used": false,
+      "langgraph_used": false,
+      "rag_used": false,
+      "auto_apply": false,
+      "auto_send_message": false,
+      "database_write_intended": false
+    }
+  }
+}
+```
+
+Missing application result:
+
+```json
+{
+  "success": false,
+  "message": "application not found",
+  "data": null
+}
+```

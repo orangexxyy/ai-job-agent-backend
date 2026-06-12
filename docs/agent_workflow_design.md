@@ -176,3 +176,26 @@ LangGraph 适合这个项目的原因：
 - Step 12：Playwright dry-run 岗位采集。
 - Step 13：用户确认后的半自动投递流程。
 - Step 14：RAG 化项目经历资料，可选，后置。
+## Step 10 已实现：规则版 workflow_preview
+
+Step 10 新增 `POST /agent/workflow_preview`，先用普通 Python service 串联现有能力，作为 LangGraph 之前的最小可运行 workflow preview。
+
+当前链路：
+
+```text
+load_candidate_profile
+-> load_application
+-> run_job_match(update_application=False)
+-> analyze_hr_intent(optional)
+-> generate_reply_draft(update_application=False, optional)
+-> require_user_approval
+```
+
+设计边界：
+
+- 这是 rule-based preview，不是 LangGraph。
+- workflow 内部直接调用 service function，不从后端内部 HTTP 调用自己的 API。
+- `job_match` 和 `hr_reply` 都关闭 application 回写，保证预览接口不修改数据库中的投递状态。
+- 输出 `approval_required=true`、`approved_by_user=false`，明确下一步需要用户人工确认。
+- 不调用 DeepSeek / LLM，不实现 RAG / Embedding，不使用 Playwright，不连接真实招聘平台。
+- 不自动投递、不自动发送 HR 消息、不自动确认面试时间。

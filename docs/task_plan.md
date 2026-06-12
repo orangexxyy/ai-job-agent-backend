@@ -156,3 +156,15 @@ Step 9: Agent Workflow Design + interview demo docs.
 - Do not scrape job posts.
 - Do not fabricate application, resume, salary, education, or project history facts.
 - Do not implement LangGraph code in Step 9.
+## Completed In Step 10
+
+- Added `POST /agent/workflow_preview`.
+- Added `app/schemas/agent_schema.py`, `app/routes/agent_routes.py`, and `app/services/workflow_service.py`.
+- The preview workflow loads `candidate_profile` and the target `application`.
+- The preview workflow reuses `analyze_job_match(update_application=False)`.
+- When `hr_message` is provided, the preview workflow reuses `analyze_hr_message` and `generate_hr_reply(update_application=False)`.
+- Added `workflow_steps`, `state_summary`, `job_match`, optional `hr_intent`, optional `hr_reply`, `approval_required`, and `approved_by_user`.
+- Added smoke test coverage for `/agent/workflow_preview`.
+- Verified the preview workflow is read-only for application state: no `status`, `next_action`, `last_hr_message`, or `match_score` write-back.
+- This step is rule-based workflow preview only, not LangGraph.
+- It does not call DeepSeek / LLM, does not implement RAG, Embedding, Playwright, frontend, automatic application, automatic HR sending, or automatic interview confirmation.

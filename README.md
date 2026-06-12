@@ -178,3 +178,28 @@ Step 9 只做文档收口，没有修改业务代码，也没有实现 LangGraph
 - Step 12：Playwright dry-run 岗位采集
 - Step 13：用户确认后的半自动投递流程
 - Step 14：RAG 化项目经历资料，optional / later
+## Step 10: rule-based workflow_preview
+
+Step 10 新增 `POST /agent/workflow_preview`，用于把已有 service 能力串成一个只读预览流程：
+
+- 读取 `candidate_profile`
+- 读取指定 `application`
+- 复用 `analyze_job_match(update_application=False)`
+- 可选分析 HR message
+- 可选复用 `generate_hr_reply(update_application=False)`
+- 返回 `workflow_steps`、`state_summary`、`job_match`、`hr_intent`、`hr_reply` 和 Human-in-the-loop 审批状态
+
+这个接口是规则版 workflow preview，不是 LangGraph 实现。它不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。
+
+接口：
+
+- `POST /agent/workflow_preview`
+
+示例请求：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "方便介绍一下你做过的 RAG 或 Agent 项目吗？"
+}
+```

@@ -28,6 +28,7 @@ def generate_hr_reply(
     company_name: Optional[str] = None,
     job_title: Optional[str] = None,
     extra_context: Optional[str] = None,
+    update_application: bool = True,
 ) -> Optional[Dict[str, Any]]:
     """生成 Human-in-the-loop 的 HR 回复草稿。
 
@@ -121,7 +122,7 @@ def generate_hr_reply(
 
     application_update_fields: Dict[str, Any] = {}
     application_updated = False
-    if application is not None:
+    if application is not None and update_application:
         application_update_fields = {
             "last_hr_message": message,
             "next_action": _next_action_for_intent(analysis["primary_intent"]),
@@ -180,8 +181,10 @@ def generate_hr_reply(
             "need_llm": analysis["need_llm"],
             "matched_keywords": analysis["matched_keywords"],
             "application_update_error": not application_updated
-            if application is not None
+            if application is not None and update_application
             else False,
+            "application_update_skipped": application is not None
+            and not update_application,
         },
     }
 

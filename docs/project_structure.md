@@ -144,3 +144,30 @@ scripts/api_smoke_test.py
 - `update_application` node 调用 `update_application()`。
 
 这样可以保持业务逻辑集中在 service 层，让 FastAPI routes 和 LangGraph workflow 都复用同一套能力。
+## Step 10 新增文件
+
+- `app/routes/agent_routes.py`  
+  提供 `POST /agent/workflow_preview` HTTP 入口，只负责接收请求、调用 service、包装响应和转换明确错误。
+- `app/schemas/agent_schema.py`  
+  定义 workflow preview 的 request / response 结构，包括 `workflow_steps`、`state_summary`、`job_match`、`hr_intent`、`hr_reply` 和审批状态。
+- `app/services/workflow_service.py`  
+  提供 `run_workflow_preview()`，直接复用现有 service function 串联只读预览流程。
+
+### POST /agent/workflow_preview
+
+```text
+POST /agent/workflow_preview
+-> agent_routes.py
+-> workflow_service.py
+-> profile_service.py
+-> application_service.py
+-> job_match_service.py(update_application=False)
+-> hr_intent_service.py(optional)
+-> hr_reply_service.py(update_application=False, optional)
+```
+
+`workflow_preview` 是规则版预览链路，不是 LangGraph。它不写 application，不调用 LLM，不实现 RAG / Playwright，不自动投递，不自动发送 HR 消息。
+
+| 函数 | 文件 | 作用 |
+| --- | --- | --- |
+| `run_workflow_preview` | `app/services/workflow_service.py` | 串联 profile、application、job_match、HR intent 和 HR reply，返回只读 workflow preview |
