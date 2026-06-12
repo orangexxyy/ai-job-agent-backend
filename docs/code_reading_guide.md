@@ -130,3 +130,22 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 - `generate_hr_reply(update_application=False)` 用来避免预览时写入 `last_hr_message` 和 `next_action`。
 - `approval_required=true` 和 `approved_by_user=false` 表示流程停在 Human-in-the-loop 节点。
 - 当前不是 LangGraph，只是 rule-based workflow baseline。
+## Step 11 阅读补充：LangGraph workflow
+
+阅读 `POST /agent/langgraph_workflow_preview` 时，建议顺序：
+
+1. `app/routes/agent_routes.py`
+2. `app/schemas/agent_schema.py`
+3. `app/services/langgraph_workflow_service.py`
+4. `app/services/workflow_service.py`
+5. `app/services/job_match_service.py`
+6. `app/services/hr_reply_service.py`
+7. `scripts/api_smoke_test.py`
+
+对比阅读方式：
+
+- 先看 Step 10 的 `run_workflow_preview()`，理解普通 Python workflow baseline。
+- 再看 Step 11 的 `run_langgraph_workflow_preview()`，理解同一业务链路如何映射到 LangGraph `StateGraph`。
+- 重点看 `WorkflowState` 如何保存跨 node 状态。
+- 重点看 `load_profile_node` 和 `load_application_node` 后面的 Conditional Edge 如何处理错误。
+- 重点确认 `analyze_job_match(update_application=False)` 和 `generate_hr_reply(update_application=False)` 如何保证预览链路只读。

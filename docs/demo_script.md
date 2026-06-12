@@ -266,3 +266,30 @@ pip install -r requirements.txt
 - `approval_required=true` 且 `approved_by_user=false`
 - `debug.llm_used=false`、`debug.langgraph_used=false`、`debug.rag_used=false`
 - 不自动投递、不自动发送 HR 消息、不自动确认面试时间、不写入 application
+## Step 11 demo: POST /agent/langgraph_workflow_preview
+
+建议和 Step 10 的 `POST /agent/workflow_preview` 连续演示，用来对比普通 Python workflow 和 LangGraph StateGraph workflow。
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "方便介绍一下你做过的 RAG 或 Agent 项目吗？"
+}
+```
+
+演示重点：
+
+- `workflow_mode` 是 `langgraph_preview`
+- `workflow_engine` 是 `langgraph_stategraph`
+- `workflow_steps` 对应 LangGraph nodes
+- `debug.langgraph_used=true`
+- `debug.llm_used=false`
+- `approval_required=true`、`approved_by_user=false`
+- `hr_reply.application_updated=false`
+- 预览接口不写 application，不自动投递，不自动发送 HR 消息
+
+对比讲法：
+
+- Step 10 证明业务链路可以用普通 Python service 串起来。
+- Step 11 把同一条链路迁移到 LangGraph StateGraph，显式表达 State、Node、Edge 和 Conditional Edge。
+- 当前没有循环、没有 human interrupt resume，只做最小可运行 demo。

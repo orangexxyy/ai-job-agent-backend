@@ -199,3 +199,65 @@ load_candidate_profile
 - 输出 `approval_required=true`、`approved_by_user=false`，明确下一步需要用户人工确认。
 - 不调用 DeepSeek / LLM，不实现 RAG / Embedding，不使用 Playwright，不连接真实招聘平台。
 - 不自动投递、不自动发送 HR 消息、不自动确认面试时间。
+## Step 11 已实现：最小 LangGraph StateGraph
+
+Step 11 新增 `POST /agent/langgraph_workflow_preview`，把 Step 10 的普通 Python workflow baseline 迁移成最小 LangGraph `StateGraph`。
+
+代码位置：
+
+- `app/services/langgraph_workflow_service.py`
+- `app/routes/agent_routes.py`
+
+State 核心字段：
+
+- `application_id`
+- `hr_message`
+- `candidate_profile_loaded`
+- `application_loaded`
+- `company_name`
+- `job_title`
+- `job_match`
+- `hr_intent`
+- `hr_reply`
+- `workflow_steps`
+- `approval_required`
+- `approved_by_user`
+- `next_action`
+- `error_message`
+- `debug`
+
+Nodes：
+
+- `load_profile_node`
+- `load_application_node`
+- `run_job_match_node`
+- `analyze_hr_intent_node`
+- `generate_reply_draft_node`
+- `require_user_approval_node`
+- `handle_error_node`
+
+Edges / Conditional Edges：
+
+```text
+START
+-> load_profile_node
+-> conditional: error_message ? handle_error_node : load_application_node
+-> conditional: error_message ? handle_error_node : run_job_match_node
+-> analyze_hr_intent_node
+-> generate_reply_draft_node
+-> require_user_approval_node
+-> END
+
+handle_error_node -> END
+```
+
+只读边界：
+
+- `analyze_job_match(update_application=False)`
+- `generate_hr_reply(update_application=False)`
+- 不写 `status`
+- 不写 `next_action`
+- 不写 `last_hr_message`
+- 不写 `match_score`
+
+当前仍然不调用 DeepSeek / LLM，不实现 RAG / Embedding，不使用 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，不自动确认面试时间。

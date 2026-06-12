@@ -697,3 +697,51 @@ Missing application result:
   "data": null
 }
 ```
+## POST /agent/langgraph_workflow_preview
+
+`/agent/langgraph_workflow_preview` 是 Step 11 的最小 LangGraph workflow demo。它用 LangGraph `StateGraph` 表达 Step 10 的同一条只读 workflow preview。
+
+它不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。
+
+```bash
+curl -X POST http://127.0.0.1:8001/agent/langgraph_workflow_preview \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"hr_message\":\"方便介绍一下你做过的 RAG 或 Agent 项目吗？\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "langgraph workflow preview generated",
+  "data": {
+    "workflow_mode": "langgraph_preview",
+    "workflow_engine": "langgraph_stategraph",
+    "application_id": 1,
+    "workflow_steps": [
+      {
+        "name": "load_candidate_profile",
+        "status": "completed"
+      },
+      {
+        "name": "require_user_approval",
+        "status": "waiting"
+      }
+    ],
+    "approval_required": true,
+    "approved_by_user": false,
+    "debug": {
+      "llm_used": false,
+      "langgraph_used": true,
+      "rag_used": false,
+      "playwright_used": false,
+      "auto_apply": false,
+      "auto_send_message": false,
+      "auto_confirm_interview": false,
+      "database_write_intended": false,
+      "workflow_engine": "langgraph_stategraph"
+    }
+  }
+}
+```

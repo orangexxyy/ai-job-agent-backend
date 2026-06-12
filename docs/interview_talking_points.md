@@ -187,3 +187,25 @@ A：不会。它调用 `analyze_job_match(update_application=False)` 和 `genera
 
 **Q：为什么要先做 preview？**  
 A：先用最小可运行链路验证业务流程和安全边界，再上 LangGraph，会更容易控制复杂度，也方便 smoke test 覆盖主链路。
+## Step 11: LangGraph 面试表达
+
+Step 11 新增了最小 `LangGraph StateGraph` demo：`POST /agent/langgraph_workflow_preview`。
+
+可以这样讲：
+
+> 我先在 Step 10 用普通 Python service 串出 workflow baseline，确认业务节点和只读边界。Step 11 再把同一条链路迁移到 LangGraph StateGraph，用 State 承载 application、HR message、job_match、hr_reply 和 approval 状态，用 Node 表达每个业务步骤，用 Conditional Edge 处理 profile 或 application 缺失的错误分支。
+
+重点表达：
+
+- LangGraph 版本复用已有 service，不重写业务逻辑。
+- `job_match` 和 `hr_reply` 都以 `update_application=False` 运行，保证 workflow preview 不写数据库。
+- `require_user_approval_node` 总是设置 `approval_required=true`、`approved_by_user=false`。
+- 当前是最小 demo，没有 LLM、RAG、Playwright、真实招聘平台和自动发送。
+
+可能追问：
+
+**Q：为什么先做普通 Python workflow，再做 LangGraph？**  
+A：先用普通 Python baseline 验证业务链路和 safety boundary，再迁移到 LangGraph，更容易保证行为一致，也方便对比两种实现。
+
+**Q：LangGraph 版本和 Step 10 版本有什么区别？**  
+A：业务能力相同，都是只读预览；区别是 Step 11 用 `StateGraph` 显式表达 State、Node、Edge 和 Conditional Edge，更适合后续扩展复杂分支和 Human-in-the-loop。

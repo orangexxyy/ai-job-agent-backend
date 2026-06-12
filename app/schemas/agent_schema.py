@@ -25,6 +25,7 @@ class WorkflowStateSummary(BaseModel):
 
 class WorkflowPreviewData(BaseModel):
     workflow_mode: str
+    workflow_engine: Optional[str] = None
     application_id: int
     company_name: str
     job_title: str

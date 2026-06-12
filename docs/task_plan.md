@@ -168,3 +168,15 @@ Step 9: Agent Workflow Design + interview demo docs.
 - Verified the preview workflow is read-only for application state: no `status`, `next_action`, `last_hr_message`, or `match_score` write-back.
 - This step is rule-based workflow preview only, not LangGraph.
 - It does not call DeepSeek / LLM, does not implement RAG, Embedding, Playwright, frontend, automatic application, automatic HR sending, or automatic interview confirmation.
+## Completed In Step 11
+
+- Added `POST /agent/langgraph_workflow_preview`.
+- Added `app/services/langgraph_workflow_service.py`.
+- Added minimal LangGraph `StateGraph` workflow preview.
+- Reused Step 10 service capabilities: `get_candidate_profile`, `get_application`, `analyze_job_match`, `analyze_hr_message`, and `generate_hr_reply`.
+- Added `WorkflowState` with application context, HR context, workflow steps, approval state, next action, error message, and debug flags.
+- Added nodes: `load_profile_node`, `load_application_node`, `run_job_match_node`, `analyze_hr_intent_node`, `generate_reply_draft_node`, `require_user_approval_node`, and `handle_error_node`.
+- Added conditional edges for missing `candidate_profile` and missing `application`.
+- Kept `POST /agent/workflow_preview` unchanged for comparison with the LangGraph version.
+- Added smoke test coverage for LangGraph workflow preview and read-only application verification.
+- The LangGraph preview does not write application data, does not call DeepSeek / LLM, does not implement RAG / Embedding / Playwright, does not connect to recruitment platforms, does not auto-apply, and does not auto-send HR messages.

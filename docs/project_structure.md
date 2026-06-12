@@ -171,3 +171,35 @@ POST /agent/workflow_preview
 | 函数 | 文件 | 作用 |
 | --- | --- | --- |
 | `run_workflow_preview` | `app/services/workflow_service.py` | 串联 profile、application、job_match、HR intent 和 HR reply，返回只读 workflow preview |
+## Step 11 新增文件
+
+- `app/services/langgraph_workflow_service.py`  
+  使用 LangGraph `StateGraph` 编排最小 workflow preview，复用 profile、application、job_match、HR intent 和 HR reply service。
+
+### POST /agent/langgraph_workflow_preview
+
+```text
+POST /agent/langgraph_workflow_preview
+-> agent_routes.py
+-> langgraph_workflow_service.py
+-> StateGraph
+   -> load_profile_node
+   -> load_application_node
+   -> run_job_match_node
+   -> analyze_hr_intent_node
+   -> generate_reply_draft_node
+   -> require_user_approval_node
+```
+
+Conditional Edge：
+
+```text
+load_profile_node -> handle_error_node | load_application_node
+load_application_node -> handle_error_node | run_job_match_node
+```
+
+`langgraph_workflow_service.py` 是 Step 11 的最小 LangGraph demo，不写 application，不调用 LLM，不自动投递，不自动发送 HR 消息。
+
+| 函数 | 文件 | 作用 |
+| --- | --- | --- |
+| `run_langgraph_workflow_preview` | `app/services/langgraph_workflow_service.py` | 使用 LangGraph StateGraph 串联只读 workflow preview |
