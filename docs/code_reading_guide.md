@@ -164,3 +164,6 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 - `state_snapshots` 是执行过程中的状态摘要。
 - `edge_trace` 是本次请求的执行路径。
 - 这些字段是观测增强，不是新业务能力。
+## Workflow / LangGraph 阅读建议
+
+学习 workflow / LangGraph 阶段时，建议先读 [workflow_langgraph_summary.md](workflow_langgraph_summary.md)，建立 Step 10、Step 11、Step 11.5 的整体理解；然后再读 `app/services/workflow_service.py` 和 `app/services/langgraph_workflow_service.py`，对照普通 Python workflow 与 LangGraph StateGraph 的实现差异。

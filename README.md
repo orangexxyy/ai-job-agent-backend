@@ -243,3 +243,6 @@ LangGraph 版本会返回：
 - `edge_trace`：展示本次 workflow 实际走过的边和条件判断结果
 
 这些字段用于学习 LangGraph 编排、Swagger 调试和面试展示。当前仍然不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。
+## Workflow / LangGraph 阶段总结
+
+- [Workflow / LangGraph 阶段总结](docs/workflow_langgraph_summary.md)：用于复习 Step 10、Step 11、Step 11.5，说明普通 Python workflow、LangGraph workflow、可观测性字段、Human-in-the-loop 边界和未实现能力。

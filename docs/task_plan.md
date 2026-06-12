@@ -189,3 +189,9 @@ Step 9: Agent Workflow Design + interview demo docs.
 - `edge_trace` records the actual execution path and conditional decisions.
 - Updated smoke test assertions for LangGraph observability fields.
 - This step does not add business capability, does not add a new API, does not write application data, and does not call DeepSeek / LLM / RAG / Playwright.
+## Completed In Step 11.6
+
+- Docs-only: added `docs/workflow_langgraph_summary.md`.
+- Summarized Step 10 ordinary Python `workflow_preview`, Step 11 LangGraph `workflow_preview`, and Step 11.5 LangGraph observability.
+- Added the summary as a review and interview-preparation entry for README and docs.
+- This step does not add business capabilities, APIs, schemas, database changes, LLM calls, RAG, Playwright, automatic sending, or automatic application.

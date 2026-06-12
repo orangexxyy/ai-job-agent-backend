@@ -222,3 +222,6 @@ A：业务能力相同，都是只读预览；区别是 Step 11 用 `StateGraph`
 - `edge_trace` 展示条件分支和执行路径。
 - `require_user_approval_node` 是 Human-in-the-loop 停止点。
 - 当前仍不调用 LLM、不写数据库、不自动发送、不自动投递。
+## Workflow / LangGraph 阶段总结入口
+
+更完整的 Workflow / LangGraph 阶段总结见 [workflow_langgraph_summary.md](workflow_langgraph_summary.md)。面试复习时可以先读该总结，再回到本文件挑选适合自己的表达。
