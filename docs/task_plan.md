@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 8: profile context enhanced HR reply.
+Step 9: Agent Workflow Design + interview demo docs.
 
 ## Completed In Step 1
 
@@ -104,11 +104,25 @@ Step 8: profile context enhanced HR reply.
 - This is not RAG, not Embedding, not vector search, and not an LLM call.
 - The feature does not fabricate candidate experience and does not claim complete production-grade recruitment systems, automatic HR sending, or automatic recruitment decisions.
 
+## Completed In Step 9
+
+- Added `docs/agent_workflow_design.md`.
+- Added `docs/interview_talking_points.md`.
+- Added `docs/demo_script.md`.
+- Organized Step 1-8 into an Agent Workflow design view.
+- Documented future LangGraph State, Nodes, Conditional Edges, and Human-in-the-loop approval boundaries.
+- Added interview-facing talking points, common Q&A, design tradeoffs, project highlights, and truthful capability boundaries.
+- Added a Swagger demo script with endpoint order, test JSON, talking points, and troubleshooting notes.
+- Updated `README.md` with Step 9 documentation entry links and roadmap changes.
+- This step is docs-only: no business code changes, no new API endpoints, no database tables, no LangGraph implementation, no RAG, no Playwright, no LLM calls.
+
 ## Next Suggested Steps
 
-1. Step 9: add RAG for project experience material.
-2. Step 10: add Playwright dry-run job collection with no auto-apply.
-3. Step 11: design user-confirmed semi-automation.
+1. Step 10: build a minimal LangGraph Workflow Demo.
+2. Step 11: add job source import / manual JD import improvements.
+3. Step 12: add Playwright dry-run job collection with no auto-apply.
+4. Step 13: design user-confirmed semi-automatic application flow.
+5. Step 14: optionally add RAG for project experience material.
 
 ## Do Not Do Yet
 
@@ -129,3 +143,4 @@ Step 8: profile context enhanced HR reply.
 - Do not add business endpoints for the smoke test harness.
 - Do not scrape job posts.
 - Do not fabricate application, resume, salary, education, or project history facts.
+- Do not implement LangGraph code in Step 9.
