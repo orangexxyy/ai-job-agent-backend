@@ -215,3 +215,25 @@ load_application_node -> handle_error_node | run_job_match_node
   记录本次 workflow 实际走过的边和条件判断原因。
 
 这些字段只用于调试和展示，不改变业务行为，不写数据库。
+## Step 12 新增 service
+
+- `app/services/jd_parser_service.py`  
+  本地规则版 JD 解析 service，用于标准化 `source_type`，抽取 `jd_keywords`、`jd_required_skills`、年限要求、地点要求和远程类型，并生成规则版 `jd_summary`。
+
+职责边界：
+
+- 不写数据库。
+- 不调用 DeepSeek / LLM。
+- 不实现 RAG / Embedding / 向量检索。
+- 不抓取岗位，不连接真实招聘平台。
+- 解析结果只用于求职者侧快速筛选和 application 数据标准化。
+
+调用链：
+
+```text
+POST/PATCH /applications
+-> application_routes.py
+-> application_service.py
+-> jd_parser_service.py
+-> SQLite applications
+```

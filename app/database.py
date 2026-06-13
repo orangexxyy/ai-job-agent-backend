@@ -6,6 +6,17 @@ from app.config import settings
 from app.models import APPLICATIONS_TABLE_SQL, CANDIDATE_PROFILE_TABLE_SQL
 
 
+APPLICATION_OPTIONAL_COLUMNS = {
+    "source_type": "TEXT",
+    "jd_summary": "TEXT",
+    "jd_keywords": "TEXT",
+    "jd_required_skills": "TEXT",
+    "jd_years_requirement": "TEXT",
+    "jd_location_requirement": "TEXT",
+    "jd_remote_type": "TEXT",
+}
+
+
 def get_database_path() -> Path:
     return settings.database_file
 
@@ -22,7 +33,24 @@ def init_database() -> None:
     with get_connection() as connection:
         connection.execute(CANDIDATE_PROFILE_TABLE_SQL)
         connection.execute(APPLICATIONS_TABLE_SQL)
+        _ensure_optional_columns(connection, "applications", APPLICATION_OPTIONAL_COLUMNS)
         connection.commit()
+
+
+def _ensure_optional_columns(
+    connection: sqlite3.Connection,
+    table_name: str,
+    columns: dict[str, str],
+) -> None:
+    existing_columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    }
+    for column_name, column_type in columns.items():
+        if column_name not in existing_columns:
+            connection.execute(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+            )
 
 
 def connection_scope() -> Iterator[sqlite3.Connection]:

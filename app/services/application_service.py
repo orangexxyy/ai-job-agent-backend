@@ -10,6 +10,7 @@ from app.schemas.application_schema import (
     ApplicationUpdateRequest,
     VALID_APPLICATION_STATUSES,
 )
+from app.services.jd_parser_service import normalize_source, parse_jd
 
 
 APPLICATION_COLUMNS = [
@@ -18,6 +19,13 @@ APPLICATION_COLUMNS = [
     "job_source",
     "job_url",
     "jd_text",
+    "source_type",
+    "jd_summary",
+    "jd_keywords",
+    "jd_required_skills",
+    "jd_years_requirement",
+    "jd_location_requirement",
+    "jd_remote_type",
     "status",
     "match_score",
     "hr_contact_name",
@@ -38,6 +46,13 @@ UPDATABLE_FIELDS = {
     "job_source",
     "job_url",
     "jd_text",
+    "source_type",
+    "jd_summary",
+    "jd_keywords",
+    "jd_required_skills",
+    "jd_years_requirement",
+    "jd_location_requirement",
+    "jd_remote_type",
     "status",
     "match_score",
     "hr_contact_name",
@@ -75,11 +90,42 @@ def _serialize_risk_flags(data: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 
+def _serialize_json_list_fields(data: Dict[str, Any]) -> Dict[str, Any]:
+    for field in ("jd_keywords", "jd_required_skills"):
+        if field in data:
+            data[field] = json.dumps(data[field] or [], ensure_ascii=False)
+    return data
+
+
 def _row_to_application(row: Row) -> ApplicationItem:
     data = dict(row)
     value = data.get("risk_flags")
     data["risk_flags"] = json.loads(value) if value else []
+    data["source"] = data.get("job_source") or ""
+    for field in ("jd_keywords", "jd_required_skills"):
+        value = data.get(field)
+        data[field] = json.loads(value) if value else []
+    for field in (
+        "source_type",
+        "jd_summary",
+        "jd_years_requirement",
+        "jd_location_requirement",
+        "jd_remote_type",
+    ):
+        data[field] = data.get(field) or ("unknown" if field == "jd_remote_type" else "")
     return ApplicationItem(**data)
+
+
+def _source_from_data(data: Dict[str, Any]) -> str:
+    source = data.pop("source", None)
+    if source and not data.get("job_source"):
+        data["job_source"] = source
+    return data.get("job_source") or source or ""
+
+
+def _apply_jd_parse_fields(data: Dict[str, Any], *, source: str, jd_text: str) -> None:
+    parsed = parse_jd(jd_text or "", source)
+    data.update(parsed)
 
 
 def create_application(request: ApplicationCreateRequest) -> ApplicationItem:
@@ -91,7 +137,10 @@ def create_application(request: ApplicationCreateRequest) -> ApplicationItem:
     """
     _validate_status(request.status)
     now = _now_iso()
-    data = _serialize_risk_flags(_dump_model(request))
+    data = _dump_model(request)
+    source = _source_from_data(data)
+    _apply_jd_parse_fields(data, source=source, jd_text=data.get("jd_text") or "")
+    data = _serialize_json_list_fields(_serialize_risk_flags(data))
     data["created_at"] = now
     data["updated_at"] = now
 
@@ -193,6 +242,11 @@ def update_application(
     副作用：会更新 application 并写入 SQLite；不自动投递，不自动发送 HR 消息，不调用 LLM。
     """
     data = _dump_model(request, exclude_unset=True)
+    source_provided = "source" in data or "job_source" in data
+    jd_text_provided = "jd_text" in data
+    source_input = data.pop("source", None)
+    if source_input and data.get("job_source") is None:
+        data["job_source"] = source_input
     data = {key: value for key, value in data.items() if key in UPDATABLE_FIELDS}
     if not data:
         return get_application(application_id)
@@ -205,7 +259,22 @@ def update_application(
     if "status" in data and data["status"] is not None:
         _validate_status(data["status"])
 
-    data = _serialize_risk_flags(data)
+    if source_provided or jd_text_provided:
+        current = get_application(application_id)
+        if current is None:
+            return None
+        source = data.get("job_source")
+        if source is None:
+            source = current.job_source or source_input or ""
+        jd_text = data.get("jd_text")
+        if jd_text is None:
+            jd_text = current.jd_text or ""
+        if source_provided:
+            data["source_type"] = normalize_source(source)
+        if jd_text_provided:
+            _apply_jd_parse_fields(data, source=source, jd_text=jd_text)
+
+    data = _serialize_json_list_fields(_serialize_risk_flags(data))
     data["updated_at"] = _now_iso()
     data["application_id"] = application_id
 

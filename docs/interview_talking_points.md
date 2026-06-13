@@ -225,3 +225,18 @@ A：业务能力相同，都是只读预览；区别是 Step 11 用 `StateGraph`
 ## Workflow / LangGraph 阶段总结入口
 
 更完整的 Workflow / LangGraph 阶段总结见 [workflow_langgraph_summary.md](workflow_langgraph_summary.md)。面试复习时可以先读该总结，再回到本文件挑选适合自己的表达。
+## Step 12: JD parsing 面试说法
+
+Step 12 做的是 rule-based JD parsing baseline，用来提升手动录入 application 的数据质量。
+
+可以这样介绍：
+
+> 我在 applications 模块中加入了岗位来源标准化和 JD 轻量解析。创建或更新 application 时，系统会基于本地规则生成 source_type、jd_summary、jd_keywords、jd_required_skills、年限要求、地点要求和远程类型。这些字段可以帮助求职者侧快速筛选岗位，也能给后续 job_match 和 workflow preview 提供更规范的岗位上下文。
+
+需要强调边界：
+
+- 这不是语义理解，只是规则关键词抽取。
+- 不是招聘决策，不代表录用概率。
+- 不调用 LLM，不做 RAG / Embedding。
+- 不抓取岗位，不连接真实招聘平台。
+- 不自动投递，不自动发送 HR 消息。

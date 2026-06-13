@@ -18,6 +18,7 @@ VALID_APPLICATION_STATUSES = {
 class ApplicationCreateRequest(BaseModel):
     company_name: str
     job_title: str
+    source: Optional[str] = None
     job_source: str = ""
     job_url: str = ""
     jd_text: str = ""
@@ -35,6 +36,7 @@ class ApplicationCreateRequest(BaseModel):
 class ApplicationUpdateRequest(BaseModel):
     company_name: Optional[str] = None
     job_title: Optional[str] = None
+    source: Optional[str] = None
     job_source: Optional[str] = None
     job_url: Optional[str] = None
     jd_text: Optional[str] = None
@@ -51,6 +53,13 @@ class ApplicationUpdateRequest(BaseModel):
 
 class ApplicationItem(ApplicationCreateRequest):
     id: int
+    source_type: str = ""
+    jd_summary: str = ""
+    jd_keywords: List[str] = Field(default_factory=list)
+    jd_required_skills: List[str] = Field(default_factory=list)
+    jd_years_requirement: str = ""
+    jd_location_requirement: str = ""
+    jd_remote_type: str = "unknown"
     created_at: str
     updated_at: str
 

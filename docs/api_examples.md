@@ -804,3 +804,57 @@ Expected key result:
   ]
 }
 ```
+## Step 12: POST /applications with JD parsing
+
+创建 application 时可以传入 `source` 和 `jd_text`。系统会用本地规则生成 `source_type` 和 JD 结构化字段。
+
+这不是 LLM 语义理解，不调用 DeepSeek，不做 RAG / Embedding，不抓取岗位。
+
+```bash
+curl -X POST http://127.0.0.1:8001/applications \
+  -H "Content-Type: application/json" \
+  -d "{\"company_name\":\"星辰智能科技\",\"job_title\":\"AI 应用开发工程师\",\"source\":\"BOSS直聘\",\"jd_text\":\"岗位职责：负责基于 Python、FastAPI、RAG、LangGraph 的企业 AI 应用开发。任职要求：熟悉 LLM API、向量检索、Prompt Engineering，有 1-3 年后端开发经验，可接受杭州现场办公。\",\"status\":\"saved\",\"notes\":\"适合 AI 应用开发方向，后续重点跟进。\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "application created",
+  "data": {
+    "source": "BOSS直聘",
+    "job_source": "BOSS直聘",
+    "source_type": "boss",
+    "jd_summary": "该岗位主要涉及 Python、FastAPI、LLM、RAG、LangGraph、Prompt Engineering 等方向。经验要求为 1-3年。地点要求包含 杭州。工作方式倾向 onsite。该摘要由本地规则生成，仅用于求职者侧快速筛选。",
+    "jd_keywords": ["Python", "FastAPI", "LLM", "RAG", "LangGraph", "Prompt Engineering"],
+    "jd_required_skills": ["LLM", "Prompt Engineering"],
+    "jd_years_requirement": "1-3年",
+    "jd_location_requirement": "杭州",
+    "jd_remote_type": "onsite"
+  }
+}
+```
+
+## Step 12: PATCH /applications/{application_id} jd_text
+
+当 PATCH 更新 `jd_text` 时，系统会重新解析 JD 字段，但不会自动修改未传入的 `status`。
+
+```bash
+curl -X PATCH http://127.0.0.1:8001/applications/1 \
+  -H "Content-Type: application/json" \
+  -d "{\"jd_text\":\"岗位职责：支持 remote 远程协作，负责 Docker、React 和 FastAPI 相关 AI 应用开发。\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "application updated",
+  "data": {
+    "jd_keywords": ["FastAPI", "Docker", "React"],
+    "jd_remote_type": "remote"
+  }
+}
+```

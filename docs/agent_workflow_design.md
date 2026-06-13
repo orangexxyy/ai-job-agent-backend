@@ -281,3 +281,8 @@ handle_error_node -> END
 - Human-in-the-loop：`require_user_approval_node` 设置 `approval_required=true`、`approved_by_user=false` 后停止到 `END`。
 
 这只是观测增强，不新增业务能力，不写数据库，不调用 LLM，不自动发送 HR 消息，不自动投递。
+## Step 12 对 workflow 的影响
+
+Step 12 增强的是 application / JD 上下文质量：创建或更新 application 时会生成 `source_type`、`jd_summary`、`jd_keywords`、`jd_required_skills`、年限要求、地点要求和远程类型。
+
+这些字段可以被后续 `job_match`、普通 `workflow_preview` 和 LangGraph `workflow_preview` 复用，但 Step 12 不改变现有 LangGraph workflow 结构，不新增 Node / Edge / Conditional Edge，也不调用 LLM / RAG / Playwright。

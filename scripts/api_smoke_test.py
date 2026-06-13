@@ -171,11 +171,22 @@ class SmokeTestHarness:
         )
         if not self._success(response):
             return False
-        application_id = response.json().get("data", {}).get("id")
+        data = response.json().get("data", {})
+        application_id = data.get("id")
         if not isinstance(application_id, int):
             return False
         self.application_id = application_id
-        return True
+        keywords = set(data.get("jd_keywords", []))
+        keyword_hits = len({"Python", "FastAPI", "RAG"}.intersection(keywords))
+        return (
+            data.get("source_type") == "boss"
+            and bool(data.get("jd_summary"))
+            and keyword_hits >= 2
+            and isinstance(data.get("jd_required_skills"), list)
+            and bool(data.get("jd_years_requirement"))
+            and "杭州" in data.get("jd_location_requirement", "")
+            and data.get("jd_remote_type") in {"remote", "hybrid", "onsite", "unknown"}
+        )
 
     def _test_read_application(self) -> bool:
         if self.application_id is None:
@@ -379,11 +390,23 @@ class SmokeTestHarness:
             f"/applications/{self.application_id}",
             json_body={
                 "status": "hr_contacted",
+                "jd_text": (
+                    "岗位职责：支持 remote 远程协作，负责 Docker、React "
+                    "和 FastAPI 相关 AI 应用开发。"
+                ),
                 "last_hr_message": "方便明天下午视频面试吗？",
                 "next_action": "确认面试时间",
             },
         )
-        return self._success(response) and response.json().get("data", {}).get("status") == "hr_contacted"
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        keywords = set(data.get("jd_keywords", []))
+        return (
+            data.get("status") == "hr_contacted"
+            and data.get("jd_remote_type") == "remote"
+            and {"Docker", "React"}.issubset(keywords)
+        )
 
     def _test_invalid_status(self) -> bool:
         if self.application_id is None:
@@ -609,11 +632,12 @@ class SmokeTestHarness:
         return {
             "company_name": f"HARNESS Demo Company {self.timestamp}",
             "job_title": "AI Application Developer",
-            "job_source": "Manual",
+            "source": "BOSS直聘",
             "job_url": "https://example.com/harness",
             "jd_text": (
-                "Build AI application workflows with FastAPI, RAG, Agent, "
-                "and human approval."
+                "岗位职责：负责基于 Python、FastAPI、RAG、LangGraph 的企业 AI 应用开发。"
+                "任职要求：熟悉 LLM API、向量检索、Prompt Engineering，有 1-3 年后端开发经验，"
+                "可接受杭州现场办公。"
             ),
             "status": "saved",
             "next_action": "Harness initial action",

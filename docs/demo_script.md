@@ -310,3 +310,19 @@ pip install -r requirements.txt
 - `state_snapshots` 用来展示每个关键 Node 后 state 的变化。
 - `edge_trace` 用来展示本次实际执行路径和条件判断。
 - `require_user_approval_node` 到 `END` 的 trace 说明流程停在 Human-in-the-loop，不会自动发送或投递。
+## Step 12 demo: JD 手动导入增强
+
+演示顺序建议：
+
+1. `POST /applications` 创建一条带 `source` 和 `jd_text` 的 application。
+2. 查看返回中的 `source_type`、`jd_summary`、`jd_keywords`、`jd_required_skills`、`jd_years_requirement`、`jd_location_requirement`、`jd_remote_type`。
+3. `PATCH /applications/{application_id}` 更新 `jd_text`，例如加入 `remote`、`Docker`、`React`。
+4. 再次查看解析字段是否变化。
+5. 调用 `POST /job_match` 或 `POST /agent/workflow_preview`，说明岗位上下文已经更规范。
+
+演示时强调：
+
+- JD 解析是本地规则 baseline。
+- 不调用 LLM，不做 RAG / Embedding。
+- 不抓取岗位，不连接真实招聘平台。
+- 解析结果用于求职者侧快速筛选和 application 数据标准化，不是招聘决策。

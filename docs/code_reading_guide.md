@@ -167,3 +167,20 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 ## Workflow / LangGraph 阅读建议
 
 学习 workflow / LangGraph 阶段时，建议先读 [workflow_langgraph_summary.md](workflow_langgraph_summary.md)，建立 Step 10、Step 11、Step 11.5 的整体理解；然后再读 `app/services/workflow_service.py` 和 `app/services/langgraph_workflow_service.py`，对照普通 Python workflow 与 LangGraph StateGraph 的实现差异。
+## Step 12 阅读补充：JD parsing
+
+阅读 JD 手动导入增强时，建议顺序：
+
+1. `app/routes/application_routes.py`
+2. `app/schemas/application_schema.py`
+3. `app/services/application_service.py`
+4. `app/services/jd_parser_service.py`
+5. `app/services/job_match_service.py`
+6. `app/services/workflow_service.py`
+7. `app/services/langgraph_workflow_service.py`
+
+重点关注：
+
+- `jd_parser_service.py` 只做本地规则解析，不写数据库，不调用 LLM / RAG / Embedding。
+- `application_service.py` 在 create / update 时负责调用 parser 并写入结构化字段。
+- `job_match` 和 workflow preview 可以复用更规范的 application / JD 上下文，但 Step 12 不改变 workflow 结构。

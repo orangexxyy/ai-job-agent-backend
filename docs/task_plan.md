@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 11.7: README synchronization fix + Step completion documentation checklist.
+Step 12: JD manual import enhancement + source normalization + rule-based JD parsing.
 
 ## Completed In Step 1
 
@@ -203,3 +203,13 @@ Step 11.7: README synchronization fix + Step completion documentation checklist.
 - Added `/agent/workflow_preview` and `/agent/langgraph_workflow_preview` to the README API list.
 - Added `Step Completion Documentation Checklist` to `AGENTS.md`.
 - This step does not modify business code, schemas, database structure, APIs, smoke tests, LLM calls, RAG, Playwright, automatic sending, or automatic application.
+
+## Completed In Step 12
+
+- Added `app/services/jd_parser_service.py` for local rule-based JD parsing.
+- Added `source_type` normalization for application source / job_source.
+- Added optional application fields: `jd_summary`, `jd_keywords`, `jd_required_skills`, `jd_years_requirement`, `jd_location_requirement`, and `jd_remote_type`.
+- Application create/update now auto-generates JD structured fields when `source` / `job_source` or `jd_text` changes.
+- Added compatible SQLite `ALTER TABLE ADD COLUMN` migration during database initialization.
+- Updated smoke test to cover source normalization, JD parsing fields, and PATCH `jd_text` re-parsing.
+- This step does not add automatic application, real recruitment platform access, scraping, DeepSeek / LLM calls, RAG / Embedding, Playwright, automatic HR sending, or automatic interview confirmation.
