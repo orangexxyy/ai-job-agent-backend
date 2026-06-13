@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.database import init_database
 from app.routes import (
     agent_routes,
+    application_review_routes,
     application_routes,
     health_routes,
     hr_routes,
@@ -27,5 +28,6 @@ app.include_router(health_routes.router)
 app.include_router(profile_routes.router)
 app.include_router(hr_routes.router)
 app.include_router(application_routes.router)
+app.include_router(application_review_routes.router)
 app.include_router(job_match_routes.router)
 app.include_router(agent_routes.router)

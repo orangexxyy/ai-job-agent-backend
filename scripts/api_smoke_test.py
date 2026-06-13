@@ -72,6 +72,15 @@ class SmokeTestHarness:
             "missing application_id job match",
             self._test_missing_application_job_match,
         )
+        self._run_step("application review", self._test_application_review)
+        self._run_step(
+            "high risk application review",
+            self._test_high_risk_application_review,
+        )
+        self._run_step(
+            "verify application review is read-only",
+            self._test_application_after_application_review,
+        )
         self._run_step("patch application", self._test_patch_application)
         self._run_step("reject invalid application status", self._test_invalid_status)
         self._run_step("analyze HR message", self._test_hr_analyze)
@@ -381,6 +390,88 @@ class SmokeTestHarness:
             and payload.get("message") == "application not found"
             and payload.get("data") is None
         )
+
+    def _test_application_review(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review",
+            json_body={
+                "application_id": self.application_id,
+                "update_application": False,
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        debug = data.get("debug", {})
+        llm_ready_context = data.get("llm_ready_context", {})
+        return (
+            data.get("application_id") == self.application_id
+            and data.get("review_mode") == "rule_based"
+            and data.get("llm_used") is False
+            and isinstance(data.get("review_score"), int)
+            and data.get("review_level")
+            in {
+                "high_priority",
+                "normal_priority",
+                "cautious_follow_up",
+                "low_priority",
+                "not_recommended",
+            }
+            and data.get("confidence") in {"high", "medium", "low"}
+            and isinstance(data.get("evidence"), list)
+            and bool(data.get("evidence"))
+            and bool(data.get("recommended_action"))
+            and isinstance(data.get("reasons"), list)
+            and data.get("human_review_required") is True
+            and llm_ready_context.get("confidence") in {"high", "medium", "low"}
+            and isinstance(llm_ready_context.get("evidence_summary"), list)
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_update_status") is False
+            and debug.get("llm_used") is False
+            and debug.get("rag_used") is False
+            and debug.get("playwright_used") is False
+        )
+
+    def _test_high_risk_application_review(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "这个岗位是外包，需要长期驻场，可以接受吗？",
+                "update_application": False,
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        risk_text = " ".join(data.get("risk_flags", []))
+        evidence = data.get("evidence", [])
+        action = data.get("recommended_action", "")
+        return (
+            data.get("review_level")
+            in {"cautious_follow_up", "not_recommended", "low_priority"}
+            and ("外包" in risk_text or "驻场" in risk_text)
+            and any(item.get("type") == "risk_signal" for item in evidence)
+            and any(item.get("source") == "hr_message" for item in evidence)
+            and ("确认" in action or "谨慎" in action)
+            and data.get("suggested_next_message_type") == "confirm_details"
+        )
+
+    def _test_application_after_application_review(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(response):
+            return False
+        data = response.json().get("data", {})
+        return data.get("status") == "saved"
 
     def _test_patch_application(self) -> bool:
         if self.application_id is None:

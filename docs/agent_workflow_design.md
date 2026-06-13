@@ -171,11 +171,10 @@ LangGraph 适合这个项目的原因：
 
 ## 后续路线
 
-- Step 10：最小 LangGraph Workflow Demo。
-- Step 11：岗位来源导入 / 手动 JD 导入增强。
-- Step 12：Playwright dry-run 岗位采集。
-- Step 13：用户确认后的半自动投递流程。
-- Step 14：RAG 化项目经历资料，可选，后置。
+- Step 13：Application review / follow-up decision layer。
+- Step 14：用户确认后的状态更新 workflow，可选，且必须 Human-in-the-loop。
+- Step 15：LLM parser / RAG project context，可选，后置。
+- Later：Playwright dry-run 岗位采集，必须人工确认，且不做自动投递。
 ## Step 10 已实现：规则版 workflow_preview
 
 Step 10 新增 `POST /agent/workflow_preview`，先用普通 Python service 串联现有能力，作为 LangGraph 之前的最小可运行 workflow preview。
@@ -286,3 +285,8 @@ handle_error_node -> END
 Step 12 增强的是 application / JD 上下文质量：创建或更新 application 时会生成 `source_type`、`jd_summary`、`jd_keywords`、`jd_required_skills`、年限要求、地点要求和远程类型。
 
 这些字段可以被后续 `job_match`、普通 `workflow_preview` 和 LangGraph `workflow_preview` 复用，但 Step 12 不改变现有 LangGraph workflow 结构，不新增 Node / Edge / Conditional Edge，也不调用 LLM / RAG / Playwright。
+## Step 13: Application Review As Future Workflow Node
+
+Step 13 的 `POST /application_review` 可以作为后续 workflow 中“跟进决策节点”的候选能力。当前它先作为独立只读 API 存在，不改变普通 Python workflow 或 LangGraph workflow 的结构。
+
+该节点未来可以接在 `job_match` 和 `hr_intent` 之后，用于生成 `review_score`、`review_level`、`confidence`、`evidence`、`recommended_action` 和 Human-in-the-loop 所需的确认信息。`confidence` 是规则证据充分程度，不是模型概率；`evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。当前实现不调用 LLM / RAG / Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，也不自动修改 application status。

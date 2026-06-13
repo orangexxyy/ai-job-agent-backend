@@ -240,3 +240,14 @@ Step 12 做的是 rule-based JD parsing baseline，用来提升手动录入 appl
 - 不调用 LLM，不做 RAG / Embedding。
 - 不抓取岗位，不连接真实招聘平台。
 - 不自动投递，不自动发送 HR 消息。
+## Step 13: Application Review / Follow-up Decision
+
+Step 13 新增的是 rule-based application review，不是重新实现一套 `job_match`。它先复用已有 `job_match` 结果，再结合 application 状态、JD 解析字段、HR intent、风险词和缺失信息，给出下一步是否优先跟进、谨慎确认或暂缓投入的建议。
+
+面试中可以这样表达：
+
+- 我把岗位匹配和跟进决策拆开：`job_match` 负责基础匹配评分，`application_review` 负责综合当前投递状态和 HR 上下文给出 follow-up 建议。
+- 这一层先用 rule-based baseline，是为了让评分依据可解释，方便调试和面试展示。
+- 我在返回里加入了 `confidence` 和 `evidence`：`confidence` 表示规则证据充分程度，不是模型概率；`evidence` 用来说明每个结论背后的来源，比如 JD 关键词、HR 消息风险词、job_match 分数或 application status。
+- 当前不调用 LLM，不做 RAG / Embedding，不连接招聘平台，也不会自动发送 HR 消息或自动投递。
+- 未来如果接 LLM enhanced review，也只能参考 `llm_ready_context`、`confidence` 和 `evidence`，不能把规则推断当作事实，并继续保持 Human-in-the-loop。

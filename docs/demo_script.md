@@ -326,3 +326,49 @@ pip install -r requirements.txt
 - 不调用 LLM，不做 RAG / Embedding。
 - 不抓取岗位，不连接真实招聘平台。
 - 解析结果用于求职者侧快速筛选和 application 数据标准化，不是招聘决策。
+## Step 13 Demo: Application Review / Follow-up Decision
+
+演示目标：说明 `/application_review` 不是重新做 `job_match`，而是在已有 application、JD 解析字段、`job_match` 和 HR intent 基础上生成跟进建议。
+
+1. 创建一条带 JD 的 application。
+2. 调用 `POST /job_match`，确认岗位匹配评分仍然正常。
+3. 调用 `POST /application_review`：
+
+```json
+{
+  "application_id": 1,
+  "update_application": false
+}
+```
+
+4. 展示返回中的关键字段：
+
+- `review_score`
+- `review_level`
+- `confidence`
+- `evidence`
+- `recommended_action`
+- `risk_flags`
+- `missing_information`
+- `suggested_next_message_type`
+- `decision_factors`
+
+5. 再演示高风险 HR message：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "这个岗位是外包，需要长期驻场，可以接受吗？",
+  "update_application": false
+}
+```
+
+讲解重点：
+
+- 外包 / 驻场风险会进入 `risk_flags`
+- 风险证据会进入 `evidence`，并标出来源如 `hr_message`
+- `review_level` 会变得更谨慎
+- `suggested_next_message_type` 会倾向 `confirm_details`
+- 接口不自动发送 HR 消息，不自动投递，不自动确认面试，也不自动修改 application status
+
+补充说明：`confidence` 是规则证据充分程度，不是大模型概率；`evidence` 用来解释规则判断，也为未来可选 LLM enhanced review 提供结构化上下文。LLM 未来只能参考这些规则结果，不能把规则推断当作事实，最终仍然 Human-in-the-loop。

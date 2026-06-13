@@ -237,3 +237,23 @@ POST/PATCH /applications
 -> jd_parser_service.py
 -> SQLite applications
 ```
+## Step 13: Application Review Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/schemas/application_review_schema.py` | 定义 `POST /application_review` 的请求、响应和 review data 结构 |
+| `app/routes/application_review_routes.py` | 注册 `/application_review` route，并处理 `application not found` |
+| `app/services/application_review_service.py` | 基于 application、JD 解析字段、`job_match`、HR intent、风险、缺失信息、`confidence` 和 `evidence` 生成规则版跟进建议 |
+
+调用链：
+
+```text
+POST /application_review
+-> application_review_routes.review_application_route
+-> application_review_service.review_application
+-> application_service.get_application
+-> job_match_service.analyze_job_match(update_application=False)
+-> hr_intent_service.analyze_hr_message(optional)
+```
+
+Step 13 的 service 保持只读，不写 `application.status`，不发送 HR 消息，不自动投递，不调用 LLM / RAG / Playwright。`confidence` 是规则证据充分程度，不是模型概率；`evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。

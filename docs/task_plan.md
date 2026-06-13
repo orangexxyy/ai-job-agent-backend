@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 12: JD manual import enhancement + source normalization + rule-based JD parsing.
+Step 13: Application review / follow-up decision layer.
 
 ## Completed In Step 1
 
@@ -130,10 +130,9 @@ Step 12: JD manual import enhancement + source normalization + rule-based JD par
 
 ## Next Suggested Steps
 
-1. Step 13: add an Application review / follow-up decision layer based on application data, JD parsed fields, job_match, and HR intent, while keeping Human-in-the-loop.
-2. Step 14: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
-3. Step 15: optionally add an LLM parser / RAG project context layer only when the project explicitly needs it.
-4. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
+1. Step 14: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+2. Step 15: optionally add an LLM parser / RAG project context layer only when the project explicitly needs it.
+3. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -219,3 +218,17 @@ Step 12: JD manual import enhancement + source normalization + rule-based JD par
 - Moved future planning to Step 13 and later.
 - Clarified that Playwright dry-run is a later optional direction, not Step 12.
 - This step does not add business capabilities, APIs, schemas, database changes, smoke test changes, LLM calls, RAG / Embedding, Playwright, automatic sending, or automatic application.
+
+## Completed In Step 13
+
+- Added `POST /application_review`.
+- Added `app/schemas/application_review_schema.py`, `app/routes/application_review_routes.py`, and `app/services/application_review_service.py`.
+- Added a rule-based follow-up decision baseline on top of existing `job_match`, application state, JD parsed fields, optional HR intent, risk flags, and missing information.
+- Returned `review_score`, `review_level`, `confidence`, `evidence`, `recommended_action`, `risk_flags`, `missing_information`, `suggested_next_message_type`, `decision_factors`, `llm_ready_context`, and debug safety flags.
+- Added `confidence` as rule evidence sufficiency, not model probability.
+- Added structured `evidence` for job_match, JD keywords, risk signals, missing information, HR intent, and application status.
+- Added `confidence` and `evidence_summary` to `llm_ready_context` for future optional LLM enhanced review context.
+- Reused `analyze_job_match(application_id, update_application=False)` so review does not write `match_score`, `next_action`, or `risk_flags`.
+- Kept the API read-only for application state in this step: it does not update `status`, send HR messages, apply to jobs, or confirm interviews.
+- Added smoke test coverage for normal application review, high-risk outsourcing / onsite review, and status read-only verification.
+- This step does not call DeepSeek / LLM, does not implement RAG / Embedding, does not implement Playwright, does not connect to recruitment platforms, does not scrape jobs, does not auto-apply, and does not auto-send HR messages.

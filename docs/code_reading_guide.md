@@ -184,3 +184,14 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 - `jd_parser_service.py` 只做本地规则解析，不写数据库，不调用 LLM / RAG / Embedding。
 - `application_service.py` 在 create / update 时负责调用 parser 并写入结构化字段。
 - `job_match` 和 workflow preview 可以复用更规范的 application / JD 上下文，但 Step 12 不改变 workflow 结构。
+## Step 13: Application Review 阅读顺序
+
+学习 application review 时，建议按这个顺序阅读：
+
+1. `app/schemas/application_review_schema.py`：先看请求和响应字段，理解 `review_score`、`review_level`、`confidence`、`evidence`、`decision_factors` 和 debug 边界。
+2. `app/routes/application_review_routes.py`：再看 route 如何把 `application not found` 转换成稳定响应。
+3. `app/services/application_review_service.py`：重点看规则评分、风险覆盖、缺失信息、`confidence`、`evidence`、`suggested_next_message_type` 和只读边界。
+4. `app/services/job_match_service.py`：理解 review 如何复用 `analyze_job_match(update_application=False)`。
+5. `app/services/hr_intent_service.py`：理解可选 HR message 如何影响跟进建议。
+
+当前 Step 13 不改变 LangGraph workflow 结构；它可以作为后续 workflow 中“跟进决策节点”的候选 service。

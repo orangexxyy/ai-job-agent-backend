@@ -858,3 +858,81 @@ Expected key result:
   }
 }
 ```
+## Step 13: Application Review / Follow-up Decision
+
+`POST /application_review` 基于 application、JD 解析字段、`job_match` 和可选 HR message 生成只读跟进建议。
+
+### 普通 follow-up review
+
+```bash
+curl -X POST http://127.0.0.1:8001/application_review \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"update_application\":false}"
+```
+
+示例返回：
+
+```json
+{
+  "success": true,
+  "message": "application reviewed",
+  "data": {
+    "application_id": 1,
+    "review_mode": "rule_based",
+    "review_score": 72,
+    "review_level": "normal_priority",
+    "confidence": "medium",
+    "recommended_action": "可以继续跟进，建议补充确认薪资、工作方式和岗位真实职责。",
+    "evidence": [
+      {
+        "type": "job_match",
+        "text": "job_match 返回 match_score=78",
+        "source": "job_match",
+        "confidence": "high"
+      },
+      {
+        "type": "jd_keyword",
+        "text": "JD 命中 Python、FastAPI、RAG、LangGraph",
+        "source": "jd_keywords",
+        "confidence": "high"
+      }
+    ],
+    "risk_flags": [],
+    "missing_information": ["薪资范围未明确", "是否外包/驻场未明确"],
+    "suggested_next_message_type": "confirm_details",
+    "human_review_required": true,
+    "llm_used": false,
+    "debug": {
+      "llm_used": false,
+      "rag_used": false,
+      "playwright_used": false,
+      "auto_apply": false,
+      "auto_send_message": false,
+      "auto_update_status": false,
+      "review_engine": "rule_based_application_review"
+    }
+  }
+}
+```
+
+### 高风险外包 / 驻场 follow-up review
+
+```bash
+curl -X POST http://127.0.0.1:8001/application_review \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"hr_message\":\"这个岗位是外包，需要长期驻场，可以接受吗？\",\"update_application\":false}"
+```
+
+预期重点：
+
+- `review_level` 通常会降为 `cautious_follow_up`、`low_priority` 或 `not_recommended`
+- `risk_flags` 会包含外包 / 驻场相关风险
+- `evidence` 会包含 `risk_signal`，用于解释风险来自 `hr_message`、`jd_text`、`notes` 或 `last_hr_message`
+- `suggested_next_message_type` 应为 `confirm_details`
+- `debug.auto_apply`、`debug.auto_send_message`、`debug.auto_update_status` 都是 `false`
+
+说明：
+
+- `confidence` 是规则证据充分程度，不是 LLM 概率。
+- `evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。
+- 未来 LLM 只能参考规则结果，不能把规则推断当作事实，最终仍然 Human-in-the-loop。
