@@ -184,11 +184,13 @@ Step 9 只做文档收口，没有修改业务代码，也没有实现 LangGraph
 
 ## Roadmap
 
-- Step 10：最小 LangGraph Workflow Demo
-- Step 11：岗位来源导入 / 手动 JD 导入
-- Step 12：Playwright dry-run 岗位采集
-- Step 13：用户确认后的半自动投递流程
-- Step 14：RAG 化项目经历资料，optional / later
+- Step 13：Application review / follow-up decision layer，基于 application、JD 解析字段、job_match 和 HR intent 给出下一步建议，仍然保持 Human-in-the-loop。
+- Step 14：可选的人工确认后状态更新 workflow，只有用户确认后才更新 application status / next_action。
+- Step 15：可选 LLM parser / RAG project context，仅在明确需要时再做。
+- Later：Playwright dry-run 岗位采集，必须人工确认，且不做自动投递。
+
+当前仍不调用 DeepSeek / LLM，不做 RAG / Embedding，不做 Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息。
+
 ## Step 10: rule-based workflow_preview
 
 Step 10 新增 `POST /agent/workflow_preview`，用于把已有 service 能力串成一个只读预览流程：

@@ -130,11 +130,10 @@ Step 12: JD manual import enhancement + source normalization + rule-based JD par
 
 ## Next Suggested Steps
 
-1. Step 10: build a minimal workflow_preview or LangGraph Workflow Demo.
-2. Step 11: add job source import / manual JD import improvements.
-3. Step 12: add Playwright dry-run job collection with no auto-apply.
-4. Step 13: design user-confirmed semi-automatic application flow.
-5. Step 14: optionally add RAG for project experience material.
+1. Step 13: add an Application review / follow-up decision layer based on application data, JD parsed fields, job_match, and HR intent, while keeping Human-in-the-loop.
+2. Step 14: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+3. Step 15: optionally add an LLM parser / RAG project context layer only when the project explicitly needs it.
+4. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -213,3 +212,10 @@ Step 12: JD manual import enhancement + source normalization + rule-based JD par
 - Added compatible SQLite `ALTER TABLE ADD COLUMN` migration during database initialization.
 - Updated smoke test to cover source normalization, JD parsing fields, and PATCH `jd_text` re-parsing.
 - This step does not add automatic application, real recruitment platform access, scraping, DeepSeek / LLM calls, RAG / Embedding, Playwright, automatic HR sending, or automatic interview confirmation.
+
+## Completed In Step 12.1
+
+- Docs-only: synchronized the README Roadmap with the current Step 12 completion state.
+- Moved future planning to Step 13 and later.
+- Clarified that Playwright dry-run is a later optional direction, not Step 12.
+- This step does not add business capabilities, APIs, schemas, database changes, smoke test changes, LLM calls, RAG / Embedding, Playwright, automatic sending, or automatic application.
