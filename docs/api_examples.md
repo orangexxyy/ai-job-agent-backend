@@ -936,3 +936,57 @@ curl -X POST http://127.0.0.1:8001/application_review \
 - `confidence` 是规则证据充分程度，不是 LLM 概率。
 - `evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。
 - 未来 LLM 只能参考规则结果，不能把规则推断当作事实，最终仍然 Human-in-the-loop。
+
+## Step 14: LLM Enhanced Application Review
+
+### 无 API key 场景
+
+```bash
+curl -X POST http://127.0.0.1:8001/application_review/llm_enhance \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"hr_message\":\"这个岗位需要长期驻场，你能接受吗？\",\"include_raw_prompt\":false}"
+```
+
+预期结构：
+
+```json
+{
+  "success": true,
+  "message": "api_key_missing",
+  "data": {
+    "application_id": 1,
+    "rule_review": {"review_mode": "rule_based"},
+    "llm_enhanced_review": null,
+    "llm_used": false,
+    "llm_error": "api_key_missing",
+    "human_review_required": true,
+    "debug": {
+      "review_engine": "llm_enhanced_application_review",
+      "base_review_engine": "rule_based_application_review",
+      "rag_used": false,
+      "playwright_used": false,
+      "auto_apply": false,
+      "auto_send_message": false,
+      "auto_update_status": false,
+      "database_write_intended": false
+    }
+  }
+}
+```
+
+### 配置 API key 后的手动测试
+
+`.env` 示例：
+
+```text
+DEEPSEEK_API_KEY=你的 key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+启动服务后调用同一接口，预期：
+
+- `llm_used=true`
+- `llm_enhanced_review` 存在
+- LLM 输出只解释规则 review，不执行外部动作
+- application status 不会被自动修改

@@ -257,3 +257,14 @@ POST /application_review
 ```
 
 Step 13 的 service 保持只读，不写 `application.status`，不发送 HR 消息，不自动投递，不调用 LLM / RAG / Playwright。`confidence` 是规则证据充分程度，不是模型概率；`evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。
+
+## Step 14: LLM Enhanced Review Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/services/llm_service.py` | DeepSeek-compatible Chat Completions 最小封装，处理 API key 缺失、网络错误和 JSON 解析 |
+| `app/services/application_review_llm_service.py` | 基于规则版 application review 构造安全 prompt，并返回只读 LLM 增强分析 |
+| `app/routes/application_review_routes.py` | 在 `/application_review` router 下注册 `/llm_enhance` |
+| `app/schemas/application_review_schema.py` | 定义 LLM enhance 请求和响应 schema |
+
+Step 14 不新增数据库表，不写 review 历史，不改 application status / next_action / risk_flags。

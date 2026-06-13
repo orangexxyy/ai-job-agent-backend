@@ -36,3 +36,27 @@ class ApplicationReviewResponse(BaseModel):
     success: bool
     message: str
     data: Optional[ApplicationReviewData] = None
+
+
+class ApplicationReviewLLMEnhanceRequest(BaseModel):
+    application_id: int
+    hr_message: Optional[str] = None
+    include_raw_prompt: bool = False
+
+
+class ApplicationReviewLLMEnhanceData(BaseModel):
+    application_id: int
+    company_name: str
+    job_title: str
+    rule_review: Dict[str, Any]
+    llm_enhanced_review: Optional[Dict[str, Any]] = None
+    llm_used: bool = False
+    llm_error: Optional[str] = None
+    human_review_required: bool = True
+    debug: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ApplicationReviewLLMEnhanceResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[ApplicationReviewLLMEnhanceData] = None

@@ -172,8 +172,9 @@ LangGraph 适合这个项目的原因：
 ## 后续路线
 
 - Step 13：Application review / follow-up decision layer。
-- Step 14：用户确认后的状态更新 workflow，可选，且必须 Human-in-the-loop。
-- Step 15：LLM parser / RAG project context，可选，后置。
+- Step 14：LLM enhanced application review，只读增强分析。
+- Step 15：HR reply draft enhancement，可选，仍需人工确认。
+- Step 16：用户确认后的状态更新 workflow，可选，且必须 Human-in-the-loop。
 - Later：Playwright dry-run 岗位采集，必须人工确认，且不做自动投递。
 ## Step 10 已实现：规则版 workflow_preview
 
@@ -290,3 +291,9 @@ Step 12 增强的是 application / JD 上下文质量：创建或更新 applicat
 Step 13 的 `POST /application_review` 可以作为后续 workflow 中“跟进决策节点”的候选能力。当前它先作为独立只读 API 存在，不改变普通 Python workflow 或 LangGraph workflow 的结构。
 
 该节点未来可以接在 `job_match` 和 `hr_intent` 之后，用于生成 `review_score`、`review_level`、`confidence`、`evidence`、`recommended_action` 和 Human-in-the-loop 所需的确认信息。`confidence` 是规则证据充分程度，不是模型概率；`evidence` 用于解释规则判断，也为未来 LLM enhanced review 提供上下文。当前实现不调用 LLM / RAG / Playwright，不连接真实招聘平台，不自动投递，不自动发送 HR 消息，也不自动修改 application status。
+
+## Step 14: LLM Enhance Review As Future Node
+
+`POST /application_review/llm_enhance` 未来可以作为 LangGraph 中的 `llm_enhance_review_node` 候选能力。当前它先作为独立只读 API 存在，不改变 LangGraph workflow 结构。
+
+该能力只在规则版 review 之后做解释增强，不从零判断岗位，不写数据库，不自动发送 HR 消息，不自动投递，不自动确认面试，也不自动修改 application status。

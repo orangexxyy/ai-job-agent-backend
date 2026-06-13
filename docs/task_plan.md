@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 13: Application review / follow-up decision layer.
+Step 14: LLM enhanced application review.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 13: Application review / follow-up decision layer.
 
 ## Next Suggested Steps
 
-1. Step 14: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
-2. Step 15: optionally add an LLM parser / RAG project context layer only when the project explicitly needs it.
+1. Step 15: optionally add HR reply draft enhancement, still requiring human confirmation.
+2. Step 16: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
 3. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
@@ -232,3 +232,15 @@ Step 13: Application review / follow-up decision layer.
 - Kept the API read-only for application state in this step: it does not update `status`, send HR messages, apply to jobs, or confirm interviews.
 - Added smoke test coverage for normal application review, high-risk outsourcing / onsite review, and status read-only verification.
 - This step does not call DeepSeek / LLM, does not implement RAG / Embedding, does not implement Playwright, does not connect to recruitment platforms, does not scrape jobs, does not auto-apply, and does not auto-send HR messages.
+
+## Completed In Step 14
+
+- Added `POST /application_review/llm_enhance`.
+- Added `app/services/application_review_llm_service.py`.
+- Implemented minimal DeepSeek-compatible Chat Completions support in `app/services/llm_service.py`.
+- The LLM enhanced review first calls the rule-based `review_application(update_application=False)`.
+- The prompt requires the model to distinguish raw facts, rule inference, and LLM suggestions.
+- Returned `rule_review`, optional `llm_enhanced_review`, `llm_used`, `llm_error`, `human_review_required`, and safety debug fields.
+- When `DEEPSEEK_API_KEY` is missing, the API keeps `rule_review`, returns `llm_used=false`, and reports `api_key_missing` without crashing.
+- Added smoke test coverage for `/application_review/llm_enhance` without requiring a real API key.
+- This step does not generate a full HR reply draft, does not write application review history, does not update application status / next_action / risk_flags, does not auto-send messages, does not auto-apply, does not confirm interviews, does not implement RAG / Embedding / Playwright, and does not connect to recruitment platforms.

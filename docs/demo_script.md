@@ -372,3 +372,27 @@ pip install -r requirements.txt
 - 接口不自动发送 HR 消息，不自动投递，不自动确认面试，也不自动修改 application status
 
 补充说明：`confidence` 是规则证据充分程度，不是大模型概率；`evidence` 用来解释规则判断，也为未来可选 LLM enhanced review 提供结构化上下文。LLM 未来只能参考这些规则结果，不能把规则推断当作事实，最终仍然 Human-in-the-loop。
+
+## Step 14 Demo: LLM Enhanced Application Review
+
+演示顺序：
+
+1. 先调用 `POST /application_review`，展示规则版 `review_score`、`review_level`、`confidence` 和 `evidence`。
+2. 再调用 `POST /application_review/llm_enhance`：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "这个岗位需要长期驻场，你能接受吗？",
+  "include_raw_prompt": false
+}
+```
+
+3. 无 API key 时，展示 `rule_review` 仍然存在，`llm_used=false`，`llm_error=api_key_missing`。
+4. 有 API key 时，展示 `llm_enhanced_review` 如何在规则结果基础上做解释、查漏补缺和保守建议。
+
+讲解重点：
+
+- LLM 不从零判断岗位，只参考规则版 review。
+- LLM 不发送 HR 消息，不自动投递，不自动确认面试，不自动修改 application status。
+- LLM 输出只是只读分析，最终仍然需要用户确认。

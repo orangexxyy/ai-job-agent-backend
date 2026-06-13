@@ -195,3 +195,12 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 5. `app/services/hr_intent_service.py`：理解可选 HR message 如何影响跟进建议。
 
 当前 Step 13 不改变 LangGraph workflow 结构；它可以作为后续 workflow 中“跟进决策节点”的候选 service。
+
+## Step 14: LLM Enhanced Review 阅读顺序
+
+1. `app/services/llm_service.py`：看 DeepSeek-compatible Chat Completions 的最小封装、无 API key 容错和 JSON 解析。
+2. `app/services/application_review_llm_service.py`：看如何先调用规则版 review，再构造安全 prompt，并返回只读 LLM 增强结果。
+3. `app/schemas/application_review_schema.py`：看 `ApplicationReviewLLMEnhanceRequest` 和 response data。
+4. `app/routes/application_review_routes.py`：看 `/application_review/llm_enhance` 如何复用同一个 router。
+
+阅读时重点确认：LLM 只做解释增强，不写数据库，不自动发送消息，不自动投递，也不自动修改 application status。

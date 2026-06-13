@@ -251,3 +251,12 @@ Step 13 新增的是 rule-based application review，不是重新实现一套 `j
 - 我在返回里加入了 `confidence` 和 `evidence`：`confidence` 表示规则证据充分程度，不是模型概率；`evidence` 用来说明每个结论背后的来源，比如 JD 关键词、HR 消息风险词、job_match 分数或 application status。
 - 当前不调用 LLM，不做 RAG / Embedding，不连接招聘平台，也不会自动发送 HR 消息或自动投递。
 - 未来如果接 LLM enhanced review，也只能参考 `llm_ready_context`、`confidence` 和 `evidence`，不能把规则推断当作事实，并继续保持 Human-in-the-loop。
+
+## Step 14: LLM Enhanced Application Review
+
+Step 14 的表达重点：
+
+- LLM 不从零判断岗位，而是基于规则版 `review_score`、`review_level`、`confidence`、`evidence` 做解释增强和查漏补缺。
+- Prompt 明确要求区分原始事实、规则推断和 LLM 建议，避免把规则推断说成事实。
+- 没有 API key 时接口不会崩溃，会返回 `rule_review` 和 `llm_used=false / api_key_missing`。
+- 即使 LLM 返回增强分析，也不自动发送 HR 消息、不自动投递、不自动确认面试、不自动修改状态，最终仍然 Human-in-the-loop。

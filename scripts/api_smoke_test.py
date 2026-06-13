@@ -78,6 +78,10 @@ class SmokeTestHarness:
             self._test_high_risk_application_review,
         )
         self._run_step(
+            "LLM enhanced application review",
+            self._test_llm_enhanced_application_review,
+        )
+        self._run_step(
             "verify application review is read-only",
             self._test_application_after_application_review,
         )
@@ -462,6 +466,42 @@ class SmokeTestHarness:
             and any(item.get("source") == "hr_message" for item in evidence)
             and ("确认" in action or "谨慎" in action)
             and data.get("suggested_next_message_type") == "confirm_details"
+        )
+
+    def _test_llm_enhanced_application_review(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review/llm_enhance",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "这个岗位是外包，需要长期驻场，可以接受吗？",
+                "include_raw_prompt": False,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        debug = data.get("debug", {})
+        llm_error = data.get("llm_error") or payload.get("message")
+        llm_not_used_with_error = data.get("llm_used") is False and bool(llm_error)
+        llm_used_with_result = (
+            data.get("llm_used") is True
+            and isinstance(data.get("llm_enhanced_review"), dict)
+        )
+        return (
+            payload.get("success") is True
+            and data.get("application_id") == self.application_id
+            and bool(data.get("rule_review"))
+            and data.get("human_review_required") is True
+            and (llm_not_used_with_error or llm_used_with_result)
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_update_status") is False
+            and debug.get("database_write_intended") is False
+            and "raw_prompt_messages" not in debug
         )
 
     def _test_application_after_application_review(self) -> bool:
