@@ -129,3 +129,39 @@ After each Step, output:
 12. Keep comments concise. Do not comment every line. Focus comments and docstrings on core functions, complex business rules, state transitions, permission boundaries, and Human-in-the-loop boundaries.
 
 13. Do not implement code without updating the corresponding documentation, unless the task is explicitly a one-off experiment and will not enter the main project line.
+
+## Step Completion Documentation Checklist
+
+After every project Step, AI coding tools must check and update the related documentation before reporting completion.
+
+Required checks:
+
+1. `README.md` current stage must match the latest completed Step.
+
+2. `README.md` API list must include any newly added or changed API endpoints.
+
+3. `README.md` documentation entry section must include important new docs.
+
+4. `docs/task_plan.md` must record the completed Step and its truthful boundaries.
+
+5. `docs/api_examples.md` must be updated if an API endpoint is added or changed.
+
+6. `docs/demo_script.md` must be updated if the demo flow changes.
+
+7. `docs/interview_talking_points.md` must be updated if the Step affects interview explanation or project presentation.
+
+8. `docs/code_reading_guide.md` must be updated if important files, modules, or reading order change.
+
+9. `docs/agent_workflow_design.md` must be updated if the Step affects Agent workflow or LangGraph workflow design.
+
+10. `scripts/api_smoke_test.py` must be updated if a main-chain API is added or changed.
+
+Step completion output must include:
+
+- which documents were updated
+- which documents were checked and did not need updates
+- whether `README.md` current stage is synchronized
+- whether there are newly untracked files
+- `git diff --stat`
+
+These checks do not permit exaggerating unfinished capabilities. Documentation must keep Human-in-the-loop boundaries clear and must not describe DeepSeek / LLM, RAG, Playwright, real recruitment platform access, automatic application, automatic HR messaging, or automatic interview confirmation as implemented unless they truly are.

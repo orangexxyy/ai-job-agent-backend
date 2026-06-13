@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 9: Agent Workflow Design + interview demo docs.
+Step 11.7: README synchronization fix + Step completion documentation checklist.
 
 ## Completed In Step 1
 
@@ -195,3 +195,11 @@ Step 9: Agent Workflow Design + interview demo docs.
 - Summarized Step 10 ordinary Python `workflow_preview`, Step 11 LangGraph `workflow_preview`, and Step 11.5 LangGraph observability.
 - Added the summary as a review and interview-preparation entry for README and docs.
 - This step does not add business capabilities, APIs, schemas, database changes, LLM calls, RAG, Playwright, automatic sending, or automatic application.
+
+## Completed In Step 11.7
+
+- Docs-only: fixed `README.md` current stage from Step 9 to Step 11.6.
+- Added Step 10, Step 11, Step 11.5, and Step 11.6 summaries to the README current stage section.
+- Added `/agent/workflow_preview` and `/agent/langgraph_workflow_preview` to the README API list.
+- Added `Step Completion Documentation Checklist` to `AGENTS.md`.
+- This step does not modify business code, schemas, database structure, APIs, smoke tests, LLM calls, RAG, Playwright, automatic sending, or automatic application.
