@@ -260,3 +260,14 @@ Step 14 的表达重点：
 - Prompt 明确要求区分原始事实、规则推断和 LLM 建议，避免把规则推断说成事实。
 - 没有 API key 时接口不会崩溃，会返回 `rule_review` 和 `llm_used=false / api_key_missing`。
 - 即使 LLM 返回增强分析，也不自动发送 HR 消息、不自动投递、不自动确认面试、不自动修改状态，最终仍然 Human-in-the-loop。
+
+## Step 15: LLM HR Reply Draft
+
+Step 15 的表达重点：
+
+- Step 14 是给用户看的分析增强；Step 15 是面向 HR 的草稿生成。
+- Step 15 会同时返回给用户看的回复思路 `reply_strategy_for_user` 和给 HR 的草稿 `hr_reply_draft`。
+- Step 15 默认不依赖 Step 14，直接基于 rule_review、HR intent、原始 HR message、application 和 candidate_profile 生成结果，避免重复调用 LLM。
+- 草稿生成不等于发送消息，`safe_to_send` 也不代表自动发送。
+- 涉及外包、驻场、薪资、面试时间、工作地点时，草稿会优先采用“确认信息”的表达，而不是直接答应或承诺。
+- 无 API key 或 LLM 调用失败时，会返回 rule_fallback 草稿，保证演示链路可用。

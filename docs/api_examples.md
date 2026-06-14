@@ -990,3 +990,58 @@ DEEPSEEK_MODEL=deepseek-chat
 - `llm_enhanced_review` 存在
 - LLM 输出只解释规则 review，不执行外部动作
 - application status 不会被自动修改
+
+## Step 15: LLM HR Reply Draft
+
+### 外包 / 驻场场景
+
+```bash
+curl -X POST http://127.0.0.1:8001/application_review/hr_reply_draft \
+  -H "Content-Type: application/json" \
+  -d "{\"application_id\":1,\"hr_message\":\"这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？\",\"draft_tone\":\"professional\",\"include_raw_prompt\":false}"
+```
+
+无 API key 或 LLM 调用失败时，预期返回保守 fallback：
+
+```json
+{
+  "success": true,
+  "message": "HR reply draft generated",
+  "data": {
+    "application_id": 1,
+    "draft_source": "rule_fallback",
+    "draft_type": "confirm_details",
+    "reply_strategy_for_user": {
+      "summary": "建议先确认岗位关键信息，不要直接答应。",
+      "why_this_draft_type": "HR 消息包含外包和长期驻场，因此草稿类型为 confirm_details。",
+      "key_risks": ["疑似外包", "疑似长期驻场"],
+      "questions_to_confirm": ["合同主体", "驻场周期", "薪资范围", "社保缴纳主体"],
+      "conflict_warnings": [],
+      "conservative_next_step": "先向 HR 确认关键信息，再决定是否继续推进。"
+    },
+    "hr_reply_draft": {
+      "draft_text": "您好，这个方向我可以进一步了解一下。为了判断是否合适，想先确认一下岗位的用工性质、工作方式、薪资范围和具体职责，谢谢。",
+      "draft_goal": "确认岗位关键信息后再判断是否继续推进",
+      "must_confirm_before_send": ["确认草稿内容符合本人真实意愿"],
+      "risk_notes": ["草稿不会自动发送，必须人工审核"],
+      "safe_to_send": false
+    },
+    "draft_text": "您好，这个方向我可以进一步了解一下。为了判断是否合适，想先确认一下岗位的用工性质、工作方式、薪资范围和具体职责，谢谢。",
+    "safe_to_send": false,
+    "human_review_required": true,
+    "llm_used": false,
+    "llm_error": "api_key_missing",
+    "debug": {
+      "draft_engine": "llm_hr_reply_draft",
+      "analysis_and_draft_combined": true,
+      "step14_llm_enhance_called": false,
+      "auto_send_message": false,
+      "auto_apply": false,
+      "auto_update_status": false,
+      "database_write_intended": false
+    }
+  }
+}
+```
+
+配置 API key 后，`draft_source` 可以为 `llm`，`reply_strategy_for_user` 和 `hr_reply_draft` 来自模型 JSON。Step 15 默认不调用 Step 14，避免重复 LLM 调用。无论是否使用 LLM，接口都不会自动发送 HR 消息，也不会自动修改 application status。

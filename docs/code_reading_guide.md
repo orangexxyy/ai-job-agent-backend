@@ -204,3 +204,14 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 4. `app/routes/application_review_routes.py`：看 `/application_review/llm_enhance` 如何复用同一个 router。
 
 阅读时重点确认：LLM 只做解释增强，不写数据库，不自动发送消息，不自动投递，也不自动修改 application status。
+
+## Step 15: HR Reply Draft 阅读顺序
+
+1. `app/services/hr_reply_draft_llm_service.py`：看如何直接复用规则版 review，并生成 `reply_strategy_for_user` 和 `hr_reply_draft`。
+2. 重点阅读 `resolve_draft_type()`：确认 draft_type 如何优先根据 HR intent 决定，再参考 suggested_next_message_type、风险和状态。
+3. 重点阅读 `build_prompt_by_draft_type()`：确认不同 draft_type 如何使用不同目标模板，并且所有模板共享安全边界。
+4. `app/schemas/application_review_schema.py`：看 `ApplicationReviewReplyDraftRequest` 和 response data。
+5. `app/routes/application_review_routes.py`：看 `/application_review/hr_reply_draft` 如何挂在现有 router 下。
+6. `scripts/api_smoke_test.py`：看无 API key / 网络失败时如何验证接口不崩溃。
+
+阅读时重点确认：该接口只返回草稿，不发送 HR 消息，不写数据库，不改 application status。

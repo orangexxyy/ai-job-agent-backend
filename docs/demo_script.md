@@ -396,3 +396,31 @@ pip install -r requirements.txt
 - LLM 不从零判断岗位，只参考规则版 review。
 - LLM 不发送 HR 消息，不自动投递，不自动确认面试，不自动修改 application status。
 - LLM 输出只是只读分析，最终仍然需要用户确认。
+
+## Step 15 Demo: LLM HR Reply Draft
+
+演示顺序：
+
+1. 调用 `/application_review`，展示规则版分析建议。
+2. 调用 `/application_review/llm_enhance`，展示 LLM 只读增强分析。
+3. 调用 `/application_review/hr_reply_draft`，查看“回复策略 + HR 回复草稿”：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？",
+  "draft_tone": "professional",
+  "include_raw_prompt": false
+}
+```
+
+4. 展示从“分析建议”到“回复策略 + HR 回复草稿”的区别：`reply_strategy_for_user` 给用户看，`hr_reply_draft` 是给 HR 的草稿。
+5. 强调草稿不会自动发送，`safe_to_send=true` 也不代表自动发送。
+6. 强调 Step 15 默认不调用 Step 14，`debug.step14_llm_enhance_called=false`，避免重复 LLM 调用。
+
+重点检查：
+
+- 草稿是否没有直接答应外包 / 驻场
+- 是否提出确认合同主体、驻场周期、薪资范围、职责等问题
+- `debug.auto_send_message=false`
+- application status 不变

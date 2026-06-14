@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 14: LLM enhanced application review.
+Step 15: LLM HR reply draft based on application review.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 14: LLM enhanced application review.
 
 ## Next Suggested Steps
 
-1. Step 15: optionally add HR reply draft enhancement, still requiring human confirmation.
-2. Step 16: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+1. Step 16: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+2. Step 17: optionally connect application_review / llm_enhance / hr_reply_draft into LangGraph workflow.
 3. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
@@ -244,3 +244,23 @@ Step 14: LLM enhanced application review.
 - When `DEEPSEEK_API_KEY` is missing, the API keeps `rule_review`, returns `llm_used=false`, and reports `api_key_missing` without crashing.
 - Added smoke test coverage for `/application_review/llm_enhance` without requiring a real API key.
 - This step does not generate a full HR reply draft, does not write application review history, does not update application status / next_action / risk_flags, does not auto-send messages, does not auto-apply, does not confirm interviews, does not implement RAG / Embedding / Playwright, and does not connect to recruitment platforms.
+
+## Completed In Step 15
+
+- Added `POST /application_review/hr_reply_draft`.
+- Added `app/services/hr_reply_draft_llm_service.py`.
+- The endpoint converts application review and optional LLM enhanced review into a human-reviewable HR reply draft.
+- Added draft types: `confirm_details`, `project_intro`, `interview_schedule`, `salary_expectation`, `polite_decline`, and `general_follow_up`.
+- Added conservative `rule_fallback` draft when API key is missing, network fails, or LLM JSON parsing fails.
+- Returned `draft_source`, `draft_type`, `draft_text`, `draft_goal`, `must_confirm_before_send`, `risk_notes`, `safe_to_send`, `human_review_required`, `rule_review`, optional `llm_enhanced_review`, `llm_used`, and `llm_error`.
+- Added smoke test coverage for `/application_review/hr_reply_draft` without requiring a real API key.
+- This step does not send HR messages, does not auto-apply, does not confirm interviews, does not update application status / next_action / risk_flags, does not add review history tables, does not implement RAG / Embedding / Playwright, and does not connect to recruitment platforms.
+
+## Refined In Step 15
+
+- Changed `/application_review/hr_reply_draft` to return both `reply_strategy_for_user` and `hr_reply_draft`.
+- Step 15 now defaults to `review_application(update_application=False)` directly and no longer calls Step 14 `/application_review/llm_enhance` by default.
+- Added debug flags: `analysis_and_draft_combined=true` and `step14_llm_enhance_called=false`.
+- Adjusted `draft_type` resolution to prioritize HR intent, then `suggested_next_message_type`, risk / missing information, and application status.
+- Kept Step 14 as an independent user-facing analysis enhancement endpoint.
+- This refinement does not add sending, automatic application, status updates, review history, RAG / Embedding, Playwright, or recruitment platform access.

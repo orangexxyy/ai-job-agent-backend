@@ -82,6 +82,10 @@ class SmokeTestHarness:
             self._test_llm_enhanced_application_review,
         )
         self._run_step(
+            "LLM HR reply draft",
+            self._test_llm_hr_reply_draft,
+        )
+        self._run_step(
             "verify application review is read-only",
             self._test_application_after_application_review,
         )
@@ -497,6 +501,49 @@ class SmokeTestHarness:
             and bool(data.get("rule_review"))
             and data.get("human_review_required") is True
             and (llm_not_used_with_error or llm_used_with_result)
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_update_status") is False
+            and debug.get("database_write_intended") is False
+            and "raw_prompt_messages" not in debug
+        )
+
+    def _test_llm_hr_reply_draft(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        debug = data.get("debug", {})
+        strategy = data.get("reply_strategy_for_user") or {}
+        draft = data.get("hr_reply_draft") or {}
+        return (
+            payload.get("success") is True
+            and data.get("application_id") == self.application_id
+            and isinstance(strategy, dict)
+            and bool(strategy.get("summary"))
+            and isinstance(draft, dict)
+            and isinstance(draft.get("draft_text"), str)
+            and data.get("draft_type") == "confirm_details"
+            and data.get("draft_source") in {"llm", "rule_fallback"}
+            and isinstance(data.get("draft_text"), str)
+            and isinstance(data.get("safe_to_send"), bool)
+            and data.get("human_review_required") is True
+            and isinstance(data.get("llm_used"), bool)
+            and bool(data.get("rule_review"))
+            and debug.get("analysis_and_draft_combined") is True
+            and debug.get("step14_llm_enhance_called") is False
             and debug.get("auto_send_message") is False
             and debug.get("auto_apply") is False
             and debug.get("auto_update_status") is False
