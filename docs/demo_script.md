@@ -38,7 +38,10 @@ python scripts/api_smoke_test.py
 8. `POST /hr/reply` 不带 `application_id`
 9. `POST /hr/reply` 带 `application_id`
 10. `POST /hr/reply` 项目经历问题，展示 `selected_context_snippets`
-11. `python scripts/api_smoke_test.py`
+11. `POST /application_review`
+12. `POST /application_review/hr_reply_draft`
+13. `POST /agent/langgraph_workflow_preview`
+14. `python scripts/api_smoke_test.py`
 
 ## 每个接口的演示目的
 
@@ -413,6 +416,30 @@ pip install -r requirements.txt
   "include_raw_prompt": false
 }
 ```
+
+## Step 16 demo: POST /agent/langgraph_workflow_preview
+
+Step 16 的演示重点是说明 LangGraph workflow preview 已经把 Step 13 的 application review 和 Step 15 的 HR reply draft package 串起来，但仍然停在 Human-in-the-loop。
+
+建议请求：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？"
+}
+```
+
+演示重点：
+
+- `workflow_steps` 包含 `run_application_review`、`generate_hr_reply_package` 和 `require_user_approval`。
+- `application_review` 来自规则版 review，展示 `confidence`、`evidence`、`risk_flags` 和 `missing_information`。
+- `reply_strategy_for_user` 和 `hr_reply_draft` 来自 HR reply package。
+- `node_debug.run_application_review_node.llm_used=false`，说明规则 review 不调用 LLM。
+- `node_debug.generate_hr_reply_package_node.database_write=false`，说明草稿生成不写 application。
+- `approval_required=true`、`approved_by_user=false`，说明最终发送或状态更新仍然必须由用户确认。
+
+强调：Step 16 不自动发送 HR 消息，不自动投递，不自动确认面试，不自动修改 application 状态；没有 API key 时会返回 `rule_fallback` 草稿。
 
 4. 展示从“分析建议”到“回复策略 + HR 回复草稿”的区别：`reply_strategy_for_user` 给用户看，`hr_reply_draft` 是给 HR 的草稿。
 5. 强调草稿不会自动发送，`safe_to_send=true` 也不代表自动发送。

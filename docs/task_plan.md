@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 15: LLM HR reply draft based on application review.
+Step 16: LangGraph workflow preview integrates application review and HR reply package.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 15: LLM HR reply draft based on application review.
 
 ## Next Suggested Steps
 
-1. Step 16: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
-2. Step 17: optionally connect application_review / llm_enhance / hr_reply_draft into LangGraph workflow.
+1. Step 17: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+2. Step 18: optionally add node audit trace / workflow run summary for clearer workflow execution review.
 3. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
@@ -264,3 +264,15 @@ Step 15: LLM HR reply draft based on application review.
 - Adjusted `draft_type` resolution to prioritize HR intent, then `suggested_next_message_type`, risk / missing information, and application status.
 - Kept Step 14 as an independent user-facing analysis enhancement endpoint.
 - This refinement does not add sending, automatic application, status updates, review history, RAG / Embedding, Playwright, or recruitment platform access.
+
+## Completed In Step 16
+
+- Enhanced `POST /agent/langgraph_workflow_preview`.
+- Replaced the older LangGraph node chain with: `load_profile_node`, `load_application_node`, `run_application_review_node`, `generate_hr_reply_package_node`, `require_user_approval_node`, and `handle_error_node`.
+- Added `application_review` to the LangGraph response by reusing `review_application(update_application=False)`.
+- Added `hr_reply_package`, `reply_strategy_for_user`, and `hr_reply_draft` to the LangGraph response by reusing Step 15 `generate_hr_reply_draft_from_review`.
+- Added `node_debug` to show each node's LLM usage, database read/write boundary, external API call flag, status, and draft source.
+- Kept Step 14 `/application_review/llm_enhance` as an independent endpoint; Step 16 does not require calling it.
+- Updated smoke test coverage for the new LangGraph node chain and read-only boundary.
+- The workflow may call DeepSeek-compatible LLM only through Step 15 HR reply package when an API key is configured; without API key it falls back to `rule_fallback`.
+- This step does not write application data, does not update application status / next_action / risk_flags / last_hr_message, does not send HR messages, does not auto-apply, does not confirm interviews, does not add review history tables, does not implement RAG / Embedding / Playwright, and does not connect to recruitment platforms.

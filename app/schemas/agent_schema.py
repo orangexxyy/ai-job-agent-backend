@@ -19,6 +19,8 @@ class WorkflowStateSummary(BaseModel):
     has_application: bool
     has_hr_message: bool
     match_level: Optional[str] = None
+    review_level: Optional[str] = None
+    confidence: Optional[str] = None
     primary_intent: Optional[str] = None
     reply_draft_generated: bool = False
 
@@ -31,8 +33,12 @@ class WorkflowPreviewData(BaseModel):
     job_title: str
     workflow_steps: List[WorkflowStep] = Field(default_factory=list)
     state_summary: WorkflowStateSummary
+    application_review: Optional[Dict[str, Any]] = None
     job_match: Dict[str, Any]
     hr_intent: Optional[Dict[str, Any]] = None
+    hr_reply_package: Optional[Dict[str, Any]] = None
+    reply_strategy_for_user: Optional[Dict[str, Any]] = None
+    hr_reply_draft: Optional[Dict[str, Any]] = None
     hr_reply: Optional[Dict[str, Any]] = None
     approval_required: bool
     approved_by_user: bool
@@ -40,6 +46,7 @@ class WorkflowPreviewData(BaseModel):
     graph_structure: Optional[Dict[str, Any]] = None
     state_snapshots: Optional[List[Dict[str, Any]]] = None
     edge_trace: Optional[List[Dict[str, Any]]] = None
+    node_debug: Optional[Dict[str, Any]] = None
     debug: Dict[str, Any] = Field(default_factory=dict)
 
 

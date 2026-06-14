@@ -274,7 +274,7 @@ class SmokeTestHarness:
             "/agent/langgraph_workflow_preview",
             json_body={
                 "application_id": self.application_id,
-                "hr_message": "Which RAG or Agent related projects have you built?",
+                "hr_message": "这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？",
             },
         )
         if not self._success(response):
@@ -287,7 +287,11 @@ class SmokeTestHarness:
         snapshot_nodes = {snapshot.get("after_node") for snapshot in state_snapshots}
         edge_trace = data.get("edge_trace") or []
         debug = data.get("debug", {})
-        hr_reply = data.get("hr_reply") or {}
+        node_debug = data.get("node_debug") or {}
+        application_review = data.get("application_review") or {}
+        hr_reply_package = data.get("hr_reply_package") or {}
+        reply_strategy = data.get("reply_strategy_for_user") or {}
+        hr_reply_draft = data.get("hr_reply_draft") or {}
         return (
             data.get("workflow_mode") == "langgraph_preview"
             and data.get("workflow_engine") == "langgraph_stategraph"
@@ -295,28 +299,32 @@ class SmokeTestHarness:
             and {
                 "load_candidate_profile",
                 "load_application",
-                "run_job_match",
-                "analyze_hr_intent",
-                "generate_reply_draft",
+                "run_application_review",
+                "generate_hr_reply_package",
                 "require_user_approval",
             }.issubset(step_names)
             and data.get("approval_required") is True
             and data.get("approved_by_user") is False
             and debug.get("langgraph_used") is True
-            and debug.get("llm_used") is False
+            and debug.get("application_review_used") is True
+            and debug.get("hr_reply_draft_used") is True
             and debug.get("rag_used") is False
             and debug.get("auto_apply") is False
             and debug.get("auto_send_message") is False
+            and debug.get("auto_confirm_interview") is False
             and debug.get("database_write_intended") is False
             and {
                 "load_profile_node",
                 "load_application_node",
-                "run_job_match_node",
+                "run_application_review_node",
+                "generate_hr_reply_package_node",
                 "require_user_approval_node",
             }.issubset(graph_nodes)
             and bool(graph_structure.get("conditional_edges"))
             and bool(state_snapshots)
             and "load_profile_node" in snapshot_nodes
+            and "run_application_review_node" in snapshot_nodes
+            and "generate_hr_reply_package_node" in snapshot_nodes
             and "require_user_approval_node" in snapshot_nodes
             and bool(edge_trace)
             and any(edge.get("from") == "load_profile_node" for edge in edge_trace)
@@ -324,9 +332,14 @@ class SmokeTestHarness:
                 edge.get("to") in {"require_user_approval_node", "END"}
                 for edge in edge_trace
             )
-            and bool(hr_reply.get("reply_draft"))
-            and hr_reply.get("application_updated") is False
-            and hr_reply.get("debug", {}).get("application_update_skipped") is True
+            and bool(application_review)
+            and bool(reply_strategy)
+            and bool(hr_reply_draft)
+            and bool(hr_reply_package)
+            and hr_reply_package.get("draft_source") in {"llm", "rule_fallback"}
+            and node_debug.get("run_application_review_node", {}).get("llm_used") is False
+            and node_debug.get("generate_hr_reply_package_node", {}).get("database_write") is False
+            and data.get("hr_reply") == hr_reply_draft
         )
 
     def _test_application_after_langgraph_workflow_preview(self) -> bool:

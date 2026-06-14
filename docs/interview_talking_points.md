@@ -271,3 +271,18 @@ Step 15 的表达重点：
 - 草稿生成不等于发送消息，`safe_to_send` 也不代表自动发送。
 - 涉及外包、驻场、薪资、面试时间、工作地点时，草稿会优先采用“确认信息”的表达，而不是直接答应或承诺。
 - 无 API key 或 LLM 调用失败时，会返回 rule_fallback 草稿，保证演示链路可用。
+
+## Step 16: LangGraph Review + Reply Package
+
+Step 16 的表达重点：
+
+- 我把 Step 13 的 `application_review` 和 Step 15 的 `hr_reply_draft` 接入了 `POST /agent/langgraph_workflow_preview`。
+- LangGraph 节点从早期的 job_match / intent / reply draft 拆法，升级为更贴近业务决策的 `run_application_review_node` 和 `generate_hr_reply_package_node`。
+- `run_application_review_node` 只调用规则版 review，不调用 LLM，不写 application。
+- `generate_hr_reply_package_node` 生成回复策略和 HR 草稿；配置 API key 时可能调用一次 DeepSeek-compatible LLM，没有 API key 时走 `rule_fallback`。
+- `node_debug` 用来解释每个节点是否调用 LLM、是否读库、是否写库、是否外部调用，以及草稿来源。
+- `require_user_approval_node` 仍然是停止点，系统不自动发送 HR 消息、不自动投递、不自动确认面试，也不自动修改 application status。
+
+可以这样介绍：
+
+> Step 16 不是新增一个自动执行 Agent，而是把已有的规则 review 和回复草稿能力放进 LangGraph 编排里。它会先做只读 application review，再生成 HR reply package，最后停在用户确认节点。这样既能展示 LangGraph 的 Node / Edge / State 结构，又不会越过 Human-in-the-loop 边界。

@@ -26,6 +26,7 @@ def generate_hr_reply_draft_from_review(
     hr_message: Optional[str] = None,
     draft_tone: str = "professional",
     include_raw_prompt: bool = False,
+    precomputed_rule_review: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """基于规则 review 一次性生成回复策略和 HR 回复草稿。
 
@@ -34,13 +35,16 @@ def generate_hr_reply_draft_from_review(
     副作用：可能调用一次外部 LLM；不调用 Step 14；不写数据库，不发送 HR 消息，不自动投递，不修改 application。
     """
     normalized_tone = draft_tone if draft_tone in VALID_DRAFT_TONES else "professional"
-    rule_review = jsonable_encoder(
-        review_application(
-            application_id=application_id,
-            hr_message=hr_message,
-            update_application=False,
+    if precomputed_rule_review is not None:
+        rule_review = jsonable_encoder(precomputed_rule_review)
+    else:
+        rule_review = jsonable_encoder(
+            review_application(
+                application_id=application_id,
+                hr_message=hr_message,
+                update_application=False,
+            )
         )
-    )
     application = get_application(application_id)
     if application is None:
         raise ValueError("application not found")

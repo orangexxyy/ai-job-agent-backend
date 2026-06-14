@@ -215,3 +215,15 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 6. `scripts/api_smoke_test.py`：看无 API key / 网络失败时如何验证接口不崩溃。
 
 阅读时重点确认：该接口只返回草稿，不发送 HR 消息，不写数据库，不改 application status。
+
+## Step 16: LangGraph Review + Reply Package 阅读顺序
+
+学习 Step 16 时，建议按这个顺序阅读：
+
+1. `app/schemas/agent_schema.py`：先看 `WorkflowPreviewData` 新增的 `application_review`、`hr_reply_package`、`reply_strategy_for_user`、`hr_reply_draft` 和 `node_debug`。
+2. `app/services/langgraph_workflow_service.py`：重点看 `WorkflowState`、`_build_graph()`、`run_application_review_node()`、`generate_hr_reply_package_node()` 和 `require_user_approval_node()`。
+3. `app/services/application_review_service.py`：确认 LangGraph review 节点复用的是 `review_application(update_application=False)`。
+4. `app/services/hr_reply_draft_llm_service.py`：确认 reply package 节点复用 Step 15 的草稿生成逻辑，并支持传入 `precomputed_rule_review` 避免重复 review。
+5. `scripts/api_smoke_test.py`：看 smoke test 如何验证 Step 16 节点、`node_debug`、LLM fallback 和只读边界。
+
+阅读时重点确认：`node_debug` 是节点级可观测性字段；LangGraph workflow preview 不自动发送、不自动投递、不自动确认面试、不自动修改 application 状态。Step 14 `/application_review/llm_enhance` 仍然是独立接口，不是 Step 16 必须调用的节点。

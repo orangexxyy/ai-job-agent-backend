@@ -278,3 +278,14 @@ Step 14 不新增数据库表，不写 review 历史，不改 application status
 | `app/schemas/application_review_schema.py` | 定义 HR reply draft 请求和响应 schema |
 
 Step 15 默认不调用 Step 14，避免重复 LLM 调用。它不新增消息发送能力，不写 review 历史，不改 application status / next_action / risk_flags。
+
+## Step 16: LangGraph Review + Reply Package Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/services/langgraph_workflow_service.py` | 使用 LangGraph `StateGraph` 串联 profile 读取、application 读取、规则版 application review、HR reply package 生成和 Human-in-the-loop 审批节点 |
+| `app/schemas/agent_schema.py` | 为 `/agent/langgraph_workflow_preview` 增加 `application_review`、`hr_reply_package`、`reply_strategy_for_user`、`hr_reply_draft`、`node_debug` 等响应字段 |
+| `app/services/hr_reply_draft_llm_service.py` | 支持接收 `precomputed_rule_review`，让 LangGraph reply package 节点复用已生成的规则 review，避免重复分析 |
+| `scripts/api_smoke_test.py` | 验证 Step 16 LangGraph 节点链路、reply package、`node_debug` 和 application 只读边界 |
+
+Step 16 不新增 route 文件，不新增数据库表，不新增发送消息能力。`POST /agent/langgraph_workflow_preview` 仍然是只读 preview：不自动发送 HR 消息，不自动投递，不自动确认面试，不自动修改 application `status / next_action / risk_flags / last_hr_message`。

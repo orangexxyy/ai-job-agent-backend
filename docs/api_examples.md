@@ -699,15 +699,17 @@ Missing application result:
 ```
 ## POST /agent/langgraph_workflow_preview
 
-`/agent/langgraph_workflow_preview` 是 Step 11 的最小 LangGraph workflow demo。它用 LangGraph `StateGraph` 表达 Step 10 的同一条只读 workflow preview。
+`/agent/langgraph_workflow_preview` 是 LangGraph `StateGraph` 版 workflow preview。Step 16 后，它会串联 application review、HR reply package 和 Human-in-the-loop 审批节点。
 
-它不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。
+它不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。规则版 application review 节点不调用 LLM；HR reply package 节点可能在配置 API key 后通过 Step 15 调用一次 DeepSeek-compatible LLM，没有 API key 时会返回 `rule_fallback`。
 
 ```bash
 curl -X POST http://127.0.0.1:8001/agent/langgraph_workflow_preview \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"方便介绍一下你做过的 RAG 或 Agent 项目吗？\"}"
 ```
+
+Step 16 后，该接口会在 LangGraph 中串联 application review 和 HR reply package。它仍然是 preview，不自动发送、不自动投递、不自动确认面试，也不自动修改 application 状态。
 
 Expected key result:
 
@@ -725,22 +727,65 @@ Expected key result:
         "status": "completed"
       },
       {
+        "name": "run_application_review",
+        "status": "completed"
+      },
+      {
+        "name": "generate_hr_reply_package",
+        "status": "completed"
+      },
+      {
         "name": "require_user_approval",
         "status": "waiting"
       }
     ],
+    "application_review": {
+      "review_engine": "rule_based_application_review",
+      "confidence": "medium",
+      "evidence": []
+    },
+    "reply_strategy_for_user": {
+      "summary": "先确认岗位风险点，再决定是否继续沟通。"
+    },
+    "hr_reply_draft": {
+      "draft_type": "confirm_details",
+      "draft_source": "rule_fallback",
+      "draft_text": "您好，这个岗位我可以进一步了解。想先确认一下外包、驻场地点、合同主体和项目周期等信息。"
+    },
+    "hr_reply_package": {
+      "draft_source": "rule_fallback",
+      "llm_used": false,
+      "human_review_required": true
+    },
+    "node_debug": {
+      "run_application_review_node": {
+        "llm_used": false,
+        "database_read": true,
+        "database_write": false,
+        "external_api_called": false,
+        "status": "success"
+      },
+      "generate_hr_reply_package_node": {
+        "llm_used": false,
+        "database_read": true,
+        "database_write": false,
+        "external_api_called": false,
+        "status": "success",
+        "draft_source": "rule_fallback"
+      }
+    },
     "approval_required": true,
     "approved_by_user": false,
     "debug": {
-      "llm_used": false,
       "langgraph_used": true,
+      "application_review_used": true,
+      "hr_reply_draft_used": true,
       "rag_used": false,
       "playwright_used": false,
       "auto_apply": false,
       "auto_send_message": false,
       "auto_confirm_interview": false,
-      "database_write_intended": false,
-      "workflow_engine": "langgraph_stategraph"
+      "database_write_intended": false
     }
   }
 }
@@ -755,15 +800,14 @@ Expected key result:
     "nodes": [
       "load_profile_node",
       "load_application_node",
-      "run_job_match_node",
-      "analyze_hr_intent_node",
-      "generate_reply_draft_node",
+      "run_application_review_node",
+      "generate_hr_reply_package_node",
       "require_user_approval_node",
       "handle_error_node"
     ],
     "edges": [
       "START -> load_profile_node",
-      "run_job_match_node -> analyze_hr_intent_node",
+      "run_application_review_node -> generate_hr_reply_package_node",
       "require_user_approval_node -> END"
     ],
     "conditional_edges": [
