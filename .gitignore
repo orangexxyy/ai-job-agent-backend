@@ -1,5 +1,4 @@
-﻿@'
-.venv/
+﻿.venv/
 .env
 __pycache__/
 *.pyc
@@ -8,4 +7,7 @@ data/
 *.sqlite
 .vscode/*
 !.vscode/launch.json
-'@ | Set-Content .gitignore -Encoding UTF8
+
+# Local resume input / private profile source
+docs/input/*
+!docs/input/.gitkeep

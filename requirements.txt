@@ -4,3 +4,5 @@ python-dotenv
 pydantic
 requests
 langgraph
+python-docx
+pypdf

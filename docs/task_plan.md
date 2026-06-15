@@ -304,3 +304,14 @@ Step 16.7: fix project fact boundary and add interview availability slots MVP.
 - When available slots exist, interview schedule drafts can only offer those slots and still require human confirmation.
 - Updated smoke test coverage for project fact boundaries, interview schedule with / without slots, and LangGraph approval safety.
 - This step does not connect Google Calendar, does not connect recruitment platforms, does not auto-send HR messages, does not auto-apply, does not auto-confirm interviews, does not implement RAG / Embedding, and does not make the project production-grade.
+
+## Completed In Resume-Input-01
+
+- Added `scripts/extract_resume_text.py` for local resume text extraction.
+- Supports `.docx`, text-based `.pdf`, `.txt`, and `.md` input files.
+- Generates `docs/input/current_resume.txt` without rewriting, summarizing, or calling LLM.
+- Generates `docs/input/resume_extract_report.md` with input path, file type, output path, extracted character count, PDF page count when applicable, suspected scanned-PDF flag, and next-step suggestions.
+- Added `docs/input/resume_source/sample_resume.md` as a minimal local test fixture.
+- Added `python-docx` and `pypdf` to `requirements.txt` for docx and text-based PDF extraction.
+- Documented that `current_resume.txt` can later support `candidate_profile.resume_text`, `project_context`, and `truth_boundaries`.
+- This step does not write database data, does not update `candidate_profile`, does not modify HR reply logic, does not call LLM, does not do OCR, and does not add frontend upload.

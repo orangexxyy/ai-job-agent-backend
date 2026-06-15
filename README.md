@@ -369,6 +369,21 @@ Step 15 新增 `POST /application_review/hr_reply_draft`，用于基于 Step 13 
 
 Step 15 refinement 后，该接口默认不再调用 Step 14，`debug.step14_llm_enhance_called=false`，避免重复 LLM 调用。Step 14 仍然保留为独立的用户分析增强接口。Step 15 只生成草稿，不发送消息，不自动投递，不自动确认面试，不自动修改 application 状态。没有 API key 或 LLM 调用失败时，会返回 `rule_fallback` 草稿。
 
+## Resume fact source extraction
+
+`scripts/extract_resume_text.py` 可以从本地 `.docx`、文本型 `.pdf`、`.txt`、`.md` 简历中提取原始文本，并生成：
+
+- `docs/input/current_resume.txt`
+- `docs/input/resume_extract_report.md`
+
+示例：
+
+```bash
+..venv\Scripts\python.exe scripts/extract_resume_text.py docs/input/resume_source/sample_resume.md
+```
+
+`current_resume.txt` 后续可作为整理 `candidate_profile.resume_text`、`project_context` 和 `truth_boundaries` 的事实来源。当前只支持文本型 PDF，不支持 OCR；扫描版 PDF 请先转换为文本型 PDF 或 docx。
+
 ## Step 16: LangGraph application review + HR reply package
 
 Step 16 增强 `POST /agent/langgraph_workflow_preview`，把 Step 13 的 `application_review` 和 Step 15 的 `hr_reply_draft` 接入 LangGraph preview：
