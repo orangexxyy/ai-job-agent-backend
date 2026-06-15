@@ -3,7 +3,11 @@ from pathlib import Path
 from typing import Iterator
 
 from app.config import settings
-from app.models import APPLICATIONS_TABLE_SQL, CANDIDATE_PROFILE_TABLE_SQL
+from app.models import (
+    APPLICATIONS_TABLE_SQL,
+    CANDIDATE_PROFILE_TABLE_SQL,
+    INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL,
+)
 
 
 APPLICATION_OPTIONAL_COLUMNS = {
@@ -33,6 +37,7 @@ def init_database() -> None:
     with get_connection() as connection:
         connection.execute(CANDIDATE_PROFILE_TABLE_SQL)
         connection.execute(APPLICATIONS_TABLE_SQL)
+        connection.execute(INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL)
         _ensure_optional_columns(connection, "applications", APPLICATION_OPTIONAL_COLUMNS)
         connection.commit()
 

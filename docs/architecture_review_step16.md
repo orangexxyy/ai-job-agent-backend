@@ -47,6 +47,9 @@ AI Job Agent 是面向 AI 应用开发 / 大模型应用开发求职场景的 Hu
 - `POST /application_review/hr_reply_draft`
 - `POST /agent/workflow_preview`
 - `POST /agent/langgraph_workflow_preview`
+- `POST /interview_availability_slots`
+- `GET /interview_availability_slots`
+- `PATCH /interview_availability_slots/{slot_id}`
 
 ## Step 13 / 14 / 15 / 16 的职责边界
 
@@ -153,6 +156,88 @@ Step 15 默认不调用 Step 14，原因是：
 - 让 Step 14 可以独立用于用户想看更详细分析的场景。
 
 未来如果需要更强表达，可以让用户显式选择 LLM enhanced review，而不是默认强制调用。
+
+## Step 16.7：项目事实边界和面试可用时间
+
+Step 16.7 修复两个 Demo 验收中暴露的问题。
+
+### 项目事实边界
+
+项目介绍必须区分 RAG 企业知识库项目和 AI Job Agent 项目。
+
+RAG 企业知识库项目可以说：
+
+- FastAPI
+- 文档入库
+- txt / PDF / Excel
+- Document / chunk / metadata
+- FAISS + BM25 + RRF
+- Reranker
+- low_confidence
+- SQLite 多轮会话
+- React Demo
+
+RAG 企业知识库项目不可以说：
+
+- LangGraph
+- 自动投递
+- 自动发送 HR 消息
+- 招聘 Agent
+
+AI Job Agent 项目可以说：
+
+- FastAPI
+- candidate profile
+- application tracking
+- JD parsing
+- job_match
+- application_review
+- LLM enhanced review
+- HR reply draft
+- LangGraph workflow preview
+- require_user_approval_node
+- node_debug / edge_trace / state_snapshots
+
+AI Job Agent 项目不可以说：
+
+- RAG 检索
+- Embedding
+- 向量数据库
+- FAISS / BM25 / Reranker
+- 自动投递
+- 自动发送 HR 消息
+- 自动确认面试
+- 企业级生产系统
+
+`project_intro` 草稿生成增加了轻量关键词校验。如果草稿出现明显混淆，例如“AI Job Agent 使用 RAG 检索”或“RAG 项目使用 LangGraph”，系统会替换为安全 fallback，并在 `debug.project_fact_boundary_fallback=true` 中记录。
+
+### 面试可用时间 slots MVP
+
+新增 `interview_availability_slots` 表，用于手动维护面试可用时间段。
+
+字段包括：
+
+- `id`
+- `date`
+- `start_time`
+- `end_time`
+- `timezone`
+- `status`：`available / held / booked / expired`
+- `note`
+- `created_at`
+- `updated_at`
+
+当前只做后端最小闭环：
+
+- `POST /interview_availability_slots`：创建可用时间段。
+- `GET /interview_availability_slots`：查询时间段，默认只返回 `status=available`。
+- `PATCH /interview_availability_slots/{slot_id}`：更新 `status` 或 `note`。
+
+`interview_schedule` 草稿生成会读取 available slots：
+
+- 没有 slots 时，只能回复“需要先确认日程，稍后回复”，不能虚构明天下午、后天上午等时间。
+- 有 slots 时，只能提供 slots 中的时间段供 HR 参考。
+- 无论是否有 slots，都不自动确认面试，不自动发送 HR 消息。
 
 ## Human-in-the-loop 安全边界
 

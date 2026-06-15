@@ -83,6 +83,9 @@ class ApplicationReviewReplyDraftData(BaseModel):
     risk_notes: List[str] = Field(default_factory=list)
     safe_to_send: bool = False
     human_review_required: bool = True
+    available_slots_used: List[Dict[str, Any]] = Field(default_factory=list)
+    availability_source: Optional[str] = None
+    availability_missing: bool = False
     rule_review: Dict[str, Any]
     llm_enhanced_review: Optional[Dict[str, Any]] = None
     llm_used: bool = False

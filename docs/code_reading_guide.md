@@ -238,3 +238,15 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 4. `app/services/langgraph_workflow_service.py`：最后再回到代码，确认文档中的节点和实际实现一致。
 
 Step 16.5 不改变业务代码，重点是让后续阅读和演示路线更清楚。
+
+## Step 16.7: 项目事实边界和面试时间阅读顺序
+
+建议按这个顺序阅读：
+
+1. `app/schemas/interview_availability_schema.py`：先看 `interview_availability_slots` 的字段和状态。
+2. `app/services/interview_availability_service.py`：确认 slots 只是手动维护的 SQLite 记录，不接真实日历。
+3. `app/routes/interview_availability_routes.py`：看 `POST / GET / PATCH` 三个最小接口。
+4. `app/services/hr_reply_draft_llm_service.py`：重点看 `project_intro` 的 project fact boundary，以及 `interview_schedule` 如何读取 available slots。
+5. `scripts/api_smoke_test.py`：看如何验证项目技术栈不混说、无 slots 不虚构时间、有 slots 只引用 slots、LangGraph 仍停在人工确认节点。
+
+阅读时重点确认：AI Job Agent 当前没有 RAG / Embedding / 向量检索；RAG 企业知识库项目没有 LangGraph；面试时间草稿不自动确认具体时间。

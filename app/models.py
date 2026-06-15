@@ -46,3 +46,18 @@ CREATE TABLE IF NOT EXISTS applications (
     updated_at TEXT NOT NULL
 );
 """
+
+
+INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS interview_availability_slots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    timezone TEXT NOT NULL,
+    status TEXT NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+"""

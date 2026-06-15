@@ -38,6 +38,7 @@ class SmokeTestHarness:
         self.original_profile: Optional[Dict[str, Any]] = None
         self.original_profile_exists = False
         self.application_id: Optional[int] = None
+        self.interview_slot_id: Optional[int] = None
         self.timestamp = int(time.time())
 
     def run(self) -> int:
@@ -84,6 +85,30 @@ class SmokeTestHarness:
         self._run_step(
             "LLM HR reply draft",
             self._test_llm_hr_reply_draft,
+        )
+        self._run_step(
+            "project intro fact boundary",
+            self._test_project_intro_fact_boundary,
+        )
+        self._run_step(
+            "interview schedule without availability slot",
+            self._test_interview_schedule_without_slot,
+        )
+        self._run_step(
+            "create interview availability slot",
+            self._test_create_interview_availability_slot,
+        )
+        self._run_step(
+            "interview schedule with availability slot",
+            self._test_interview_schedule_with_slot,
+        )
+        self._run_step(
+            "langgraph interview schedule safety",
+            self._test_langgraph_interview_schedule_safety,
+        )
+        self._run_step(
+            "expire interview availability slot",
+            self._test_expire_interview_availability_slot,
         )
         self._run_step(
             "verify application review is read-only",
@@ -563,6 +588,170 @@ class SmokeTestHarness:
             and debug.get("database_write_intended") is False
             and "raw_prompt_messages" not in debug
         )
+
+    def _test_project_intro_fact_boundary(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "你做过 RAG 或 Agent 相关项目吗？可以简单介绍一下吗？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        draft_text = data.get("draft_text") or ""
+        forbidden = [
+            "AI Job Agent 使用 RAG 检索",
+            "AI Job Agent 利用 RAG 技术",
+            "AI Job Agent 使用 RAG",
+            "RAG 项目使用 LangGraph",
+            "RAG 项目接入 LangGraph",
+            "自动发送 HR 消息",
+            "自动投递",
+            "企业级生产系统",
+        ]
+        return (
+            payload.get("success") is True
+            and data.get("draft_type") == "project_intro"
+            and bool(draft_text)
+            and all(item not in draft_text for item in forbidden)
+            and "RAG 企业知识库" in draft_text
+            and "AI Job Agent" in draft_text
+            and data.get("human_review_required") is True
+        )
+
+    def _test_interview_schedule_without_slot(self) -> bool:
+        if self.application_id is None:
+            return False
+        available = self._request("GET", "/interview_availability_slots")
+        if available is not None and self._success(available):
+            existing_slots = available.json().get("data") or []
+            if existing_slots:
+                return True
+        response = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "明天下午三点方便视频面试吗？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        draft_text = data.get("draft_text") or ""
+        forbidden = ["后天上午", "明天下午或后天上午", "可以明天下午", "明天下午可以"]
+        return (
+            payload.get("success") is True
+            and data.get("draft_type") == "interview_schedule"
+            and data.get("availability_missing") is True
+            and data.get("available_slots_used") == []
+            and data.get("safe_to_send") is False
+            and data.get("human_review_required") is True
+            and all(item not in draft_text for item in forbidden)
+            and ("确认一下日程" in draft_text or "稍后回复" in draft_text)
+        )
+
+    def _test_create_interview_availability_slot(self) -> bool:
+        response = self._request(
+            "POST",
+            "/interview_availability_slots",
+            json_body={
+                "date": "2026-06-20",
+                "start_time": "14:00",
+                "end_time": "16:00",
+                "timezone": "Asia/Shanghai",
+                "status": "available",
+                "note": f"HARNESS slot {self.timestamp}",
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data") or {}
+        self.interview_slot_id = data.get("id")
+        return (
+            data.get("date") == "2026-06-20"
+            and data.get("start_time") == "14:00"
+            and data.get("end_time") == "16:00"
+            and data.get("status") == "available"
+        )
+
+    def _test_interview_schedule_with_slot(self) -> bool:
+        if self.application_id is None or self.interview_slot_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "最近什么时候方便面试？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if response is None or response.status_code != 200:
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        draft_text = data.get("draft_text") or ""
+        slots = data.get("available_slots_used") or []
+        return (
+            payload.get("success") is True
+            and data.get("draft_type") == "interview_schedule"
+            and data.get("availability_missing") is False
+            and any(slot.get("id") == self.interview_slot_id for slot in slots)
+            and "2026-06-20" in draft_text
+            and "14:00-16:00" in draft_text
+            and data.get("safe_to_send") is False
+            and data.get("human_review_required") is True
+        )
+
+    def _test_langgraph_interview_schedule_safety(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            "/agent/langgraph_workflow_preview",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "最近什么时候方便面试？",
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data") or {}
+        debug = data.get("debug") or {}
+        steps = {step.get("name") for step in data.get("workflow_steps", [])}
+        return (
+            data.get("approval_required") is True
+            and data.get("approved_by_user") is False
+            and "require_user_approval" in steps
+            and debug.get("auto_confirm_interview") is False
+            and debug.get("auto_send_message") is False
+        )
+
+    def _test_expire_interview_availability_slot(self) -> bool:
+        if self.interview_slot_id is None:
+            return False
+        response = self._request(
+            "PATCH",
+            f"/interview_availability_slots/{self.interview_slot_id}",
+            json_body={"status": "expired", "note": f"HARNESS expired {self.timestamp}"},
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data") or {}
+        return data.get("status") == "expired"
 
     def _test_application_after_application_review(self) -> bool:
         if self.application_id is None:

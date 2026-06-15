@@ -1089,3 +1089,98 @@ curl -X POST http://127.0.0.1:8001/application_review/hr_reply_draft \
 ```
 
 配置 API key 后，`draft_source` 可以为 `llm`，`reply_strategy_for_user` 和 `hr_reply_draft` 来自模型 JSON。Step 15 默认不调用 Step 14，避免重复 LLM 调用。无论是否使用 LLM，接口都不会自动发送 HR 消息，也不会自动修改 application status。
+
+## Step 16.7: Interview Availability Slots
+
+`interview_availability_slots` 用于手动维护面试可用时间段。它不接 Google Calendar，不自动确认面试，不自动发送 HR 消息。
+
+### POST /interview_availability_slots
+
+```bash
+curl -X POST http://127.0.0.1:8001/interview_availability_slots \
+  -H "Content-Type: application/json" \
+  -d "{\"date\":\"2026-06-20\",\"start_time\":\"14:00\",\"end_time\":\"16:00\",\"timezone\":\"Asia/Shanghai\",\"status\":\"available\",\"note\":\"Demo 可面试时间\"}"
+```
+
+Expected key result:
+
+```json
+{
+  "success": true,
+  "message": "interview availability slot created",
+  "data": {
+    "id": 1,
+    "date": "2026-06-20",
+    "start_time": "14:00",
+    "end_time": "16:00",
+    "timezone": "Asia/Shanghai",
+    "status": "available"
+  }
+}
+```
+
+### GET /interview_availability_slots
+
+默认只返回 `status=available`：
+
+```bash
+curl http://127.0.0.1:8001/interview_availability_slots
+```
+
+也可以查询其他状态：
+
+```bash
+curl "http://127.0.0.1:8001/interview_availability_slots?status=expired"
+```
+
+### PATCH /interview_availability_slots/{slot_id}
+
+```bash
+curl -X PATCH http://127.0.0.1:8001/interview_availability_slots/1 \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"expired\",\"note\":\"Demo 后过期\"}"
+```
+
+## Step 16.7: HR Reply Draft Boundaries
+
+### Project intro fact boundary
+
+当 HR 问“你做过 RAG 或 Agent 项目吗？”时，`/application_review/hr_reply_draft` 会要求区分两个项目：
+
+- RAG 企业知识库项目：可以说 FastAPI、文档入库、FAISS + BM25 + RRF、Reranker、low_confidence、SQLite 多轮会话。
+- AI Job Agent：可以说 candidate profile、application tracking、JD parsing、job_match、application_review、HR reply draft、LangGraph workflow preview。
+
+不能说：
+
+- RAG 项目使用 LangGraph。
+- AI Job Agent 使用 RAG / Embedding / 向量检索。
+- 自动发送 HR 消息、自动投递、企业级生产系统。
+
+如果草稿出现明显混淆，系统会使用安全 fallback，并在 `debug.project_fact_boundary_fallback=true` 记录。
+
+### Interview schedule with slots
+
+无可用 slots 时：
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "明天下午三点方便视频面试吗？",
+  "draft_tone": "professional",
+  "include_raw_prompt": false
+}
+```
+
+返回中重点看：
+
+```json
+{
+  "draft_type": "interview_schedule",
+  "availability_missing": true,
+  "available_slots_used": [],
+  "safe_to_send": false,
+  "human_review_required": true
+}
+```
+
+有可用 slots 时，草稿只能提供 `available_slots_used` 中的时间段供 HR 参考，仍然不会自动确认面试。

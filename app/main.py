@@ -7,6 +7,7 @@ from app.routes import (
     application_routes,
     health_routes,
     hr_routes,
+    interview_availability_routes,
     job_match_routes,
     profile_routes,
 )
@@ -31,3 +32,4 @@ app.include_router(application_routes.router)
 app.include_router(application_review_routes.router)
 app.include_router(job_match_routes.router)
 app.include_router(agent_routes.router)
+app.include_router(interview_availability_routes.router)

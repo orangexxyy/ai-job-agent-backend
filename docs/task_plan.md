@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 16.5: docs-only architecture review, demo validation route, enterprise gap, and roadmap alignment.
+Step 16.7: fix project fact boundary and add interview availability slots MVP.
 
 ## Completed In Step 1
 
@@ -291,3 +291,16 @@ Step 16.5: docs-only architecture review, demo validation route, enterprise gap,
 - Updated `README.md` current stage, architecture summary, limitations, and architecture document entry.
 - Adjusted Next Suggested Steps to Step 17-20.
 - This step does not add business capabilities, APIs, schemas, database changes, smoke test changes, LLM calls, RAG / Embedding, Playwright, automatic sending, or automatic application.
+
+## Completed In Step 16.7
+
+- Fixed project introduction fact boundary for `project_intro` HR reply drafts.
+- Added explicit separation between the RAG enterprise knowledge base project and AI Job Agent project.
+- Added lightweight project fact boundary fallback when generated project intro drafts mix forbidden claims, such as "AI Job Agent uses RAG retrieval" or "RAG project uses LangGraph".
+- Added `interview_availability_slots` SQLite table for manually maintained interview availability.
+- Added `POST /interview_availability_slots`, `GET /interview_availability_slots`, and `PATCH /interview_availability_slots/{slot_id}`.
+- Updated `interview_schedule` HR reply draft logic to read available slots.
+- When no available slots exist, interview schedule drafts ask to confirm the user's calendar first and do not invent time ranges.
+- When available slots exist, interview schedule drafts can only offer those slots and still require human confirmation.
+- Updated smoke test coverage for project fact boundaries, interview schedule with / without slots, and LangGraph approval safety.
+- This step does not connect Google Calendar, does not connect recruitment platforms, does not auto-send HR messages, does not auto-apply, does not auto-confirm interviews, does not implement RAG / Embedding, and does not make the project production-grade.
