@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 16: LangGraph workflow preview integrates application review and HR reply package.
+Step 16.5: docs-only architecture review, demo validation route, enterprise gap, and roadmap alignment.
 
 ## Completed In Step 1
 
@@ -130,9 +130,11 @@ Step 16: LangGraph workflow preview integrates application review and HR reply p
 
 ## Next Suggested Steps
 
-1. Step 17: optionally add a user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
-2. Step 18: optionally add node audit trace / workflow run summary for clearer workflow execution review.
-3. Later: optionally add Playwright dry-run job collection with manual confirmation and no automatic application.
+1. Step 17: user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
+2. Step 18: error handling and retry policy.
+3. Step 19: checkpoint / resume / approval interrupt design.
+4. Step 20: review history / audit log.
+5. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -276,3 +278,16 @@ Step 16: LangGraph workflow preview integrates application review and HR reply p
 - Updated smoke test coverage for the new LangGraph node chain and read-only boundary.
 - The workflow may call DeepSeek-compatible LLM only through Step 15 HR reply package when an API key is configured; without API key it falls back to `rule_fallback`.
 - This step does not write application data, does not update application status / next_action / risk_flags / last_hr_message, does not send HR messages, does not auto-apply, does not confirm interviews, does not add review history tables, does not implement RAG / Embedding / Playwright, and does not connect to recruitment platforms.
+
+## Completed In Step 16.5
+
+- Docs-only: added `docs/architecture_review_step16.md`.
+- Summarized current project positioning, completed capabilities, core APIs, and Step 13 / 14 / 15 / 16 responsibility boundaries.
+- Documented the current LangGraph node chain, plus `state`, `node`, `edge`, `node_debug`, and `edge_trace`.
+- Explained why Step 15 does not call Step 14 by default.
+- Documented Human-in-the-loop safety boundaries and why the project is not yet production-grade or enterprise-grade.
+- Updated `docs/demo_script.md` with three validation routes: outsourcing / onsite risk confirmation, project experience reply, and interview time scenario.
+- Updated `docs/interview_talking_points.md` with 30-second and 2-minute project introductions, LangGraph rationale, no-auto-send rationale, Step 14 vs Step 15, and enterprise gap discussion.
+- Updated `README.md` current stage, architecture summary, limitations, and architecture document entry.
+- Adjusted Next Suggested Steps to Step 17-20.
+- This step does not add business capabilities, APIs, schemas, database changes, smoke test changes, LLM calls, RAG / Embedding, Playwright, automatic sending, or automatic application.

@@ -227,3 +227,14 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 5. `scripts/api_smoke_test.py`：看 smoke test 如何验证 Step 16 节点、`node_debug`、LLM fallback 和只读边界。
 
 阅读时重点确认：`node_debug` 是节点级可观测性字段；LangGraph workflow preview 不自动发送、不自动投递、不自动确认面试、不自动修改 application 状态。Step 14 `/application_review/llm_enhance` 仍然是独立接口，不是 Step 16 必须调用的节点。
+
+## Step 16.5: 架构复习阅读建议
+
+如果目标是准备面试或继续做 Step 17 之后的功能，建议先读：
+
+1. `docs/architecture_review_step16.md`：建立当前项目定位、Step 13-16 边界、LangGraph 节点链路和企业级差距的整体认识。
+2. `docs/demo_script.md`：按三条 Demo 路线验证外包 / 驻场风险、项目经验回复和面试时间场景。
+3. `docs/interview_talking_points.md`：整理 30 秒版本、2 分钟版本和 LangGraph / Human-in-the-loop 的表达。
+4. `app/services/langgraph_workflow_service.py`：最后再回到代码，确认文档中的节点和实际实现一致。
+
+Step 16.5 不改变业务代码，重点是让后续阅读和演示路线更清楚。

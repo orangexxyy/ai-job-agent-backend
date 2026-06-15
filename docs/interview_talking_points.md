@@ -4,6 +4,20 @@
 
 AI Job Agent 是一个面向 AI应用开发求职场景的 Human-in-the-loop Agent Demo，用于管理求职档案、投递记录、HR 消息、岗位匹配和回复草稿。
 
+## 30 秒版本项目介绍
+
+AI Job Agent 是一个面向 AI 应用开发求职场景的 Human-in-the-loop 后端 Demo。它用 FastAPI、SQLite 和 LangGraph 串联求职档案、投递记录、岗位匹配、HR intent、application review 和 HR 回复草稿生成。当前重点不是自动投递或自动沟通，而是帮助求职者把 application 上下文、风险点、项目经历和回复草稿整理清楚，并在 `require_user_approval_node` 停下来等待人工确认。
+
+## 2 分钟版本项目介绍
+
+这个项目从一个很实际的求职流程出发：求职者会有简历信息、目标岗位、投递记录、JD、HR 消息和后续跟进动作。如果这些信息散落在聊天记录和表格里，很容易丢上下文，也容易在回复 HR 时说得太满或漏掉风险。
+
+所以我先做了 `candidate_profile` 和 `applications`，把候选人事实和投递上下文结构化存起来。然后用规则版 `hr/analyze` 识别 HR intent，用 `/hr/reply` 生成保守回复草稿，并用 truth boundary 避免夸大经历。后面增加了 `job_match` 和 rule-based JD parsing，用来做求职者侧的岗位优先级判断。
+
+Step 13 到 Step 16 是最近的主线：`application_review` 基于 application、JD 解析字段、job_match 和 HR intent 给出只读跟进建议；Step 14 的 LLM enhanced review 是独立的分析增强；Step 15 的 HR reply package 同时生成给用户看的回复策略和给 HR 的草稿；Step 16 再把 application review、HR reply package 和 `require_user_approval_node` 接入 LangGraph workflow preview。
+
+这个项目的边界很明确：它不是自动招聘系统，也不是自动海投工具。系统可以生成分析、建议和草稿，但发送 HR 消息、投递、确认面试时间、修改关键状态，都必须由用户人工确认。
+
 ## 为什么做这个项目
 
 这个项目想解决几个真实求职流程里的问题：
@@ -286,3 +300,40 @@ Step 16 的表达重点：
 可以这样介绍：
 
 > Step 16 不是新增一个自动执行 Agent，而是把已有的规则 review 和回复草稿能力放进 LangGraph 编排里。它会先做只读 application review，再生成 HR reply package，最后停在用户确认节点。这样既能展示 LangGraph 的 Node / Edge / State 结构，又不会越过 Human-in-the-loop 边界。
+
+## LangGraph 为什么要接入
+
+可以这样回答：
+
+- 普通 Python workflow 适合早期验证主链路，但当流程里出现多个节点、错误分支、人工确认、状态恢复和后续审计时，LangGraph 更适合表达。
+- 当前 LangGraph workflow preview 把读取 profile、读取 application、运行 application review、生成 HR reply package、等待用户确认拆成节点。
+- `graph_structure` 展示静态图结构，`state_snapshots` 展示节点后的状态变化，`edge_trace` 展示本次请求实际走过的边，`node_debug` 展示每个节点是否读库、写库、调用 LLM。
+- 接入 LangGraph 的目的不是为了炫技，而是为后续 checkpoint / resume / approval interrupt / audit log 做结构准备。
+
+## 为什么不用自动发送
+
+HR 沟通属于真实外部沟通，可能涉及薪资、面试时间、到岗时间、异地、外包、候选人经历等承诺。自动发送会把“草稿建议”变成“真实承诺”，风险很高。
+
+当前系统只生成 `reply_strategy_for_user` 和 `hr_reply_draft`，并在 workflow 中停在 `require_user_approval_node`。这样既能提升回复效率，也不会替用户做最终承诺。
+
+## Step 14 和 Step 15 的区别
+
+- Step 14 `/application_review/llm_enhance` 是给用户看的分析增强：它解释规则 review、查漏补缺、提示冲突和给保守建议。
+- Step 15 `/application_review/hr_reply_draft` 是面向 HR 回复的草稿生成：它输出 `reply_strategy_for_user` 和 `hr_reply_draft`。
+- Step 15 默认不调用 Step 14，是为了避免一次草稿生成触发两次 LLM 调用，也让规则 review 保持稳定 baseline。
+- 两者都不写 application，不发送消息，不自动投递，不自动确认面试。
+
+## 当前不是企业级系统，后续如何增强
+
+当前项目是求职展示级 Demo，不是生产级企业系统。主要差距包括：
+
+- 没有用户体系、权限系统和多租户隔离。
+- 没有生产级数据库迁移、备份恢复和数据治理。
+- 没有 review history / audit log。
+- 没有 LangGraph checkpoint / resume / approval interrupt。
+- 没有完整 retry policy、超时控制、任务队列和监控告警。
+- 没有前端工作台。
+- 没有 RAG / Embedding 项目经历知识库。
+- 没有真实招聘平台接入，也不处理平台合规接入流程。
+
+后续可以按 Step 17-20 推进：先做用户确认后的状态更新 workflow，再做错误处理与 retry policy，然后设计 checkpoint / resume / approval interrupt，最后补 review history / audit log。
