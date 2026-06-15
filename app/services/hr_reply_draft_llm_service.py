@@ -663,18 +663,25 @@ def _safe_to_send(
 
 
 def _serialize_available_slots(slots: Any) -> List[Dict[str, Any]]:
-    return [
-        {
-            "id": slot.id,
-            "date": slot.date,
-            "start_time": slot.start_time,
-            "end_time": slot.end_time,
-            "timezone": slot.timezone,
-            "status": slot.status,
-            "note": slot.note,
-        }
-        for slot in slots
-    ]
+    serialized: List[Dict[str, Any]] = []
+    seen = set()
+    for slot in slots:
+        key = (slot.date, slot.start_time, slot.end_time, slot.timezone)
+        if key in seen:
+            continue
+        seen.add(key)
+        serialized.append(
+            {
+                "id": slot.id,
+                "date": slot.date,
+                "start_time": slot.start_time,
+                "end_time": slot.end_time,
+                "timezone": slot.timezone,
+                "status": slot.status,
+                "note": slot.note,
+            }
+        )
+    return serialized
 
 
 def _string_list(value: Any) -> List[str]:

@@ -305,6 +305,18 @@ Step 16.7: fix project fact boundary and add interview availability slots MVP.
 - Updated smoke test coverage for project fact boundaries, interview schedule with / without slots, and LangGraph approval safety.
 - This step does not connect Google Calendar, does not connect recruitment platforms, does not auto-send HR messages, does not auto-apply, does not auto-confirm interviews, does not implement RAG / Embedding, and does not make the project production-grade.
 
+## Completed In Step 16.7B
+
+- Hardened `interview_availability_slots` duplicate handling.
+- `POST /interview_availability_slots` now rejects duplicate `date + start_time + end_time + timezone` slots with 409 Conflict.
+- `GET /interview_availability_slots` still defaults to `status=available` and now supports `status=all`.
+- HR reply draft continues to use only `status=available` slots.
+- `available_slots_used` includes slot `id` and deduplicates historical duplicate slots by time range.
+- Added `POST /interview_availability_slots/{slot_id}/book` to mark an available / held slot as `booked` after user confirmation.
+- Booking a slot is only an internal state marker: it does not send HR messages, does not auto-confirm interviews, does not update application status, and does not connect external calendars.
+- Updated smoke test coverage for duplicate prevention, slot id visibility, booked slot exclusion, and safety flags.
+- This step does not connect Google Calendar, Feishu Calendar, OAuth, real recruitment platforms, automatic calendar conflict detection, automatic HR sending, automatic application, or automatic interview confirmation.
+
 ## Completed In Resume-Input-01
 
 - Added `scripts/extract_resume_text.py` for local resume text extraction.

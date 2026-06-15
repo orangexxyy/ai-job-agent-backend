@@ -20,6 +20,11 @@ class InterviewAvailabilitySlotUpdateRequest(BaseModel):
     note: Optional[str] = None
 
 
+class InterviewAvailabilitySlotBookRequest(BaseModel):
+    application_id: Optional[int] = None
+    note: str = ""
+
+
 class InterviewAvailabilitySlotItem(BaseModel):
     id: int
     date: str

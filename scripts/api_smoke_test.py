@@ -40,6 +40,10 @@ class SmokeTestHarness:
         self.application_id: Optional[int] = None
         self.interview_slot_id: Optional[int] = None
         self.timestamp = int(time.time())
+        day = (self.timestamp % 20) + 1
+        self.interview_slot_date = f"2026-07-{day:02d}"
+        self.duplicate_slot_date = f"2026-08-{day:02d}"
+        self.booked_slot_date = f"2026-09-{day:02d}"
 
     def run(self) -> int:
         if not self._backup_profile():
@@ -95,6 +99,10 @@ class SmokeTestHarness:
             self._test_interview_schedule_without_slot,
         )
         self._run_step(
+            "duplicate interview availability slot prevention",
+            self._test_duplicate_interview_availability_slot,
+        )
+        self._run_step(
             "create interview availability slot",
             self._test_create_interview_availability_slot,
         )
@@ -105,6 +113,10 @@ class SmokeTestHarness:
         self._run_step(
             "langgraph interview schedule safety",
             self._test_langgraph_interview_schedule_safety,
+        )
+        self._run_step(
+            "booked interview slot is not reused",
+            self._test_booked_slot_not_reused_by_hr_reply_draft,
         )
         self._run_step(
             "expire interview availability slot",
@@ -667,7 +679,7 @@ class SmokeTestHarness:
             "POST",
             "/interview_availability_slots",
             json_body={
-                "date": "2026-06-20",
+                "date": self.interview_slot_date,
                 "start_time": "14:00",
                 "end_time": "16:00",
                 "timezone": "Asia/Shanghai",
@@ -680,11 +692,43 @@ class SmokeTestHarness:
         data = response.json().get("data") or {}
         self.interview_slot_id = data.get("id")
         return (
-            data.get("date") == "2026-06-20"
+            data.get("date") == self.interview_slot_date
             and data.get("start_time") == "14:00"
             and data.get("end_time") == "16:00"
             and data.get("status") == "available"
         )
+
+    def _test_duplicate_interview_availability_slot(self) -> bool:
+        body = {
+            "date": self.duplicate_slot_date,
+            "start_time": "10:00",
+            "end_time": "11:00",
+            "timezone": "Asia/Shanghai",
+            "status": "available",
+            "note": f"HARNESS duplicate slot {self.timestamp}",
+        }
+        first = self._request("POST", "/interview_availability_slots", json_body=body)
+        if first is None:
+            return False
+        if first.status_code not in {200, 409}:
+            return False
+        second = self._request("POST", "/interview_availability_slots", json_body=body)
+        if second is None or second.status_code != 409:
+            return False
+        listed = self._request("GET", "/interview_availability_slots")
+        if not self._success(listed):
+            return False
+        slots = listed.json().get("data") or []
+        matches = [
+            slot
+            for slot in slots
+            if slot.get("date") == self.duplicate_slot_date
+            and slot.get("start_time") == "10:00"
+            and slot.get("end_time") == "11:00"
+            and slot.get("timezone") == "Asia/Shanghai"
+            and slot.get("status") == "available"
+        ]
+        return len(matches) <= 1
 
     def _test_interview_schedule_with_slot(self) -> bool:
         if self.application_id is None or self.interview_slot_id is None:
@@ -710,10 +754,85 @@ class SmokeTestHarness:
             and data.get("draft_type") == "interview_schedule"
             and data.get("availability_missing") is False
             and any(slot.get("id") == self.interview_slot_id for slot in slots)
-            and "2026-06-20" in draft_text
+            and all("id" in slot for slot in slots)
+            and self.interview_slot_date in draft_text
             and "14:00-16:00" in draft_text
             and data.get("safe_to_send") is False
             and data.get("human_review_required") is True
+            and (data.get("debug") or {}).get("auto_send_message") is False
+            and (data.get("debug") or {}).get("auto_confirm_interview") is False
+            and (data.get("debug") or {}).get("auto_apply") is False
+        )
+
+    def _test_booked_slot_not_reused_by_hr_reply_draft(self) -> bool:
+        if self.application_id is None:
+            return False
+        create = self._request(
+            "POST",
+            "/interview_availability_slots",
+            json_body={
+                "date": self.booked_slot_date,
+                "start_time": "15:00",
+                "end_time": "16:00",
+                "timezone": "Asia/Shanghai",
+                "status": "available",
+                "note": f"HARNESS bookable slot {self.timestamp}",
+            },
+        )
+        if not self._success(create):
+            return False
+        slot_id = (create.json().get("data") or {}).get("id")
+        before = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "最近什么时候方便视频面试？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if not self._success(before):
+            return False
+        before_data = before.json().get("data") or {}
+        before_slots = before_data.get("available_slots_used") or []
+        if not any(slot.get("id") == slot_id for slot in before_slots):
+            return False
+        booked = self._request(
+            "POST",
+            f"/interview_availability_slots/{slot_id}/book",
+            json_body={
+                "application_id": self.application_id,
+                "note": f"HARNESS booked slot {self.timestamp}",
+            },
+        )
+        if not self._success(booked):
+            return False
+        booked_data = booked.json().get("data") or {}
+        after = self._request(
+            "POST",
+            "/application_review/hr_reply_draft",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": "最近什么时候方便视频面试？",
+                "draft_tone": "professional",
+                "include_raw_prompt": False,
+            },
+        )
+        if not self._success(after):
+            return False
+        after_data = after.json().get("data") or {}
+        after_slots = after_data.get("available_slots_used") or []
+        after_text = after_data.get("draft_text") or ""
+        debug = after_data.get("debug") or {}
+        return (
+            booked_data.get("status") == "booked"
+            and all(slot.get("id") != slot_id for slot in after_slots)
+            and self.booked_slot_date not in after_text
+            and after_data.get("human_review_required") is True
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_confirm_interview") is False
+            and debug.get("auto_apply") is False
         )
 
     def _test_langgraph_interview_schedule_safety(self) -> bool:

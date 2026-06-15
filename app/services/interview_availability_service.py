@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from app.database import get_connection
 from app.schemas.interview_availability_schema import (
+    InterviewAvailabilitySlotBookRequest,
     InterviewAvailabilitySlotCreateRequest,
     InterviewAvailabilitySlotItem,
     InterviewAvailabilitySlotUpdateRequest,
@@ -63,6 +64,20 @@ def create_interview_availability_slot(
 
     connection = get_connection()
     try:
+        duplicate = connection.execute(
+            """
+            SELECT * FROM interview_availability_slots
+            WHERE date = ?
+              AND start_time = ?
+              AND end_time = ?
+              AND timezone = ?
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (request.date, request.start_time, request.end_time, request.timezone),
+        ).fetchone()
+        if duplicate is not None:
+            raise ValueError("duplicate slot exists")
         cursor = connection.execute(
             f"""
             INSERT INTO interview_availability_slots ({", ".join(SLOT_COLUMNS)})
@@ -93,7 +108,7 @@ def list_interview_availability_slots(
     """
     filters = []
     params: Dict[str, Any] = {"limit": min(limit, 100)}
-    if status:
+    if status and status != "all":
         _validate_status(status)
         filters.append("status = :status")
         params["status"] = status
@@ -158,6 +173,27 @@ def update_interview_availability_slot(
         connection.close()
 
     return _row_to_slot(row)
+
+
+def book_interview_availability_slot(
+    slot_id: int,
+    request: InterviewAvailabilitySlotBookRequest,
+) -> Optional[InterviewAvailabilitySlotItem]:
+    """将用户确认占用的面试时间段标记为 booked。
+
+    主要输入：slot_id，以及可选 application_id / note。
+    主要输出：更新后的 InterviewAvailabilitySlotItem；不存在时返回 None。
+    副作用：会写入 SQLite；不更新 application，不发送 HR 消息，不连接外部日历。
+    """
+    slot = get_interview_availability_slot(slot_id)
+    if slot is None:
+        return None
+    if slot.status not in {"available", "held"}:
+        raise ValueError("slot cannot be booked from current status")
+
+    note = request.note.strip() if request.note else slot.note
+    update = InterviewAvailabilitySlotUpdateRequest(status="booked", note=note)
+    return update_interview_availability_slot(slot_id, update)
 
 
 def get_interview_availability_slot(

@@ -1,5 +1,13 @@
 # Interview Talking Points
 
+## Step 16.7B: 面试时间 slot 闭环怎么讲
+
+这一轮把面试可用时间从“只展示可用时间段”推进到一个最小闭环：用户可以手动维护 available / held / booked / expired slots，系统生成 HR reply draft 时只引用 available slots，并且在 `available_slots_used` 中带上 slot `id`，方便知道草稿使用了哪个时间段。
+
+如果用户已经确认某个面试时间，可以调用 `POST /interview_availability_slots/{slot_id}/book` 把该 slot 标记为 `booked`。这只是系统内部占用标记，不会对 HR 发送消息，不会替用户确认面试，也不会自动修改 application status。
+
+这里刻意没有接 Google Calendar / 飞书日历，也没有做 OAuth 或外部日历冲突检测。原因是当前阶段要先把 Human-in-the-loop 的内部状态闭环做稳，外部日历同步属于后续增强。
+
 ## 一句话介绍
 
 AI Job Agent 是一个面向 AI应用开发求职场景的 Human-in-the-loop Agent Demo，用于管理求职档案、投递记录、HR 消息、岗位匹配和回复草稿。

@@ -1,5 +1,32 @@
 # Demo Script
 
+## Step 16.7B: interview availability booking demo
+
+演示目标：
+
+- 手动维护 `interview_availability_slots`。
+- 重复的 `date + start_time + end_time + timezone` 不会被重复创建。
+- `GET /interview_availability_slots` 默认只返回 `status=available`。
+- HR reply draft 只引用 available slots，并在 `available_slots_used` 中返回 slot `id`。
+- 用户确认后，可调用 `POST /interview_availability_slots/{slot_id}/book` 将内部 slot 标记为 `booked`。
+- booked slot 不再被 HR reply draft 使用。
+
+演示边界：
+
+- 不发送 HR 消息。
+- 不自动确认面试给 HR。
+- 不自动修改 application status。
+- 不接 Google Calendar / 飞书日历。
+- 不做 OAuth、外部日历同步或自动冲突检测。
+
+建议演示顺序：
+
+1. `POST /interview_availability_slots` 创建一个 available slot。
+2. 再次创建相同 slot，观察 409 Conflict。
+3. 调用 `POST /application_review/hr_reply_draft`，观察 `available_slots_used[0].id`。
+4. 调用 `POST /interview_availability_slots/{slot_id}/book`。
+5. 再次调用 HR reply draft，确认该 booked slot 不再出现。
+
 ## 演示准备
 
 启动 FastAPI：

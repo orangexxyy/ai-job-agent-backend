@@ -1,14 +1,16 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.interview_availability_schema import (
+    InterviewAvailabilitySlotBookRequest,
     InterviewAvailabilitySlotCreateRequest,
     InterviewAvailabilitySlotListResponse,
     InterviewAvailabilitySlotResponse,
     InterviewAvailabilitySlotUpdateRequest,
 )
 from app.services.interview_availability_service import (
+    book_interview_availability_slot,
     create_interview_availability_slot,
     list_interview_availability_slots,
     update_interview_availability_slot,
@@ -28,6 +30,8 @@ def create_slot(
     try:
         data = create_interview_availability_slot(request)
     except ValueError as exc:
+        if str(exc) == "duplicate slot exists":
+            raise HTTPException(status_code=409, detail="duplicate slot exists") from exc
         return InterviewAvailabilitySlotResponse(success=False, message=str(exc), data=None)
     return InterviewAvailabilitySlotResponse(
         success=True,
@@ -70,5 +74,23 @@ def update_slot(
     return InterviewAvailabilitySlotResponse(
         success=True,
         message="interview availability slot updated",
+        data=data,
+    )
+
+
+@router.post("/{slot_id}/book", response_model=InterviewAvailabilitySlotResponse)
+def book_slot(
+    slot_id: int,
+    request: InterviewAvailabilitySlotBookRequest,
+) -> InterviewAvailabilitySlotResponse:
+    try:
+        data = book_interview_availability_slot(slot_id, request)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if data is None:
+        raise HTTPException(status_code=404, detail="interview availability slot not found")
+    return InterviewAvailabilitySlotResponse(
+        success=True,
+        message="interview availability slot booked",
         data=data,
     )
