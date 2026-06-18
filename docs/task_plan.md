@@ -317,6 +317,13 @@ Step 16.7: fix project fact boundary and add interview availability slots MVP.
 - Updated smoke test coverage for duplicate prevention, slot id visibility, booked slot exclusion, and safety flags.
 - This step does not connect Google Calendar, Feishu Calendar, OAuth, real recruitment platforms, automatic calendar conflict detection, automatic HR sending, automatic application, or automatic interview confirmation.
 
+## Completed In Step 16.8
+
+- Docs-only: added `docs/real_world_design_notes.md`.
+- Documented three real-world engineering design cases: rule-level chunk design in the companion RAG project, `candidate_profile` fact-source governance, and `interview_availability_slots` state management.
+- Added the document as a README entry for resume and interview review.
+- This step does not add business capabilities, APIs, database changes, LLM calls, RAG / Embedding, MCP, Google Calendar, automatic HR sending, automatic application, or automatic interview confirmation.
+
 ## Completed In Resume-Input-01
 
 - Added `scripts/extract_resume_text.py` for local resume text extraction.

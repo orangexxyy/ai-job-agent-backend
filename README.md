@@ -224,6 +224,7 @@ python scripts/api_smoke_test.py --base-url http://127.0.0.1:8001
 - [Demo Script](docs/demo_script.md)
 - [Workflow / LangGraph Summary](docs/workflow_langgraph_summary.md)
 - [Step 16 Architecture Review](docs/architecture_review_step16.md)
+- [Real World Design Notes](docs/real_world_design_notes.md)：真实业务工程设计沉淀，记录 AI Job Agent 与配套 RAG 项目中更接近企业实际开发的设计取舍，包括事实源治理、状态流转、规则型 chunk、Human-in-the-loop 等。
 - [Project Structure](docs/project_structure.md)
 - [Code Reading Guide](docs/code_reading_guide.md)
 
