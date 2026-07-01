@@ -4,6 +4,8 @@
 
 演示目标：展示“AI 生成草稿”和“用户确认后写状态”是两个独立动作。
 
+范围说明：Step 17 当前只覆盖用户确认 HR 回复已处理 / 已手动发送后的 application 状态更新，不代表已经实现通用人工确认、完整 approval log 或完整 audit log。
+
 1. 调用 `POST /application_review/hr_reply_draft` 生成 HR 回复草稿。
 2. 调用 `GET /applications/{application_id}`，确认生成草稿没有修改 `status / next_action / notes`。
 3. 用户人工审核草稿，并在外部渠道自行处理或手动发送。

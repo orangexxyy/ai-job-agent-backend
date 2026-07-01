@@ -325,13 +325,37 @@ Step 17.1: clean up the documented API surface and add bilingual Swagger metadat
 
 ## Completed In Step 17
 
-- Added `POST /applications/{application_id}/confirm_hr_reply` for explicit user confirmation after an HR reply is handled manually.
+- Added `POST /applications/{application_id}/confirm_hr_reply` only for updating application state after the user confirms an HR reply was handled or sent manually.
 - Kept `/application_review/hr_reply_draft` read-only; draft generation does not update application state.
 - Confirmation updates `status=hr_replied`, `next_action`, optional `last_hr_message`, `updated_at`, and appends the confirmed draft plus `sent_channel=manual` to existing `notes`.
 - Reused existing application fields and added no database columns or tables.
 - Added 404 handling for missing applications, 422 handling for blank drafts, duplicate confirmation protection, and 409 protection for terminal statuses.
 - Updated smoke test coverage for the read-only draft boundary, confirmation writes, safety debug fields, error handling, repeat confirmation, and terminal-state protection.
 - This step does not auto-send HR messages, auto-apply, auto-confirm interviews, or connect to recruitment or communication platforms.
+
+## Completed In Step 17.0
+
+- Docs-only: calibrated Step 17 as a narrow HR reply confirmation flow, not a generic approval system or complete audit log.
+- Clarified that formal resumes should describe implemented capabilities and engineering highlights, while `candidate_profile.truth_boundaries` remains an internal fact-control source.
+- Reviewed public docs for unsupported GitHub high-star project reference claims; none were found.
+- Recorded `automation_policy` as a future design option only. The current version remains draft / user-confirm and does not send external messages automatically.
+- This step does not change business logic, APIs, database structure, private resume input, or external integrations.
+
+### Future Option: automation_policy (Not Implemented)
+
+后续可以设计 `automation_policy`，探索低风险动作的自动处理；薪资、到岗、面试时间、offer 和外部发送等高风险动作仍需人工确认。当前未实现该配置，当前模式仍是 draft / user-confirm；示例中的 `external_send_enabled` 必须保持为 `false`。
+
+```json
+{
+  "hr_reply_mode": "draft_only | user_confirm | auto_low_risk",
+  "interview_schedule_requires_confirmation": true,
+  "salary_requires_confirmation": true,
+  "offer_requires_confirmation": true,
+  "external_send_enabled": false
+}
+```
+
+如果未来系统性参考外部项目，应新增可追溯记录，包含项目名称、链接、借鉴点和未采用原因；在记录完成前，README 和简历不得声称已经系统参考 GitHub 高星项目。
 
 ## Completed In Step 17.1
 

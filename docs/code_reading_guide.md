@@ -241,6 +241,8 @@ workflow 是后端内部编排，应该复用 service 函数，避免额外 HTTP
 
 Step 16.5 不改变业务代码，重点是让后续阅读和演示路线更清楚。
 
+阅读 Step 17 时要注意：`confirm_hr_reply` 仅处理用户确认 HR 回复已处理 / 已手动发送后的 application 状态更新；它不是通用 approval 系统，完整 audit log 仍属于后续规划。
+
 ## Step 16.7: 项目事实边界和面试时间阅读顺序
 
 建议按这个顺序阅读：

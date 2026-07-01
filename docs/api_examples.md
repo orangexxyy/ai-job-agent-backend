@@ -1191,6 +1191,8 @@ curl -X PATCH http://127.0.0.1:8001/interview_availability_slots/1 \
 
 `POST /application_review/hr_reply_draft` 仍然只生成草稿，不写 application。用户人工审核并自行处理回复后，才调用：
 
+该接口当前只记录“本轮 HR 回复已由用户处理 / 手动发送”及对应 application 状态，不是通用人工确认接口，也不提供完整 approval log / audit log。
+
 ```bash
 curl -X POST http://127.0.0.1:8001/applications/1/confirm_hr_reply \
   -H "Content-Type: application/json" \

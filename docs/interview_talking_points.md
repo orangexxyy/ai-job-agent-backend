@@ -14,6 +14,8 @@
 
 这个确认只表示用户声明本轮 HR 回复已经人工处理，不表示系统连接了招聘平台或通信工具。系统仍然不自动发送 HR 消息、不自动投递、不自动确认面试；终态 application 也不会被盲目覆盖。
 
+Step 17 当前只覆盖 HR 回复确认后的 application 状态更新，不是通用 approval 系统，也没有完整 approval log / audit log。后续可以抽象通用 action confirmation，但面试中不能把这部分规划说成已实现。
+
 ## Step 16.7B: 面试时间 slot 闭环怎么讲
 
 这一轮把面试可用时间从“只展示可用时间段”推进到一个最小闭环：用户可以手动维护 available / held / booked / expired slots，系统生成 HR reply draft 时只引用 available slots，并且在 `available_slots_used` 中带上 slot `id`，方便知道草稿使用了哪个时间段。

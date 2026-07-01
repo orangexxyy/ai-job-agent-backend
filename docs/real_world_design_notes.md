@@ -204,6 +204,8 @@ HR reply draft 只能读取 `status=available` 的 slots。用户确认某个面
 
 `/application_review/hr_reply_draft` 保持只读。用户人工审核并自行处理回复后，主动调用 `POST /applications/{application_id}/confirm_hr_reply`，系统才把 application 更新为 `hr_replied`，设置下一步动作，并把确认采用的草稿、`sent_channel=manual` 和备注追加到现有 `notes`。该设计复用现有字段，没有新增数据库表或字段。
 
+Step 17 当前仅覆盖“用户确认 HR 回复已处理 / 已手动发送后，更新对应 application 内部状态”。它不是通用人工确认系统，也没有实现完整 approval log / audit log。
+
 ### 边界和风险
 
 - 确认接口记录的是用户声明的人工处理结果，不代表系统实际发送了消息。
@@ -255,6 +257,39 @@ Swagger 使用中英文 summary / description 标记接口用途，并通过 tag
 ### 面试表达
 
 “我对迭代后的接口做了 API surface 治理，区分主流程、Legacy 和 Preview 接口。旧接口没有直接删除，而是在 Swagger 标记 Deprecated 并说明替代入口，既保持兼容，也避免 Demo 或后续维护时误用旧接口。”
+
+## 简历表达与 truth boundaries 分层
+
+不同载体承担不同职责，不能把内部安全提示原样写进正式投递简历：
+
+- 正式简历：只写真实已实现能力、技术栈、业务问题和工程亮点，不使用“边界：该项目没有……”式项目 bullet。
+- `candidate_profile.truth_boundaries`：保存不能混淆、不能夸大、不能承诺的内部事实边界。
+- README / docs：可以如实说明当前能力、限制和后续规划。
+- HR reply draft：基于 `project_context + truth_boundaries` 约束生成，但不要求正式简历直接展示内部边界文本。
+
+适合正式简历的自然项目亮点示例：
+
+- RAG 项目：设计条款级 chunk 和 `paragraph_then_overlap` 回退策略，针对企业制度、报销规则、请假流程等规则型资料，尽量保证一条业务规则完整进入 chunk，降低固定长度切分导致关键条件缺失的问题。
+- AI Job Agent：设计 Human-in-the-loop HR 回复确认流程，HR 回复草稿生成后不直接修改状态，用户确认已处理 / 手动发送后再更新 application 状态，避免 AI 建议直接变成现实动作。
+- 面试时间管理：设计 `interview_availability_slots` 状态管理，维护 available / held / booked / expired 状态；草稿只引用 available 时间段，用户确认后标记 booked，避免重复推荐。
+
+## automation_policy 后续规划（当前未实现）
+
+后续可设计 `automation_policy`，对低风险动作探索自动处理；薪资、到岗、面试时间、offer、外部发送等高风险动作仍需人工确认。当前版本不自动发送外部消息，当前模式仍是 draft / user-confirm，尚未实现 `auto_low_risk`。
+
+```json
+{
+  "hr_reply_mode": "draft_only | user_confirm | auto_low_risk",
+  "interview_schedule_requires_confirmation": true,
+  "salary_requires_confirmation": true,
+  "offer_requires_confirmation": true,
+  "external_send_enabled": false
+}
+```
+
+## 外部项目参考的可追溯要求
+
+当前尚未完成系统性的 GitHub 项目对标，因此 README、简历和面试材料不应声称已经参考 GitHub 高星项目。未来如参考外部项目，需要记录项目名称、链接、具体借鉴点和未采用原因，确保说法真实、可追溯；不得凭空补充项目名称。
 
 ## 后续可继续沉淀的工程设计点
 

@@ -41,6 +41,8 @@
 
 `POST /application_review/hr_reply_draft` 只生成草稿，不自动发送 HR 消息，也不修改 application 状态。用户人工审核并自行处理后，才调用 `confirm_hr_reply` 记录内部状态。
 
+`confirm_hr_reply` 当前仅覆盖 HR 回复确认后的 application 状态更新，不应理解为通用 action approval、完整 approval log 或完整 audit log。
+
 ### Legacy 接口
 
 Legacy 接口保留是为了兼容早期测试和调用方式，不建议作为当前 Demo 主入口：
