@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from app.database import get_connection
 from app.schemas.application_schema import (
     ApplicationCreateRequest,
+    ApplicationHrReplyConfirmRequest,
     ApplicationItem,
     ApplicationUpdateRequest,
     VALID_APPLICATION_STATUSES,
@@ -66,6 +67,7 @@ UPDATABLE_FIELDS = {
 
 
 REQUIRED_TEXT_FIELDS = {"company_name", "job_title", "status"}
+TERMINAL_APPLICATION_STATUSES = {"offer", "rejected", "closed"}
 
 
 def _now_iso() -> str:
@@ -303,3 +305,106 @@ def update_application(
         connection.close()
 
     return _row_to_application(row)
+
+
+def confirm_application_hr_reply(
+    application_id: int,
+    request: ApplicationHrReplyConfirmRequest,
+) -> Optional[Dict[str, Any]]:
+    """在用户确认已处理 HR 回复后，安全更新 application 内部状态。
+
+    主要输入：application_id、用户确认采用的 draft_text、可选 HR 原消息、下一步动作和备注。
+    主要输出：更新后的 application、重复确认标记和 Human-in-the-loop 安全 debug。
+    副作用：会写入 SQLite；不会自动发送 HR 消息、自动投递或自动确认面试。
+    """
+    application = get_application(application_id)
+    if application is None:
+        return None
+
+    draft_text = request.draft_text.strip()
+    if not draft_text:
+        raise ValueError("draft_text cannot be empty")
+    next_action = request.next_action.strip()
+    if not next_action:
+        raise ValueError("next_action cannot be empty")
+    if application.status in TERMINAL_APPLICATION_STATUSES:
+        raise ValueError(
+            f"terminal application status '{application.status}' cannot be overwritten"
+        )
+
+    existing_notes = application.notes or ""
+    draft_marker = f"draft_text: {draft_text}"
+    already_confirmed = (
+        application.status == "hr_replied"
+        and application.next_action == next_action
+        and draft_marker in existing_notes
+    )
+    if already_confirmed:
+        return _build_hr_reply_confirmation_result(
+            application=application,
+            sent_channel=request.sent_channel,
+            already_confirmed=True,
+            database_write_performed=False,
+        )
+
+    record_lines = [
+        "[HR_REPLY_CONFIRMED]",
+        f"confirmed_at: {_now_iso()}",
+        f"sent_channel: {request.sent_channel}",
+        draft_marker,
+    ]
+    hr_message = (request.hr_message or "").strip()
+    note = request.note.strip()
+    if hr_message:
+        record_lines.append(f"hr_message: {hr_message}")
+    if note:
+        record_lines.append(f"note: {note}")
+    confirmation_record = "\n".join(record_lines)
+    notes = f"{existing_notes.rstrip()}\n\n{confirmation_record}".strip()
+
+    update_fields: Dict[str, Any] = {
+        "status": "hr_replied",
+        "next_action": next_action,
+        "notes": notes,
+    }
+    if hr_message:
+        update_fields["last_hr_message"] = hr_message
+
+    updated = update_application(
+        application_id,
+        ApplicationUpdateRequest(**update_fields),
+    )
+    if updated is None:
+        return None
+    return _build_hr_reply_confirmation_result(
+        application=updated,
+        sent_channel=request.sent_channel,
+        already_confirmed=False,
+        database_write_performed=True,
+    )
+
+
+def _build_hr_reply_confirmation_result(
+    *,
+    application: ApplicationItem,
+    sent_channel: str,
+    already_confirmed: bool,
+    database_write_performed: bool,
+) -> Dict[str, Any]:
+    return {
+        "application_id": application.id,
+        "status": application.status,
+        "next_action": application.next_action,
+        "sent_channel": sent_channel,
+        "confirmation_recorded": True,
+        "already_confirmed": already_confirmed,
+        "application": application,
+        "debug": {
+            "auto_send_message": False,
+            "auto_apply": False,
+            "auto_confirm_interview": False,
+            "database_write_intended": True,
+            "database_write_performed": database_write_performed,
+            "confirmed_by_user": True,
+        },
+    }

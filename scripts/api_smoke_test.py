@@ -44,6 +44,9 @@ class SmokeTestHarness:
         self.interview_slot_date = f"2026-07-{day:02d}"
         self.duplicate_slot_date = f"2026-08-{day:02d}"
         self.booked_slot_date = f"2026-09-{day:02d}"
+        self.confirmed_hr_reply_text = (
+            "Thank you for the invitation. I reviewed the details and replied manually."
+        )
 
     def run(self) -> int:
         if not self._backup_profile():
@@ -146,7 +149,31 @@ class SmokeTestHarness:
             "missing application_id HR reply",
             self._test_missing_application_hr_reply,
         )
+        self._run_step(
+            "missing application HR reply confirmation",
+            self._test_missing_application_hr_reply_confirmation,
+        )
+        self._run_step(
+            "empty draft HR reply confirmation",
+            self._test_empty_draft_hr_reply_confirmation,
+        )
+        self._run_step(
+            "confirm HR reply after user approval",
+            self._test_confirm_application_hr_reply,
+        )
+        self._run_step(
+            "verify application updated after HR reply confirmation",
+            self._test_application_after_hr_reply_confirmation,
+        )
+        self._run_step(
+            "repeat HR reply confirmation safely",
+            self._test_repeat_application_hr_reply_confirmation,
+        )
         self._run_step("close harness application", self._test_close_application)
+        self._run_step(
+            "protect terminal application from HR reply confirmation",
+            self._test_terminal_application_hr_reply_confirmation,
+        )
         self._run_step("restore profile", self._restore_profile)
 
         self._print_summary()
@@ -561,6 +588,10 @@ class SmokeTestHarness:
     def _test_llm_hr_reply_draft(self) -> bool:
         if self.application_id is None:
             return False
+        before_response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(before_response):
+            return False
+        before = before_response.json().get("data") or {}
         response = self._request(
             "POST",
             "/application_review/hr_reply_draft",
@@ -578,6 +609,11 @@ class SmokeTestHarness:
         debug = data.get("debug", {})
         strategy = data.get("reply_strategy_for_user") or {}
         draft = data.get("hr_reply_draft") or {}
+        after_response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(after_response):
+            return False
+        after = after_response.json().get("data") or {}
+        read_only_fields = ("status", "next_action", "last_hr_message", "notes")
         return (
             payload.get("success") is True
             and data.get("application_id") == self.application_id
@@ -598,6 +634,8 @@ class SmokeTestHarness:
             and debug.get("auto_apply") is False
             and debug.get("auto_update_status") is False
             and debug.get("database_write_intended") is False
+            and debug.get("auto_confirm_interview") is False
+            and all(before.get(field) == after.get(field) for field in read_only_fields)
             and "raw_prompt_messages" not in debug
         )
 
@@ -1044,6 +1082,105 @@ class SmokeTestHarness:
             and payload.get("data") is None
         )
 
+    def _test_missing_application_hr_reply_confirmation(self) -> bool:
+        response = self._request(
+            "POST",
+            "/applications/999999999/confirm_hr_reply",
+            json_body={"draft_text": self.confirmed_hr_reply_text},
+        )
+        if response is None or response.status_code != 404:
+            return False
+        return response.json().get("detail") == "application not found"
+
+    def _test_empty_draft_hr_reply_confirmation(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            f"/applications/{self.application_id}/confirm_hr_reply",
+            json_body={"draft_text": "   "},
+        )
+        if response is None or response.status_code != 422:
+            return False
+        return response.json().get("detail") == "draft_text cannot be empty"
+
+    def _test_confirm_application_hr_reply(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            f"/applications/{self.application_id}/confirm_hr_reply",
+            json_body={
+                "draft_text": self.confirmed_hr_reply_text,
+                "hr_message": "When would you be available for a follow-up?",
+                "sent_channel": "manual",
+                "next_action": "wait_for_hr_response",
+                "note": "Confirmed by the smoke test user.",
+            },
+        )
+        if not self._success(response):
+            return False
+        payload = response.json()
+        data = payload.get("data") or {}
+        debug = data.get("debug") or {}
+        application = data.get("application") or {}
+        return (
+            data.get("application_id") == self.application_id
+            and data.get("status") == "hr_replied"
+            and data.get("next_action") == "wait_for_hr_response"
+            and data.get("sent_channel") == "manual"
+            and data.get("confirmation_recorded") is True
+            and data.get("already_confirmed") is False
+            and application.get("status") == "hr_replied"
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_confirm_interview") is False
+            and debug.get("database_write_intended") is True
+            and debug.get("database_write_performed") is True
+            and debug.get("confirmed_by_user") is True
+        )
+
+    def _test_application_after_hr_reply_confirmation(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(response):
+            return False
+        data = response.json().get("data") or {}
+        notes = data.get("notes") or ""
+        return (
+            data.get("status") == "hr_replied"
+            and data.get("next_action") == "wait_for_hr_response"
+            and data.get("last_hr_message")
+            == "When would you be available for a follow-up?"
+            and "[HR_REPLY_CONFIRMED]" in notes
+            and "sent_channel: manual" in notes
+            and self.confirmed_hr_reply_text in notes
+        )
+
+    def _test_repeat_application_hr_reply_confirmation(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            f"/applications/{self.application_id}/confirm_hr_reply",
+            json_body={
+                "draft_text": self.confirmed_hr_reply_text,
+                "sent_channel": "manual",
+                "next_action": "wait_for_hr_response",
+            },
+        )
+        if not self._success(response):
+            return False
+        data = response.json().get("data") or {}
+        debug = data.get("debug") or {}
+        return (
+            data.get("already_confirmed") is True
+            and data.get("status") == "hr_replied"
+            and debug.get("database_write_performed") is False
+            and debug.get("confirmed_by_user") is True
+        )
+
     def _test_close_application(self) -> bool:
         if self.application_id is None:
             return False
@@ -1056,6 +1193,19 @@ class SmokeTestHarness:
             },
         )
         return self._success(response)
+
+    def _test_terminal_application_hr_reply_confirmation(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "POST",
+            f"/applications/{self.application_id}/confirm_hr_reply",
+            json_body={"draft_text": "This must not overwrite a terminal status."},
+        )
+        if response is None or response.status_code != 409:
+            return False
+        detail = response.json().get("detail") or ""
+        return "terminal application status 'closed'" in detail
 
     def _restore_profile(self) -> bool:
         if not self.original_profile_exists:

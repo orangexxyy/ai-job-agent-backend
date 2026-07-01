@@ -174,7 +174,7 @@ LangGraph 适合这个项目的原因：
 - Step 13：Application review / follow-up decision layer。
 - Step 14：LLM enhanced application review，只读增强分析。
 - Step 15：HR reply draft enhancement，可选，仍需人工确认。
-- Step 17：用户确认后的状态更新 workflow，可选，且必须 Human-in-the-loop。
+- Step 17 已实现独立确认接口：草稿节点保持只读，只有用户明确确认后才更新 application 内部状态；自动发送仍不属于 workflow。
 - Step 18：node audit trace / workflow run summary，可选，用于更清楚地展示节点执行记录。
 - Later：Playwright dry-run 岗位采集，必须人工确认，且不做自动投递。
 ## Step 10 已实现：规则版 workflow_preview

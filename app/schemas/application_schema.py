@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -7,6 +7,7 @@ VALID_APPLICATION_STATUSES = {
     "saved",
     "applied",
     "hr_contacted",
+    "hr_replied",
     "interview_scheduled",
     "interview_done",
     "offer",
@@ -51,6 +52,14 @@ class ApplicationUpdateRequest(BaseModel):
     risk_flags: Optional[List[str]] = None
 
 
+class ApplicationHrReplyConfirmRequest(BaseModel):
+    draft_text: str = Field(min_length=1)
+    hr_message: Optional[str] = None
+    sent_channel: Literal["manual"] = "manual"
+    next_action: str = Field(default="wait_for_hr_response", min_length=1)
+    note: str = ""
+
+
 class ApplicationItem(ApplicationCreateRequest):
     id: int
     source_type: str = ""
@@ -74,3 +83,20 @@ class ApplicationListResponse(BaseModel):
     success: bool
     message: str
     data: List[ApplicationItem]
+
+
+class ApplicationHrReplyConfirmData(BaseModel):
+    application_id: int
+    status: str
+    next_action: str
+    sent_channel: str
+    confirmation_recorded: bool
+    already_confirmed: bool = False
+    application: ApplicationItem
+    debug: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ApplicationHrReplyConfirmResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[ApplicationHrReplyConfirmData] = None

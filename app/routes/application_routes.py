@@ -1,14 +1,17 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.application_schema import (
     ApplicationCreateRequest,
+    ApplicationHrReplyConfirmRequest,
+    ApplicationHrReplyConfirmResponse,
     ApplicationListResponse,
     ApplicationResponse,
     ApplicationUpdateRequest,
 )
 from app.services.application_service import (
+    confirm_application_hr_reply,
     create_application,
     get_application,
     list_applications,
@@ -17,6 +20,33 @@ from app.services.application_service import (
 
 
 router = APIRouter(prefix="/applications", tags=["applications"])
+
+
+@router.post(
+    "/{application_id}/confirm_hr_reply",
+    response_model=ApplicationHrReplyConfirmResponse,
+)
+def confirm_application_hr_reply_record(
+    application_id: int,
+    request: ApplicationHrReplyConfirmRequest,
+) -> ApplicationHrReplyConfirmResponse:
+    try:
+        data = confirm_application_hr_reply(application_id, request)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 409 if message.startswith("terminal application status") else 422
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    if data is None:
+        raise HTTPException(status_code=404, detail="application not found")
+    return ApplicationHrReplyConfirmResponse(
+        success=True,
+        message=(
+            "HR reply already confirmed"
+            if data["already_confirmed"]
+            else "HR reply confirmed by user"
+        ),
+        data=data,
+    )
 
 
 @router.post("", response_model=ApplicationResponse)

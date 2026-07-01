@@ -1,5 +1,29 @@
 # Demo Script
 
+## Step 17: 用户确认 HR 回复后的状态更新
+
+演示目标：展示“AI 生成草稿”和“用户确认后写状态”是两个独立动作。
+
+1. 调用 `POST /application_review/hr_reply_draft` 生成 HR 回复草稿。
+2. 调用 `GET /applications/{application_id}`，确认生成草稿没有修改 `status / next_action / notes`。
+3. 用户人工审核草稿，并在外部渠道自行处理或手动发送。
+4. 调用 `POST /applications/{application_id}/confirm_hr_reply`，提交确认采用的 `draft_text`。
+5. 再次查询 application，观察 `status=hr_replied`、`next_action=wait_for_hr_response`，以及 `notes` 中的人工确认记录。
+
+确认请求示例：
+
+```json
+{
+  "draft_text": "您好，感谢您的邀请……",
+  "hr_message": "最近什么时候方便视频面试？",
+  "sent_channel": "manual",
+  "next_action": "wait_for_hr_response",
+  "note": "用户已人工确认并手动发送给 HR"
+}
+```
+
+演示时强调：确认接口只记录内部状态，不连接 Boss / 邮箱 / 微信 / 飞书，不自动发送消息，不自动投递，也不自动确认面试。
+
 ## Step 16.7B: interview availability booking demo
 
 演示目标：

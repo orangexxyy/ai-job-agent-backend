@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 16.7: fix project fact boundary and add interview availability slots MVP.
+Step 17: update application state only after explicit user confirmation of an HR reply.
 
 ## Completed In Step 1
 
@@ -130,11 +130,10 @@ Step 16.7: fix project fact boundary and add interview availability slots MVP.
 
 ## Next Suggested Steps
 
-1. Step 17: user-confirmed status update workflow, where application status / next_action changes only after explicit user confirmation.
-2. Step 18: error handling and retry policy.
-3. Step 19: checkpoint / resume / approval interrupt design.
-4. Step 20: review history / audit log.
-5. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
+1. Step 18: error handling and retry policy.
+2. Step 19: checkpoint / resume / approval interrupt design.
+3. Step 20: review history / audit log.
+4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -323,6 +322,16 @@ Step 16.7: fix project fact boundary and add interview availability slots MVP.
 - Documented three real-world engineering design cases: rule-level chunk design in the companion RAG project, `candidate_profile` fact-source governance, and `interview_availability_slots` state management.
 - Added the document as a README entry for resume and interview review.
 - This step does not add business capabilities, APIs, database changes, LLM calls, RAG / Embedding, MCP, Google Calendar, automatic HR sending, automatic application, or automatic interview confirmation.
+
+## Completed In Step 17
+
+- Added `POST /applications/{application_id}/confirm_hr_reply` for explicit user confirmation after an HR reply is handled manually.
+- Kept `/application_review/hr_reply_draft` read-only; draft generation does not update application state.
+- Confirmation updates `status=hr_replied`, `next_action`, optional `last_hr_message`, `updated_at`, and appends the confirmed draft plus `sent_channel=manual` to existing `notes`.
+- Reused existing application fields and added no database columns or tables.
+- Added 404 handling for missing applications, 422 handling for blank drafts, duplicate confirmation protection, and 409 protection for terminal statuses.
+- Updated smoke test coverage for the read-only draft boundary, confirmation writes, safety debug fields, error handling, repeat confirmation, and terminal-state protection.
+- This step does not auto-send HR messages, auto-apply, auto-confirm interviews, or connect to recruitment or communication platforms.
 
 ## Completed In Resume-Input-01
 

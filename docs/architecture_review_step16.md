@@ -269,7 +269,7 @@ AI Job Agent 项目不可以说：
 
 建议后续按风险和价值逐步推进：
 
-1. Step 17：用户确认后的状态更新 workflow，只在用户确认后更新 application `status / next_action`。
+1. Step 17 已完成：用户明确确认已处理 HR 回复后，才更新 application `status / next_action`。
 2. Step 18：错误处理与 retry policy，包括 LLM 调用失败、数据库异常、网络超时和 fallback 策略。
 3. Step 19：checkpoint / resume / approval interrupt 设计，让 workflow 可以停在人工确认点后继续执行。
 4. Step 20：review history / audit log，记录每次 review、草稿、用户确认和状态变化。

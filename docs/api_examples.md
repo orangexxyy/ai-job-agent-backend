@@ -1184,3 +1184,39 @@ curl -X PATCH http://127.0.0.1:8001/interview_availability_slots/1 \
 ```
 
 有可用 slots 时，草稿只能提供 `available_slots_used` 中的时间段供 HR 参考，仍然不会自动确认面试。
+
+## Step 17: Confirm HR Reply After User Approval
+
+`POST /application_review/hr_reply_draft` 仍然只生成草稿，不写 application。用户人工审核并自行处理回复后，才调用：
+
+```bash
+curl -X POST http://127.0.0.1:8001/applications/1/confirm_hr_reply \
+  -H "Content-Type: application/json" \
+  -d '{"draft_text":"您好，感谢您的邀请……","hr_message":"最近什么时候方便视频面试？","sent_channel":"manual","next_action":"wait_for_hr_response","note":"用户已人工确认并手动发送给 HR"}'
+```
+
+成功响应的关键字段：
+
+```json
+{
+  "success": true,
+  "message": "HR reply confirmed by user",
+  "data": {
+    "application_id": 1,
+    "status": "hr_replied",
+    "next_action": "wait_for_hr_response",
+    "sent_channel": "manual",
+    "confirmation_recorded": true,
+    "already_confirmed": false,
+    "debug": {
+      "auto_send_message": false,
+      "auto_apply": false,
+      "auto_confirm_interview": false,
+      "database_write_intended": true,
+      "confirmed_by_user": true
+    }
+  }
+}
+```
+
+不存在的 application 返回 404，空白 `draft_text` 返回 422，`offer / rejected / closed` 终态返回 409。重复提交相同草稿不会重复追加记录，而是返回 `already_confirmed=true`。

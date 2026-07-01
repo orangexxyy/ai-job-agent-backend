@@ -187,6 +187,42 @@ HR reply draft 只能读取 `status=available` 的 slots。用户确认某个面
 
 “我没有让 LLM 自己生成面试时间，而是设计了 interview_availability_slots。系统只会读取 available 时间段生成草稿；用户确认后把 slot 标记为 booked，后续不会再推荐。当前不自动发送 HR 消息，也不接外部日历，后续可以扩展日历冲突检测。”
 
+## 案例四：HR 回复确认后的状态更新
+
+### 真实业务问题
+
+生成 HR 回复草稿不等于用户已经发送或处理了消息。如果生成草稿时就修改 application，系统会把 AI 建议错误地当成现实动作，后续提醒和状态判断也会失真。
+
+### 简单做法的问题
+
+- 不能因为 LLM 返回 `safe_to_send=true` 就标记为已回复。
+- 不能在草稿生成时自动修改 `status / next_action`。
+- 不能由系统自动发送消息或自动确认面试。
+- 不能无条件覆盖 `offer / rejected / closed` 等终态。
+
+### 当前设计
+
+`/application_review/hr_reply_draft` 保持只读。用户人工审核并自行处理回复后，主动调用 `POST /applications/{application_id}/confirm_hr_reply`，系统才把 application 更新为 `hr_replied`，设置下一步动作，并把确认采用的草稿、`sent_channel=manual` 和备注追加到现有 `notes`。该设计复用现有字段，没有新增数据库表或字段。
+
+### 边界和风险
+
+- 确认接口记录的是用户声明的人工处理结果，不代表系统实际发送了消息。
+- 系统不连接 Boss、邮箱、微信或飞书。
+- 系统不自动投递、不自动发送 HR 消息、不自动确认面试。
+- 终态 application 返回 409，避免状态被盲目覆盖。
+- 当前使用 `notes` 保存简要确认记录，还不是完整 audit log。
+
+### 测试验收
+
+- 对比生成草稿前后的 application，确认关键字段未变化。
+- 调用确认接口后检查 `status=hr_replied`、`next_action` 和 notes 记录。
+- 检查 404、空草稿 422、终态 409 和重复确认。
+- 检查 debug 始终包含 `auto_send_message=false`、`auto_apply=false`、`auto_confirm_interview=false` 和 `confirmed_by_user=true`。
+
+### 面试表达
+
+“我把生成草稿和状态更新拆开，草稿只是 AI 建议，只有用户确认后才写 application 状态，避免 LLM 生成内容直接变成现实动作。确认接口只记录用户已经人工处理，不负责发送消息；终态也有保护，后续如果需要更完整追踪，再扩展 audit log。”
+
 ## 后续可继续沉淀的工程设计点
 
 - HR intent routing：不同 HR 意图走不同回复策略。
