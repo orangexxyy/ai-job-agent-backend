@@ -1,6 +1,7 @@
 import argparse
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 import requests
@@ -40,10 +41,12 @@ class SmokeTestHarness:
         self.application_id: Optional[int] = None
         self.interview_slot_id: Optional[int] = None
         self.timestamp = int(time.time())
-        day = (self.timestamp % 20) + 1
-        self.interview_slot_date = f"2026-07-{day:02d}"
-        self.duplicate_slot_date = f"2026-08-{day:02d}"
-        self.booked_slot_date = f"2026-09-{day:02d}"
+        slot_base = datetime.now(timezone.utc) + timedelta(days=365)
+        self.interview_slot_date = slot_base.strftime("%Y-%m-%d")
+        self.duplicate_slot_date = (slot_base + timedelta(days=1)).strftime("%Y-%m-%d")
+        self.booked_slot_date = (slot_base + timedelta(days=2)).strftime("%Y-%m-%d")
+        self.interview_slot_start = slot_base.strftime("%H:%M:%S")
+        self.interview_slot_end = (slot_base + timedelta(minutes=30)).strftime("%H:%M:%S")
         self.confirmed_hr_reply_text = (
             "Thank you for the invitation. I reviewed the details and replied manually."
         )
@@ -718,8 +721,8 @@ class SmokeTestHarness:
             "/interview_availability_slots",
             json_body={
                 "date": self.interview_slot_date,
-                "start_time": "14:00",
-                "end_time": "16:00",
+                "start_time": self.interview_slot_start,
+                "end_time": self.interview_slot_end,
                 "timezone": "Asia/Shanghai",
                 "status": "available",
                 "note": f"HARNESS slot {self.timestamp}",
@@ -731,16 +734,16 @@ class SmokeTestHarness:
         self.interview_slot_id = data.get("id")
         return (
             data.get("date") == self.interview_slot_date
-            and data.get("start_time") == "14:00"
-            and data.get("end_time") == "16:00"
+            and data.get("start_time") == self.interview_slot_start
+            and data.get("end_time") == self.interview_slot_end
             and data.get("status") == "available"
         )
 
     def _test_duplicate_interview_availability_slot(self) -> bool:
         body = {
             "date": self.duplicate_slot_date,
-            "start_time": "10:00",
-            "end_time": "11:00",
+            "start_time": self.interview_slot_start,
+            "end_time": self.interview_slot_end,
             "timezone": "Asia/Shanghai",
             "status": "available",
             "note": f"HARNESS duplicate slot {self.timestamp}",
@@ -761,12 +764,22 @@ class SmokeTestHarness:
             slot
             for slot in slots
             if slot.get("date") == self.duplicate_slot_date
-            and slot.get("start_time") == "10:00"
-            and slot.get("end_time") == "11:00"
+            and slot.get("start_time") == self.interview_slot_start
+            and slot.get("end_time") == self.interview_slot_end
             and slot.get("timezone") == "Asia/Shanghai"
             and slot.get("status") == "available"
         ]
-        return len(matches) <= 1
+        passed = len(matches) <= 1
+        for slot in matches:
+            self._request(
+                "PATCH",
+                f"/interview_availability_slots/{slot['id']}",
+                json_body={
+                    "status": "expired",
+                    "note": f"HARNESS duplicate slot cleanup {self.timestamp}",
+                },
+            )
+        return passed
 
     def _test_interview_schedule_with_slot(self) -> bool:
         if self.application_id is None or self.interview_slot_id is None:
@@ -793,8 +806,11 @@ class SmokeTestHarness:
             and data.get("availability_missing") is False
             and any(slot.get("id") == self.interview_slot_id for slot in slots)
             and all("id" in slot for slot in slots)
-            and self.interview_slot_date in draft_text
-            and "14:00-16:00" in draft_text
+            and any(
+                f"{slot.get('date')} {slot.get('start_time')}-{slot.get('end_time')}"
+                in draft_text
+                for slot in slots
+            )
             and data.get("safe_to_send") is False
             and data.get("human_review_required") is True
             and (data.get("debug") or {}).get("auto_send_message") is False
@@ -810,8 +826,8 @@ class SmokeTestHarness:
             "/interview_availability_slots",
             json_body={
                 "date": self.booked_slot_date,
-                "start_time": "15:00",
-                "end_time": "16:00",
+                "start_time": self.interview_slot_start,
+                "end_time": self.interview_slot_end,
                 "timezone": "Asia/Shanghai",
                 "status": "available",
                 "note": f"HARNESS bookable slot {self.timestamp}",

@@ -2,6 +2,8 @@
 
 本文档用于说明 AI Job Agent 当前 Demo 的推荐 API 主流程，并区分主流程接口、Legacy 兼容接口和 Debug / Preview 接口。Swagger 中的 summary / description 使用中英文双语，方便项目演示和面试阅读。
 
+当前主流程的实测结果见 [Mainline Acceptance Report](mainline_acceptance_report.md)。
+
 ## 当前 Demo 推荐顺序
 
 1. `GET /profile`：读取候选人档案 / Read candidate profile

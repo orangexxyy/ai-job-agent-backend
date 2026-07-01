@@ -1,5 +1,7 @@
 # Demo Script
 
+主线收口验收结果见 [Mainline Acceptance Report](mainline_acceptance_report.md)。需要快速复习项目表达时，可先读 [3-Minute Demo Pitch](demo_3_minute_pitch.md)。
+
 ## Step 17: 用户确认 HR 回复后的状态更新
 
 演示目标：展示“AI 生成草稿”和“用户确认后写状态”是两个独立动作。

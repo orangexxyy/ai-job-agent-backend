@@ -1,5 +1,7 @@
 # Interview Talking Points
 
+完整的三分钟项目讲法见 [3-Minute Demo Pitch](demo_3_minute_pitch.md)，主线验收证据见 [Mainline Acceptance Report](mainline_acceptance_report.md)。
+
 ## Step 17.1: API Surface Governance 怎么讲
 
 > 项目迭代后会出现功能相近的接口。我没有直接删除旧接口，而是对 API surface 做了治理：在 Swagger 中用中英文 summary / description 区分当前主流程、Legacy 和 workflow preview，并给旧接口加 Deprecated 标记。这样既保留兼容性，也避免 Demo 和后续维护误用 `/hr/reply` 等早期入口。

@@ -7,6 +7,8 @@
 建议按下面顺序阅读：
 
 0. `docs/api_surface_guide.md`：先区分当前主流程、Legacy 和 Debug / Preview API，避免从旧接口开始理解项目。
+0. `docs/mainline_acceptance_report.md`：查看当前主线哪些环节已通过、哪一项仍有 LLM 措辞稳定性风险。
+0. `docs/demo_3_minute_pitch.md`：在理解代码后，用三分钟版本复习项目定位、流程、设计和安全边界。
 
 1. `README.md`
 2. `docs/project_structure.md`

@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 17.1: clean up the documented API surface and add bilingual Swagger metadata.
+Step 17.2: complete the mainline acceptance review and document the stable Demo path.
 
 ## Completed In Step 1
 
@@ -130,10 +130,11 @@ Step 17.1: clean up the documented API surface and add bilingual Swagger metadat
 
 ## Next Suggested Steps
 
-1. Step 18: error handling and retry policy.
-2. Step 19: checkpoint / resume / approval interrupt design.
-3. Step 20: review history / audit log.
-4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
+1. Step 18: lightweight action history / audit log.
+2. Step 19: LangGraph checkpoint / persistence demo.
+3. Step 20: MCP read-only server demo with safe read-only tools only.
+4. Step 21: automation_policy design and optional low-risk automation while high-risk actions remain user-confirmed.
+5. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -365,6 +366,16 @@ Step 17.1: clean up the documented API surface and add bilingual Swagger metadat
 - Added `docs/api_surface_guide.md` to distinguish main-flow, Legacy, and Debug / Preview APIs.
 - Updated README, Demo, API examples, interview talking points, code reading guidance, and real-world design notes.
 - This step changes API documentation only. It does not change business logic, database structure, external communication, automatic application, or automatic interview confirmation.
+
+## Completed In Step 17.2
+
+- Added `docs/mainline_acceptance_report.md` with the current main-flow result, evidence, safety boundaries, Legacy classification, limitations, and next steps.
+- Added `docs/demo_3_minute_pitch.md` for truthful interview rehearsal.
+- Ran the API smoke test and reached 41 / 41 passed after fixing repeat-run slot fixture collisions and cleanup in `scripts/api_smoke_test.py`.
+- Ran a separate API Surface mainline acceptance without overwriting the real candidate profile or recording private profile content.
+- Mainline result: PARTIAL PASS. API behavior and safety boundaries passed; real-profile LLM wording mentioned RAG and AI Job Agent but did not consistently include the complete “企业知识库” phrase.
+- Mainline acceptance applications `id=35` and `id=36` were marked `closed`; acceptance slot `id=25` was marked `booked`.
+- This step adds no business feature, database schema change, external platform connection, automatic sending, automatic application, or automatic interview confirmation.
 
 ## Completed In Resume-Input-01
 
