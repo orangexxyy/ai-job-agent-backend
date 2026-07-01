@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 17: update application state only after explicit user confirmation of an HR reply.
+Step 17.1: clean up the documented API surface and add bilingual Swagger metadata.
 
 ## Completed In Step 1
 
@@ -332,6 +332,15 @@ Step 17: update application state only after explicit user confirmation of an HR
 - Added 404 handling for missing applications, 422 handling for blank drafts, duplicate confirmation protection, and 409 protection for terminal statuses.
 - Updated smoke test coverage for the read-only draft boundary, confirmation writes, safety debug fields, error handling, repeat confirmation, and terminal-state protection.
 - This step does not auto-send HR messages, auto-apply, auto-confirm interviews, or connect to recruitment or communication platforms.
+
+## Completed In Step 17.1
+
+- Added bilingual Swagger summary / description metadata for the current main-flow APIs.
+- Marked `/hr/analyze`, `/hr/reply`, and `/agent/workflow_preview` as deprecated Legacy interfaces without deleting them.
+- Added OpenAPI tag metadata for health, profile, applications, application review, interview availability, agent, HR Legacy, and job match groups.
+- Added `docs/api_surface_guide.md` to distinguish main-flow, Legacy, and Debug / Preview APIs.
+- Updated README, Demo, API examples, interview talking points, code reading guidance, and real-world design notes.
+- This step changes API documentation only. It does not change business logic, database structure, external communication, automatic application, or automatic interview confirmation.
 
 ## Completed In Resume-Input-01
 

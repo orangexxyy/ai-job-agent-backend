@@ -1,5 +1,11 @@
 # Interview Talking Points
 
+## Step 17.1: API Surface Governance 怎么讲
+
+> 项目迭代后会出现功能相近的接口。我没有直接删除旧接口，而是对 API surface 做了治理：在 Swagger 中用中英文 summary / description 区分当前主流程、Legacy 和 workflow preview，并给旧接口加 Deprecated 标记。这样既保留兼容性，也避免 Demo 和后续维护误用 `/hr/reply` 等早期入口。
+
+当前 Demo 的 HR 回复主流程是 `/application_review/hr_reply_draft` 生成只读草稿，用户人工处理后再调用 `confirm_hr_reply` 写内部状态；Legacy 接口仍可调用，但不作为新流程入口。
+
 ## Step 17: 为什么把草稿生成和状态更新拆开
 
 面试表达：

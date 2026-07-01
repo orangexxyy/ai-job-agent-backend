@@ -80,18 +80,18 @@ python scripts/api_smoke_test.py
 ## 推荐演示顺序
 
 1. `GET /health`
-2. `POST /profile`
-3. `GET /profile`
-4. `POST /applications`
-5. `GET /applications/{application_id}`
-6. `POST /job_match`
-7. `POST /hr/analyze`
-8. `POST /hr/reply` 不带 `application_id`
-9. `POST /hr/reply` 带 `application_id`
-10. `POST /hr/reply` 项目经历问题，展示 `selected_context_snippets`
-11. `POST /application_review`
-12. `POST /application_review/hr_reply_draft`
-13. `POST /agent/langgraph_workflow_preview`
+2. `GET /profile`，如未保存则先调用 `POST /profile`
+3. `POST /applications`
+4. `GET /applications/{application_id}`
+5. `POST /application_review`
+6. `POST /application_review/hr_reply_draft`
+7. 用户人工审核并自行处理回复
+8. `POST /applications/{application_id}/confirm_hr_reply`
+9. `POST /interview_availability_slots`
+10. `POST /interview_availability_slots/{slot_id}/book`
+11. `POST /agent/langgraph_workflow_preview`
+
+当前 Demo 主流程不要使用 `/hr/reply`。该接口是 Legacy 兼容入口，当前 HR 回复草稿入口是 `/application_review/hr_reply_draft`；人工处理后再调用 `confirm_hr_reply` 更新内部状态。
 14. `python scripts/api_smoke_test.py`
 
 ## 每个接口的演示目的
@@ -100,10 +100,9 @@ python scripts/api_smoke_test.py
 - `/profile`：建立候选人稳定求职档案。
 - `/applications`：建立具体投递上下文。
 - `/job_match`：展示可解释岗位匹配评分和求职者侧优先级。
-- `/hr/analyze`：展示规则版 HR intent analyzer。
-- `/hr/reply`：展示基于 profile 的保守回复草稿。
-- `/hr/reply + application_id`：展示绑定具体投递记录后的上下文回复。
-- `/hr/reply 项目经历问题`：展示基于 `resume_text / project_context` 的增强回复。
+- `/hr/analyze`、`/hr/reply`：Legacy 接口，可用于兼容性说明，不作为推荐 Demo 主流程。
+- `/application_review/hr_reply_draft`：展示当前主流程的 application context、回复策略和 HR 草稿。
+- `/applications/{application_id}/confirm_hr_reply`：展示用户确认后才更新内部状态。
 - `api_smoke_test.py`：展示主链路自动验收能力。
 
 ## 建议测试 JSON

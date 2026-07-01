@@ -25,6 +25,13 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 @router.post(
     "/{application_id}/confirm_hr_reply",
     response_model=ApplicationHrReplyConfirmResponse,
+    summary="用户确认 HR 回复后更新内部状态 / Confirm HR reply and update application state",
+    description=(
+        "用户人工审核并手动处理 HR 回复后，记录 application 内部状态。"
+        "这不代表系统自动发送 HR 消息，也不会自动投递或自动确认面试。"
+        " / Record application state only after the user has reviewed and handled the HR reply manually. "
+        "This endpoint does not send messages, apply to jobs, or confirm interviews automatically."
+    ),
 )
 def confirm_application_hr_reply_record(
     application_id: int,
@@ -49,7 +56,12 @@ def confirm_application_hr_reply_record(
     )
 
 
-@router.post("", response_model=ApplicationResponse)
+@router.post(
+    "",
+    response_model=ApplicationResponse,
+    summary="创建投递记录 / Create application record",
+    description="手动创建一条 application 投递记录。 / Manually create an application record.",
+)
 def create_application_record(
     request: ApplicationCreateRequest,
 ) -> ApplicationResponse:
@@ -64,7 +76,12 @@ def create_application_record(
     )
 
 
-@router.get("", response_model=ApplicationListResponse)
+@router.get(
+    "",
+    response_model=ApplicationListResponse,
+    summary="查询投递记录列表 / List application records",
+    description="按可选条件查询 application 列表。 / List application records with optional filters.",
+)
 def list_application_records(
     status: Optional[str] = None,
     company_name: Optional[str] = None,
@@ -87,7 +104,12 @@ def list_application_records(
     )
 
 
-@router.get("/{application_id}", response_model=ApplicationResponse)
+@router.get(
+    "/{application_id}",
+    response_model=ApplicationResponse,
+    summary="查询单个投递记录 / Get application record",
+    description="按 application_id 读取一条投递记录。 / Read one application record by application_id.",
+)
 def get_application_record(application_id: int) -> ApplicationResponse:
     data = get_application(application_id)
     if data is None:
@@ -103,7 +125,12 @@ def get_application_record(application_id: int) -> ApplicationResponse:
     )
 
 
-@router.patch("/{application_id}", response_model=ApplicationResponse)
+@router.patch(
+    "/{application_id}",
+    response_model=ApplicationResponse,
+    summary="更新投递记录 / Update application record",
+    description="手动更新 application 的允许字段。 / Manually update allowed application fields.",
+)
 def update_application_record(
     application_id: int,
     request: ApplicationUpdateRequest,

@@ -8,7 +8,17 @@ from app.services.workflow_service import run_workflow_preview
 router = APIRouter(prefix="/agent", tags=["agent"])
 
 
-@router.post("/workflow_preview", response_model=WorkflowPreviewResponse)
+@router.post(
+    "/workflow_preview",
+    response_model=WorkflowPreviewResponse,
+    summary="旧版 Agent 工作流预览 / Legacy agent workflow preview",
+    description=(
+        "早期普通 Python workflow preview，保留兼容。当前主流程请使用 "
+        "/agent/langgraph_workflow_preview。"
+        " / Legacy Python workflow preview retained for compatibility. Use the LangGraph preview for the current demo flow."
+    ),
+    deprecated=True,
+)
 def workflow_preview_route(
     request: WorkflowPreviewRequest,
 ) -> WorkflowPreviewResponse:
@@ -40,7 +50,17 @@ def workflow_preview_route(
     )
 
 
-@router.post("/langgraph_workflow_preview", response_model=WorkflowPreviewResponse)
+@router.post(
+    "/langgraph_workflow_preview",
+    response_model=WorkflowPreviewResponse,
+    summary="LangGraph 工作流预览 / LangGraph workflow preview",
+    description=(
+        "预览 LangGraph 的 node、edge、state 和人工审批边界。"
+        "该接口不自动发送、不自动投递、不自动确认面试。"
+        " / Preview LangGraph nodes, edges, state, and human approval boundaries. "
+        "It does not send messages, apply to jobs, or confirm interviews automatically."
+    ),
+)
 def langgraph_workflow_preview_route(
     request: WorkflowPreviewRequest,
 ) -> WorkflowPreviewResponse:

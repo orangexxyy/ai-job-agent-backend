@@ -23,7 +23,12 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=InterviewAvailabilitySlotResponse)
+@router.post(
+    "",
+    response_model=InterviewAvailabilitySlotResponse,
+    summary="创建可用面试时间段 / Create interview availability slot",
+    description="手动创建候选人的可用面试时间段。 / Manually create an interview availability slot.",
+)
 def create_slot(
     request: InterviewAvailabilitySlotCreateRequest,
 ) -> InterviewAvailabilitySlotResponse:
@@ -40,7 +45,12 @@ def create_slot(
     )
 
 
-@router.get("", response_model=InterviewAvailabilitySlotListResponse)
+@router.get(
+    "",
+    response_model=InterviewAvailabilitySlotListResponse,
+    summary="查询可用面试时间段 / List interview availability slots",
+    description="查询面试时间段，默认只返回 available。 / List interview slots; available is the default status.",
+)
 def list_slots(
     status: Optional[str] = "available",
     limit: int = Query(default=50, ge=1, le=100),
@@ -56,7 +66,12 @@ def list_slots(
     )
 
 
-@router.patch("/{slot_id}", response_model=InterviewAvailabilitySlotResponse)
+@router.patch(
+    "/{slot_id}",
+    response_model=InterviewAvailabilitySlotResponse,
+    summary="更新面试时间段状态 / Update interview availability slot",
+    description="手动更新面试时间段状态或备注。 / Manually update an interview slot status or note.",
+)
 def update_slot(
     slot_id: int,
     request: InterviewAvailabilitySlotUpdateRequest,
@@ -78,7 +93,15 @@ def update_slot(
     )
 
 
-@router.post("/{slot_id}/book", response_model=InterviewAvailabilitySlotResponse)
+@router.post(
+    "/{slot_id}/book",
+    response_model=InterviewAvailabilitySlotResponse,
+    summary="用户确认后锁定面试时间段 / Book interview slot after user confirmation",
+    description=(
+        "仅在用户确认后把内部 slot 标记为 booked；不向 HR 发送消息，也不自动确认面试。"
+        " / Mark the internal slot as booked only after user confirmation; no message or interview confirmation is sent."
+    ),
+)
 def book_slot(
     slot_id: int,
     request: InterviewAvailabilitySlotBookRequest,

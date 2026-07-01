@@ -13,10 +13,47 @@ from app.routes import (
 )
 
 
+OPENAPI_TAGS = [
+    {
+        "name": "health",
+        "description": "健康检查 / Service health check",
+    },
+    {
+        "name": "profile",
+        "description": "候选人档案 / Candidate Profile",
+    },
+    {
+        "name": "applications",
+        "description": "投递记录与用户确认后的状态更新 / Applications and user-confirmed state updates",
+    },
+    {
+        "name": "application_review",
+        "description": "岗位复盘与当前主流程 HR 回复草稿 / Application Review & HR Reply",
+    },
+    {
+        "name": "interview_availability_slots",
+        "description": "面试可用时间管理 / Interview Availability",
+    },
+    {
+        "name": "agent",
+        "description": "Agent 工作流预览 / Agent Workflow Preview",
+    },
+    {
+        "name": "hr",
+        "description": "旧版 HR 接口，保留兼容 / Legacy HR Interfaces",
+    },
+    {
+        "name": "job_match",
+        "description": "规则版岗位匹配 / Job Match",
+    },
+]
+
+
 app = FastAPI(
     title="AI Job Agent",
     description="Human-in-the-loop AI job search assistant MVP.",
     version="0.1.0",
+    openapi_tags=OPENAPI_TAGS,
 )
 
 

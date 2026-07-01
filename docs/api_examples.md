@@ -1,5 +1,7 @@
 # API Examples
 
+当前 Demo 的推荐接口顺序和 Legacy / Preview 分类见 [API Surface Guide](api_surface_guide.md)。`/hr/analyze` 与 `/hr/reply` 示例仅用于兼容旧版调用，新的 Demo 流程应使用 `/application_review/hr_reply_draft`，并在用户人工处理后调用 `/applications/{application_id}/confirm_hr_reply`。
+
 ## API Smoke Test Harness
 
 `scripts/api_smoke_test.py` is a local API integration smoke test harness. It assumes the FastAPI server is already running and does not start uvicorn by itself.

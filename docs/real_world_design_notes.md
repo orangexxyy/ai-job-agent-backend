@@ -223,6 +223,39 @@ HR reply draft 只能读取 `status=available` 的 slots。用户确认某个面
 
 “我把生成草稿和状态更新拆开，草稿只是 AI 建议，只有用户确认后才写 application 状态，避免 LLM 生成内容直接变成现实动作。确认接口只记录用户已经人工处理，不负责发送消息；终态也有保护，后续如果需要更完整追踪，再扩展 audit log。”
 
+## 案例五：API Surface Governance / 接口面治理
+
+### 真实业务问题
+
+项目经过多轮迭代后，容易同时存在基础版、增强版和 workflow preview 接口。如果没有明确分层，Demo 使用者和后续维护者会误把旧接口当成当前主流程。
+
+### 简单做法的问题
+
+- 直接删除旧接口会破坏已有测试、脚本和兼容调用。
+- 所有接口不加区分地暴露，会让功能边界和推荐调用顺序变得模糊。
+- 只靠 README 说明，Swagger 使用者仍可能选错入口。
+
+### 当前设计
+
+Swagger 使用中英文 summary / description 标记接口用途，并通过 tag 区分 profile、applications、application review、interview availability、agent 和 Legacy HR 接口。`/hr/analyze`、`/hr/reply`、`/agent/workflow_preview` 保留兼容并标记 Deprecated；当前 Demo 主流程统一记录在 `docs/api_surface_guide.md`。
+
+### 边界和风险
+
+- Deprecated 只表示不推荐新流程使用，不代表接口已经删除。
+- API surface 治理不改变底层业务逻辑或安全边界。
+- workflow preview 仍然只是预览，不代表真实外部执行。
+
+### 测试验收
+
+- 检查 Swagger 中主流程接口是否有中英文说明。
+- 检查 Legacy 接口是否显示 Deprecated 和替代入口。
+- 检查 Demo 文档是否指向 `/application_review/hr_reply_draft` 和 `confirm_hr_reply`。
+- 运行原有 smoke test，确认旧接口继续兼容且业务行为没有变化。
+
+### 面试表达
+
+“我对迭代后的接口做了 API surface 治理，区分主流程、Legacy 和 Preview 接口。旧接口没有直接删除，而是在 Swagger 标记 Deprecated 并说明替代入口，既保持兼容，也避免 Demo 或后续维护时误用旧接口。”
+
 ## 后续可继续沉淀的工程设计点
 
 - HR intent routing：不同 HR 意图走不同回复策略。

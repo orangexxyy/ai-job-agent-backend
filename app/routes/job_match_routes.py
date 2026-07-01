@@ -7,7 +7,15 @@ from app.services.job_match_service import analyze_job_match
 router = APIRouter(prefix="/job_match", tags=["job_match"])
 
 
-@router.post("", response_model=JobMatchResponse)
+@router.post(
+    "",
+    response_model=JobMatchResponse,
+    summary="规则版岗位匹配 / Rule-based job match",
+    description=(
+        "基于 candidate_profile 和 application 生成可解释的规则匹配结果。"
+        " / Generate an explainable rule-based match from candidate_profile and application data."
+    ),
+)
 def analyze_job_match_route(request: JobMatchRequest) -> JobMatchResponse:
     try:
         data = analyze_job_match(

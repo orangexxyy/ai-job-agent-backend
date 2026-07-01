@@ -13,7 +13,16 @@ from app.services.hr_reply_service import generate_hr_reply
 router = APIRouter(prefix="/hr", tags=["hr"])
 
 
-@router.post("/analyze", response_model=HrAnalyzeResponse)
+@router.post(
+    "/analyze",
+    response_model=HrAnalyzeResponse,
+    summary="旧版 HR 意图分析接口 / Legacy HR intent analyzer",
+    description=(
+        "早期规则版 HR intent 接口，保留兼容，不建议作为当前 Demo 主入口。"
+        " / Legacy rule-based HR intent endpoint retained for compatibility, not recommended as the main demo entry."
+    ),
+    deprecated=True,
+)
 def analyze_hr_intent(request: HrAnalyzeRequest) -> HrAnalyzeResponse:
     data = analyze_hr_message(
         message=request.message,
@@ -27,7 +36,18 @@ def analyze_hr_intent(request: HrAnalyzeRequest) -> HrAnalyzeResponse:
     )
 
 
-@router.post("/reply", response_model=HrReplyResponse)
+@router.post(
+    "/reply",
+    response_model=HrReplyResponse,
+    summary="旧版 HR 回复草稿接口 / Legacy HR reply draft generator",
+    description=(
+        "早期基础版 HR 回复草稿接口，保留兼容。当前主流程请使用 "
+        "/application_review/hr_reply_draft。"
+        " / Legacy HR reply draft endpoint retained for compatibility. "
+        "Use /application_review/hr_reply_draft for the current demo flow."
+    ),
+    deprecated=True,
+)
 def generate_hr_reply_draft(request: HrReplyRequest) -> HrReplyResponse:
     try:
         data = generate_hr_reply(

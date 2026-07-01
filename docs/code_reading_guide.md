@@ -6,6 +6,8 @@
 
 建议按下面顺序阅读：
 
+0. `docs/api_surface_guide.md`：先区分当前主流程、Legacy 和 Debug / Preview API，避免从旧接口开始理解项目。
+
 1. `README.md`
 2. `docs/project_structure.md`
 3. `app/main.py`
