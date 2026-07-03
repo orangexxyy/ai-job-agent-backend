@@ -17,8 +17,9 @@
 3. `POST /application_review`：生成规则版岗位复盘。
 4. `POST /application_review/hr_reply_draft`：生成可人工审核的 HR 回复草稿。
 5. `POST /applications/{application_id}/confirm_hr_reply`：用户确认已处理 / 手动发送后更新内部状态。
-6. `POST /interview_availability_slots` 与 `/book`：维护和锁定用户确认的面试时间段。
-7. `POST /agent/langgraph_workflow_preview`：展示 LangGraph node、edge、state 和人工审批边界。
+6. `GET /applications/{application_id}/action_history`：只读追踪关键内部动作和状态变化。
+7. `POST /interview_availability_slots` 与 `/book`：维护和锁定用户确认的面试时间段。
+8. `POST /agent/langgraph_workflow_preview`：展示 LangGraph node、edge、state 和人工审批边界。
 
 ## 3. 每一步解决的真实问题
 
@@ -40,6 +41,7 @@
 | 规则复盘 | `POST /application_review` | PASS | 返回 score、level、confidence、evidence、missing information、risk flags | 调用前后 status / next_action 未变化 |
 | HR 回复草稿 | `POST /application_review/hr_reply_draft` | PARTIAL PASS | 返回 project_intro 草稿，包含 RAG 与 AI Job Agent；事实边界和只读检查通过，但“企业知识库”措辞不稳定 | `auto_send_message=false`，不写 application |
 | 回复确认 | `POST /applications/{id}/confirm_hr_reply` | PASS | `status=hr_replied`、`next_action=wait_for_hr_response`、`confirmed_by_user=true` | 不自动发送、投递或确认面试 |
+| Action history | `GET /applications/{id}/action_history` | PASS | Smoke test 验证三类 action、重复确认不重复写入、查询只读 | `external_action_performed=false` |
 | 面试时间创建 | `POST /interview_availability_slots` | PASS | 唯一 slot 创建成功，`status=available` | 不接外部日历 |
 | 面试时间草稿 | `POST /application_review/hr_reply_draft` | PASS | `available_slots_used` 包含本轮 slot id | `auto_confirm_interview=false` |
 | 面试时间锁定 | `POST /interview_availability_slots/{id}/book` | PASS | slot 更新为 booked，默认 available 列表不再返回 | 仅内部状态，不向 HR 发送消息 |
@@ -83,7 +85,7 @@ Failed: 0
 - 真实招聘平台接入。
 - 外部消息发送。
 - 通用 approval log。
-- action history / audit log。
+- 完整 action history / approval log / audit compliance；Step 18A 当前只实现三类轻量关键动作记录。
 - LangGraph checkpoint / resume / persistence。
 - MCP read-only server。
 - automation_policy 与 `auto_low_risk`。
@@ -92,8 +94,8 @@ Failed: 0
 
 ## 9. 后续建议
 
-- Step 18：轻量 action history / audit log。
-- Step 19：LangGraph checkpoint / persistence demo。
-- Step 20：MCP read-only server demo，只暴露安全只读能力。
-- Step 21：automation_policy 设计与低风险自动处理；高风险动作继续人工确认，外部发送默认关闭。
-
+- Step 18A：轻量 action history 已完成，当前覆盖 application_created、hr_reply_confirmed、interview_slot_booked。
+- Step 18B：action 写入一致性、错误处理与 retry policy。
+- Step 19：automation_policy 设计；外部发送继续默认关闭。
+- Step 20：Agent Loop / LangGraph checkpoint 与 persistence demo。
+- Step 21：MCP read-only server demo，只暴露安全只读能力。

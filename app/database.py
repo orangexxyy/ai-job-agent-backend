@@ -4,6 +4,8 @@ from typing import Iterator
 
 from app.config import settings
 from app.models import (
+    APPLICATION_ACTION_HISTORY_INDEX_SQL,
+    APPLICATION_ACTION_HISTORY_TABLE_SQL,
     APPLICATIONS_TABLE_SQL,
     CANDIDATE_PROFILE_TABLE_SQL,
     INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL,
@@ -38,6 +40,8 @@ def init_database() -> None:
         connection.execute(CANDIDATE_PROFILE_TABLE_SQL)
         connection.execute(APPLICATIONS_TABLE_SQL)
         connection.execute(INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL)
+        connection.execute(APPLICATION_ACTION_HISTORY_TABLE_SQL)
+        connection.execute(APPLICATION_ACTION_HISTORY_INDEX_SQL)
         _ensure_optional_columns(connection, "applications", APPLICATION_OPTIONAL_COLUMNS)
         connection.commit()
 

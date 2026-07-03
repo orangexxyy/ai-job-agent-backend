@@ -40,6 +40,7 @@ class SmokeTestHarness:
         self.original_profile_exists = False
         self.application_id: Optional[int] = None
         self.interview_slot_id: Optional[int] = None
+        self.hr_reply_confirmed_history_count: Optional[int] = None
         self.timestamp = int(time.time())
         slot_base = datetime.now(timezone.utc) + timedelta(days=365)
         self.interview_slot_date = slot_base.strftime("%Y-%m-%d")
@@ -61,6 +62,10 @@ class SmokeTestHarness:
         self._run_step("read test profile", self._test_read_profile)
         self._run_step("create application", self._test_create_application)
         self._run_step("read application", self._test_read_application)
+        self._run_step(
+            "application created action history",
+            self._test_application_created_action_history,
+        )
         self._run_step("workflow preview", self._test_workflow_preview)
         self._run_step(
             "verify workflow preview is read-only",
@@ -167,6 +172,10 @@ class SmokeTestHarness:
         self._run_step(
             "verify application updated after HR reply confirmation",
             self._test_application_after_hr_reply_confirmation,
+        )
+        self._run_step(
+            "HR reply confirmed action history",
+            self._test_hr_reply_confirmed_action_history,
         )
         self._run_step(
             "repeat HR reply confirmation safely",
@@ -277,6 +286,34 @@ class SmokeTestHarness:
             return False
         response = self._request("GET", f"/applications/{self.application_id}")
         return self._success(response) and response.json().get("data", {}).get("id") == self.application_id
+
+    def _test_application_created_action_history(self) -> bool:
+        if self.application_id is None:
+            return False
+        before = self._request("GET", f"/applications/{self.application_id}")
+        history = self._request(
+            "GET",
+            f"/applications/{self.application_id}/action_history",
+        )
+        after = self._request("GET", f"/applications/{self.application_id}")
+        if not self._success(before) or not self._success(history) or not self._success(after):
+            return False
+        before_data = before.json().get("data") or {}
+        after_data = after.json().get("data") or {}
+        actions = history.json().get("data") or []
+        created = [
+            item for item in actions if item.get("action_type") == "application_created"
+        ]
+        return (
+            len(created) == 1
+            and created[0].get("action_source") == "user"
+            and created[0].get("before_status") is None
+            and created[0].get("after_status") == "saved"
+            and created[0].get("user_confirmed") is True
+            and created[0].get("external_action_performed") is False
+            and before_data.get("status") == after_data.get("status")
+            and before_data.get("next_action") == after_data.get("next_action")
+        )
 
     def _test_workflow_preview(self) -> bool:
         if self.application_id is None:
@@ -863,6 +900,18 @@ class SmokeTestHarness:
         if not self._success(booked):
             return False
         booked_data = booked.json().get("data") or {}
+        history = self._request(
+            "GET",
+            f"/applications/{self.application_id}/action_history",
+        )
+        if not self._success(history):
+            return False
+        booked_actions = [
+            item
+            for item in (history.json().get("data") or [])
+            if item.get("action_type") == "interview_slot_booked"
+            and (item.get("detail_json") or {}).get("slot_id") == slot_id
+        ]
         after = self._request(
             "POST",
             "/application_review/hr_reply_draft",
@@ -881,6 +930,12 @@ class SmokeTestHarness:
         debug = after_data.get("debug") or {}
         return (
             booked_data.get("status") == "booked"
+            and len(booked_actions) == 1
+            and booked_actions[0].get("application_id") == self.application_id
+            and booked_actions[0].get("before_status") == "available"
+            and booked_actions[0].get("after_status") == "booked"
+            and booked_actions[0].get("user_confirmed") is True
+            and booked_actions[0].get("external_action_performed") is False
             and all(slot.get("id") != slot_id for slot in after_slots)
             and self.booked_slot_date not in after_text
             and after_data.get("human_review_required") is True
@@ -1174,6 +1229,36 @@ class SmokeTestHarness:
             and self.confirmed_hr_reply_text in notes
         )
 
+    def _test_hr_reply_confirmed_action_history(self) -> bool:
+        if self.application_id is None:
+            return False
+        response = self._request(
+            "GET",
+            f"/applications/{self.application_id}/action_history",
+        )
+        if not self._success(response):
+            return False
+        actions = response.json().get("data") or []
+        confirmed = [
+            item for item in actions if item.get("action_type") == "hr_reply_confirmed"
+        ]
+        self.hr_reply_confirmed_history_count = len(confirmed)
+        if len(confirmed) != 1:
+            return False
+        detail = confirmed[0].get("detail_json") or {}
+        return (
+            confirmed[0].get("action_source") == "user"
+            and confirmed[0].get("before_status") == "hr_contacted"
+            and confirmed[0].get("after_status") == "hr_replied"
+            and confirmed[0].get("after_next_action") == "wait_for_hr_response"
+            and confirmed[0].get("user_confirmed") is True
+            and confirmed[0].get("external_action_performed") is False
+            and detail.get("sent_channel") == "manual"
+            and len(detail.get("draft_text_preview") or "") <= 120
+            and len(detail.get("draft_text_hash") or "") == 64
+            and all(item.get("external_action_performed") is False for item in actions)
+        )
+
     def _test_repeat_application_hr_reply_confirmation(self) -> bool:
         if self.application_id is None:
             return False
@@ -1190,11 +1275,25 @@ class SmokeTestHarness:
             return False
         data = response.json().get("data") or {}
         debug = data.get("debug") or {}
+        history = self._request(
+            "GET",
+            f"/applications/{self.application_id}/action_history",
+        )
+        if not self._success(history):
+            return False
+        confirmed_count = len(
+            [
+                item
+                for item in (history.json().get("data") or [])
+                if item.get("action_type") == "hr_reply_confirmed"
+            ]
+        )
         return (
             data.get("already_confirmed") is True
             and data.get("status") == "hr_replied"
             and debug.get("database_write_performed") is False
             and debug.get("confirmed_by_user") is True
+            and self.hr_reply_confirmed_history_count == confirmed_count
         )
 
     def _test_close_application(self) -> bool:

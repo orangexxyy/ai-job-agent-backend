@@ -10,6 +10,7 @@ from app.schemas.interview_availability_schema import (
     InterviewAvailabilitySlotUpdateRequest,
     VALID_INTERVIEW_SLOT_STATUSES,
 )
+from app.services.action_history_service import create_application_action_history
 
 
 SLOT_COLUMNS = [
@@ -193,7 +194,30 @@ def book_interview_availability_slot(
 
     note = request.note.strip() if request.note else slot.note
     update = InterviewAvailabilitySlotUpdateRequest(status="booked", note=note)
-    return update_interview_availability_slot(slot_id, update)
+    updated = update_interview_availability_slot(slot_id, update)
+    if updated is not None:
+        create_application_action_history(
+            application_id=request.application_id,
+            action_type="interview_slot_booked",
+            action_source="user",
+            before_status=slot.status,
+            after_status=updated.status,
+            before_next_action=None,
+            after_next_action=None,
+            user_confirmed=True,
+            external_action_performed=False,
+            risk_level="medium",
+            summary="Interview availability slot booked",
+            detail_json={
+                "slot_id": updated.id,
+                "date": updated.date,
+                "start_time": updated.start_time,
+                "end_time": updated.end_time,
+                "timezone": updated.timezone,
+                "note_preview": " ".join((updated.note or "").split())[:120],
+            },
+        )
+    return updated
 
 
 def get_interview_availability_slot(

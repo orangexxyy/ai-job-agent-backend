@@ -2,6 +2,17 @@
 
 主线收口验收结果见 [Mainline Acceptance Report](mainline_acceptance_report.md)。需要快速复习项目表达时，可先读 [3-Minute Demo Pitch](demo_3_minute_pitch.md)。
 
+## Step 18A: Action History Demo
+
+1. `POST /applications` 创建测试 application。
+2. `GET /applications/{application_id}/action_history`，观察 `application_created`。
+3. 首次调用 `confirm_hr_reply` 后再次查询，观察 `hr_reply_confirmed`。
+4. 重复提交相同确认，确认 `already_confirmed=true` 且 history 不增加重复记录。
+5. 创建 slot 并带 `application_id` 调用 `/book`，观察 `interview_slot_booked`。
+6. 检查所有记录的 `external_action_performed=false`。
+
+演示时强调：action history 只记录关键内部动作，不保存完整聊天，不是完整 approval / compliance log，也不会触发真实外部动作。
+
 ## Step 17: 用户确认 HR 回复后的状态更新
 
 演示目标：展示“AI 生成草稿”和“用户确认后写状态”是两个独立动作。

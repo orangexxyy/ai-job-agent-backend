@@ -1,3 +1,4 @@
+import hashlib
 import json
 from datetime import datetime, timezone
 from sqlite3 import Row
@@ -12,6 +13,7 @@ from app.schemas.application_schema import (
     VALID_APPLICATION_STATUSES,
 )
 from app.services.jd_parser_service import normalize_source, parse_jd
+from app.services.action_history_service import create_application_action_history
 
 
 APPLICATION_COLUMNS = [
@@ -165,7 +167,27 @@ def create_application(request: ApplicationCreateRequest) -> ApplicationItem:
     finally:
         connection.close()
 
-    return _row_to_application(row)
+    application = _row_to_application(row)
+    create_application_action_history(
+        application_id=application.id,
+        action_type="application_created",
+        action_source="user",
+        before_status=None,
+        after_status=application.status,
+        before_next_action=None,
+        after_next_action=application.next_action,
+        user_confirmed=True,
+        external_action_performed=False,
+        risk_level="low",
+        summary="Application created",
+        detail_json={
+            "company_name": application.company_name,
+            "job_title": application.job_title,
+            "source_type": application.source_type,
+            "jd_keywords_preview": application.jd_keywords[:10],
+        },
+    )
+    return application
 
 
 def list_applications(
@@ -376,6 +398,26 @@ def confirm_application_hr_reply(
     )
     if updated is None:
         return None
+    create_application_action_history(
+        application_id=updated.id,
+        action_type="hr_reply_confirmed",
+        action_source="user",
+        before_status=application.status,
+        after_status=updated.status,
+        before_next_action=application.next_action,
+        after_next_action=updated.next_action,
+        user_confirmed=True,
+        external_action_performed=False,
+        risk_level="medium",
+        summary="User confirmed HR reply was handled manually",
+        detail_json={
+            "sent_channel": request.sent_channel,
+            "draft_text_preview": _text_preview(draft_text),
+            "draft_text_hash": hashlib.sha256(draft_text.encode("utf-8")).hexdigest(),
+            "hr_message_preview": _text_preview(hr_message),
+            "note_preview": _text_preview(note),
+        },
+    )
     return _build_hr_reply_confirmation_result(
         application=updated,
         sent_channel=request.sent_channel,
@@ -408,3 +450,8 @@ def _build_hr_reply_confirmation_result(
             "confirmed_by_user": True,
         },
     }
+
+
+def _text_preview(value: str, limit: int = 120) -> str:
+    normalized = " ".join((value or "").split())
+    return normalized[:limit]

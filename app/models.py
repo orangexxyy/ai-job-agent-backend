@@ -61,3 +61,29 @@ CREATE TABLE IF NOT EXISTS interview_availability_slots (
     updated_at TEXT NOT NULL
 );
 """
+
+
+APPLICATION_ACTION_HISTORY_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS application_action_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id INTEGER,
+    action_type TEXT NOT NULL,
+    action_source TEXT NOT NULL,
+    before_status TEXT,
+    after_status TEXT,
+    before_next_action TEXT,
+    after_next_action TEXT,
+    user_confirmed INTEGER NOT NULL,
+    external_action_performed INTEGER NOT NULL,
+    risk_level TEXT,
+    summary TEXT NOT NULL,
+    detail_json TEXT,
+    created_at TEXT NOT NULL
+);
+"""
+
+
+APPLICATION_ACTION_HISTORY_INDEX_SQL = """
+CREATE INDEX IF NOT EXISTS idx_application_action_history_application_id_id
+ON application_action_history (application_id, id DESC);
+"""

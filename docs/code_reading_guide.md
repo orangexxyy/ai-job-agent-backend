@@ -10,6 +10,16 @@
 0. `docs/mainline_acceptance_report.md`：查看当前主线哪些环节已通过、哪一项仍有 LLM 措辞稳定性风险。
 0. `docs/demo_3_minute_pitch.md`：在理解代码后，用三分钟版本复习项目定位、流程、设计和安全边界。
 
+## Step 18A: Action History 阅读顺序
+
+1. `docs/action_history_design.md`：先理解轻量追踪目标、隐私控制和非完整审计边界。
+2. `app/models.py` 与 `app/database.py`：查看 history 表和初始化逻辑。
+3. `app/schemas/action_history_schema.py`：查看只读响应结构。
+4. `app/services/action_history_service.py`：查看写入与按 application 查询。
+5. `application_service.py`、`interview_availability_service.py`：查看三个动作的接入位置。
+6. `application_routes.py`：查看只读查询接口。
+7. `scripts/api_smoke_test.py`：查看写入、去重、外部动作 false 和查询只读验收。
+
 1. `README.md`
 2. `docs/project_structure.md`
 3. `app/main.py`

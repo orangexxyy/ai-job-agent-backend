@@ -307,6 +307,16 @@ Step 16.5 是 docs-only 整理，不新增业务接口，不修改 service，不
 
 Step 17.2 不新增业务接口或数据库表；`scripts/api_smoke_test.py` 只调整可重复运行的测试 slot 唯一性、断言和清理逻辑。
 
+## Step 18A: Application Action History Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/schemas/action_history_schema.py` | 定义 action history item 和列表响应 |
+| `app/services/action_history_service.py` | 写入关键动作并按 application 只读查询；强制 external action 为 false |
+| `docs/action_history_design.md` | 说明数据结构、隐私控制、当前边界和后续演进 |
+
+`application_service.py` 写入 application_created / hr_reply_confirmed，`interview_availability_service.py` 写入 interview_slot_booked，`application_routes.py` 提供 `GET /applications/{application_id}/action_history`。
+
 ## Step 16.7: Interview Availability And Fact Boundary Files
 
 | File | Responsibility |

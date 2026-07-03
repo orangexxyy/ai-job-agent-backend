@@ -8,12 +8,14 @@
 
 1. `GET /profile`：读取候选人档案 / Read candidate profile
 2. `POST /applications`：创建投递记录 / Create application record
-3. `POST /application_review`：规则版岗位复盘 / Rule-based application review
-4. `POST /application_review/hr_reply_draft`：生成带 application 上下文的 HR 回复草稿 / Generate HR reply draft with application context
-5. `POST /applications/{application_id}/confirm_hr_reply`：用户确认已人工处理回复后更新内部状态 / Confirm HR reply and update application state
-6. `POST /interview_availability_slots`：创建可用面试时间段 / Create interview availability slot
-7. `POST /interview_availability_slots/{slot_id}/book`：用户确认后锁定内部时间段 / Book interview slot after user confirmation
-8. `POST /agent/langgraph_workflow_preview`：预览 LangGraph 工作流状态 / Preview the LangGraph workflow
+3. `GET /applications/{application_id}/action_history`：确认 application_created 已记录 / Verify application_created history
+4. `POST /application_review`：规则版岗位复盘 / Rule-based application review
+5. `POST /application_review/hr_reply_draft`：生成带 application 上下文的 HR 回复草稿 / Generate HR reply draft with application context
+6. `POST /applications/{application_id}/confirm_hr_reply`：用户确认已人工处理回复后更新内部状态 / Confirm HR reply and update application state
+7. `GET /applications/{application_id}/action_history`：确认 hr_reply_confirmed 已记录 / Verify hr_reply_confirmed history
+8. `POST /interview_availability_slots`：创建可用面试时间段 / Create interview availability slot
+9. `POST /interview_availability_slots/{slot_id}/book`：用户确认后锁定内部时间段 / Book interview slot after user confirmation
+10. `POST /agent/langgraph_workflow_preview`：预览 LangGraph 工作流状态 / Preview the LangGraph workflow
 
 如果尚未保存候选人档案，应先调用 `POST /profile`。列表查询、单条查询和手动维护可以配合使用 `GET /applications`、`GET /applications/{application_id}`、`PATCH /applications/{application_id}` 和 `GET /interview_availability_slots`。
 
@@ -31,6 +33,7 @@
 | `GET /applications` | 查询投递记录列表 | List application records |
 | `GET /applications/{application_id}` | 查询单个投递记录 | Get application record |
 | `PATCH /applications/{application_id}` | 更新投递记录 | Update application record |
+| `GET /applications/{application_id}/action_history` | 查询投递记录的关键动作历史 | List action history for one application |
 | `POST /application_review` | 规则版岗位复盘 | Rule-based application review |
 | `POST /application_review/llm_enhance` | LLM 增强岗位复盘 | LLM-enhanced application review |
 | `POST /application_review/hr_reply_draft` | 生成 HR 回复草稿（当前主流程） | Generate HR reply draft with application context |
@@ -44,6 +47,8 @@
 `POST /application_review/hr_reply_draft` 只生成草稿，不自动发送 HR 消息，也不修改 application 状态。用户人工审核并自行处理后，才调用 `confirm_hr_reply` 记录内部状态。
 
 `confirm_hr_reply` 当前仅覆盖 HR 回复确认后的 application 状态更新，不应理解为通用 action approval、完整 approval log 或完整 audit log。
+
+`GET /applications/{application_id}/action_history` 是当前主流程的只读辅助查询接口，用于追踪 `application_created`、`hr_reply_confirmed` 和 `interview_slot_booked`。其中 `external_action_performed` 当前始终为 false；该接口不等同完整 approval log 或 audit compliance。
 
 ### Legacy 接口
 

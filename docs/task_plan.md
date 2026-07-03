@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 17.2: complete the mainline acceptance review and document the stable Demo path.
+Step 18A: add lightweight application action history for key internal state changes.
 
 ## Completed In Step 1
 
@@ -130,10 +130,10 @@ Step 17.2: complete the mainline acceptance review and document the stable Demo 
 
 ## Next Suggested Steps
 
-1. Step 18: lightweight action history / audit log.
-2. Step 19: LangGraph checkpoint / persistence demo.
-3. Step 20: MCP read-only server demo with safe read-only tools only.
-4. Step 21: automation_policy design and optional low-risk automation while high-risk actions remain user-confirmed.
+1. Step 18B: action write consistency, error handling, and retry policy.
+2. Step 19: automation_policy design; external sending remains disabled by default.
+3. Step 20: Agent Loop / LangGraph checkpoint and persistence demo.
+4. Step 21: MCP read-only server demo with safe read-only tools only.
 5. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
@@ -376,6 +376,16 @@ Step 17.2: complete the mainline acceptance review and document the stable Demo 
 - Mainline result: PARTIAL PASS. API behavior and safety boundaries passed; real-profile LLM wording mentioned RAG and AI Job Agent but did not consistently include the complete “企业知识库” phrase.
 - Mainline acceptance applications `id=35` and `id=36` were marked `closed`; acceptance slot `id=25` was marked `booked`.
 - This step adds no business feature, database schema change, external platform connection, automatic sending, automatic application, or automatic interview confirmation.
+
+## Completed In Step 18A
+
+- Added `application_action_history` and an index by application id / descending id.
+- Added `application_created`, `hr_reply_confirmed`, and `interview_slot_booked` writes.
+- Added read-only `GET /applications/{application_id}/action_history`.
+- Stored only limited previews and SHA-256 hash where appropriate; no full JD, full chat, resume, API key, or LLM thought process is recorded.
+- Repeated `confirm_hr_reply` calls with `already_confirmed=true` do not create duplicate history.
+- `external_action_performed` is enforced as false; no message sending, application, interview confirmation, calendar integration, or recruitment platform access was added.
+- This is lightweight engineering traceability, not a complete approval system or audit compliance implementation.
 
 ## Completed In Resume-Input-01
 

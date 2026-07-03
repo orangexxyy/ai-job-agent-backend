@@ -293,6 +293,8 @@ Swagger 使用中英文 summary / description 标记接口用途，并通过 tag
 
 ## 后续可继续沉淀的工程设计点
 
+Step 18A 已新增轻量 action history，用结构化记录替代只依赖 notes 的关键动作追踪。详细设计见 [Application Action History Design](action_history_design.md)。它只记录必要 preview/hash 和状态变化，`external_action_performed` 始终为 false，不是完整聊天、approval log 或审计合规系统。
+
 - HR intent routing：不同 HR 意图走不同回复策略。
 - `application_review` 规则评分：不是让 LLM 直接判断岗位值不值得投，而是先有可解释规则 baseline。
 - LangGraph workflow preview：节点、edge、state、human approval、`state_snapshots` 的可观测设计。

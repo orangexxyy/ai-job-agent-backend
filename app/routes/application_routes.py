@@ -10,6 +10,8 @@ from app.schemas.application_schema import (
     ApplicationResponse,
     ApplicationUpdateRequest,
 )
+from app.schemas.action_history_schema import ApplicationActionHistoryListResponse
+from app.services.action_history_service import list_application_action_history
 from app.services.application_service import (
     confirm_application_hr_reply,
     create_application,
@@ -20,6 +22,31 @@ from app.services.application_service import (
 
 
 router = APIRouter(prefix="/applications", tags=["applications"])
+
+
+@router.get(
+    "/{application_id}/action_history",
+    response_model=ApplicationActionHistoryListResponse,
+    summary="查询某个投递记录的动作历史 / List action history for one application",
+    description=(
+        "只读查询 application 的关键系统动作和状态变化。该记录不代表系统执行了外部发送，"
+        "也不等同完整 approval log / audit compliance。"
+        " / Read key internal actions and state changes for one application. "
+        "This does not indicate external sending and is not a complete approval or compliance log."
+    ),
+)
+def list_application_action_history_records(
+    application_id: int,
+    limit: int = Query(default=50, ge=1, le=100),
+) -> ApplicationActionHistoryListResponse:
+    if get_application(application_id) is None:
+        raise HTTPException(status_code=404, detail="application not found")
+    data = list_application_action_history(application_id, limit=limit)
+    return ApplicationActionHistoryListResponse(
+        success=True,
+        message="application action history listed",
+        data=data,
+    )
 
 
 @router.post(

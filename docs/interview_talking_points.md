@@ -2,6 +2,12 @@
 
 完整的三分钟项目讲法见 [3-Minute Demo Pitch](demo_3_minute_pitch.md)，主线验收证据见 [Mainline Acceptance Report](mainline_acceptance_report.md)。
 
+## Step 18A: 为什么增加 Action History
+
+> 为了让 Agent 后续自动化时可追踪，我新增 action history 记录关键状态变化，例如 application_created、hr_reply_confirmed、interview_slot_booked。它会记录动作来源、用户确认、状态前后变化和是否发生外部动作；当前 external_action_performed 始终为 false。
+
+`notes` 适合人工备注，但无法稳定查询动作类型和状态前后值。当前 action history 只做轻量工程追踪，不保存完整 HR 聊天或 LLM 思考过程，也不是完整 approval log / audit compliance。
+
 ## Step 17.1: API Surface Governance 怎么讲
 
 > 项目迭代后会出现功能相近的接口。我没有直接删除旧接口，而是对 API surface 做了治理：在 Swagger 中用中英文 summary / description 区分当前主流程、Legacy 和 workflow preview，并给旧接口加 Deprecated 标记。这样既保留兼容性，也避免 Demo 和后续维护误用 `/hr/reply` 等早期入口。

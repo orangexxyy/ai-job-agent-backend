@@ -2,6 +2,42 @@
 
 当前 Demo 的推荐接口顺序和 Legacy / Preview 分类见 [API Surface Guide](api_surface_guide.md)。`/hr/analyze` 与 `/hr/reply` 示例仅用于兼容旧版调用，新的 Demo 流程应使用 `/application_review/hr_reply_draft`，并在用户人工处理后调用 `/applications/{application_id}/confirm_hr_reply`。
 
+## Step 18A: Application Action History
+
+```bash
+curl "http://127.0.0.1:8001/applications/1/action_history?limit=50"
+```
+
+关键响应示例：
+
+```json
+{
+  "success": true,
+  "message": "application action history listed",
+  "data": [
+    {
+      "id": 3,
+      "application_id": 1,
+      "action_type": "hr_reply_confirmed",
+      "action_source": "user",
+      "before_status": "hr_contacted",
+      "after_status": "hr_replied",
+      "user_confirmed": true,
+      "external_action_performed": false,
+      "risk_level": "medium",
+      "summary": "User confirmed HR reply was handled manually",
+      "detail_json": {
+        "sent_channel": "manual",
+        "draft_text_preview": "您好，感谢您的联系……",
+        "draft_text_hash": "sha256 hash"
+      }
+    }
+  ]
+}
+```
+
+该接口只读，不保存完整 HR 聊天，不代表系统执行了外部发送，也不是完整 approval log。
+
 ## API Smoke Test Harness
 
 `scripts/api_smoke_test.py` is a local API integration smoke test harness. It assumes the FastAPI server is already running and does not start uvicorn by itself.
