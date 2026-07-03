@@ -127,6 +127,7 @@ class SmokeTestHarness:
             "create interview availability slot",
             self._test_create_interview_availability_slot,
         )
+        self._run_step("agent loop simulation matrix", self._test_agent_loop_simulation_matrix)
         self._run_step(
             "interview schedule with availability slot",
             self._test_interview_schedule_with_slot,
@@ -216,7 +217,7 @@ class SmokeTestHarness:
                 timeout=TIMEOUT_SECONDS,
             )
         except requests.RequestException as exc:
-            print(f"[FAIL] request {method} {path}: {exc}")
+            print(f"[FAIL] request {method} {path}: {exc}", flush=True)
             return None
 
     def _backup_profile(self) -> bool:
@@ -238,15 +239,15 @@ class SmokeTestHarness:
         try:
             passed = func()
         except Exception as exc:
-            print(f"[FAIL] {name}: {exc}")
+            print(f"[FAIL] {name}: {exc}", flush=True)
             passed = False
 
         self.results.append(passed)
         if passed:
             suffix = f" id={self.application_id}" if name == "create application" else ""
-            print(f"[PASS] {name}{suffix}")
+            print(f"[PASS] {name}{suffix}", flush=True)
         else:
-            print(f"[FAIL] {name}")
+            print(f"[FAIL] {name}", flush=True)
 
     def _test_health(self) -> bool:
         response = self._request("GET", "/health")
@@ -954,6 +955,97 @@ class SmokeTestHarness:
             and data.get("status") == "available"
         )
 
+    def _simulate_loop(self, message: str) -> Optional[Dict[str, Any]]:
+        if self.application_id is None:
+            return None
+        response = self._request(
+            "POST",
+            "/agent/loop/simulate",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": message,
+                "max_available_slots": 3,
+            },
+        )
+        if not self._success(response):
+            return None
+        return response.json().get("data") or {}
+
+    def _test_agent_loop_simulation_matrix(self) -> bool:
+        def fail(reason: str) -> bool:
+            print(f"[DETAIL] agent loop simulation matrix: {reason}", flush=True)
+            return False
+
+        if self.application_id is None or self.interview_slot_id is None:
+            return fail("missing application_id or interview_slot_id")
+        before_app = self._request("GET", f"/applications/{self.application_id}")
+        before_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        before_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if (
+            not self._success(before_app)
+            or not self._success(before_history)
+            or not self._success(before_slots)
+        ):
+            return fail("failed to load before-state snapshots")
+        cases = [
+            ("你做过 RAG 项目吗？", "ask_project_experience", "send_hr_reply", "auto_handle_internal"),
+            ("你是什么学历，什么专业？", "ask_education_or_basic_info", "send_hr_reply", "auto_handle_internal"),
+            ("方便发一下学历证书和身份证吗？", "privacy_or_documents", "send_hr_reply", "request_user_confirmation"),
+            ("这个岗位 16k，你能接受吗？", "salary_or_benefits", "send_hr_reply", "request_user_confirmation"),
+            ("这个岗位单休，偶尔加班，可以接受吗？", "overtime_or_work_schedule", "send_hr_reply", "request_user_confirmation"),
+            ("这个岗位是外包驻场，客户现场办公，可以接受吗？", "outsourcing_or_onsite", "send_hr_reply", "request_user_confirmation"),
+            ("明天下午方便视频面试吗？", "schedule_interview", "propose_interview_slots", None),
+            ("你能自动登录招聘软件并处理验证码吗？", "platform_verification", "handle_platform_verification", "block_action"),
+        ]
+        for message, intent, action, expected_decision in cases:
+            data = self._simulate_loop(message)
+            if not data:
+                return fail(f"empty response for intent={intent}")
+            debug = data.get("debug") or {}
+            if data.get("detected_intent") != intent or data.get("proposed_action_type") != action:
+                return fail(
+                    f"classification mismatch expected={intent}/{action} "
+                    f"actual={data.get('detected_intent')}/{data.get('proposed_action_type')}"
+                )
+            if expected_decision and data.get("agent_loop_decision") != expected_decision:
+                return fail(
+                    f"decision mismatch intent={intent} expected={expected_decision} "
+                    f"actual={data.get('agent_loop_decision')}"
+                )
+            if intent == "schedule_interview":
+                if data.get("agent_loop_decision") not in {"propose_slots_with_notification", "request_user_confirmation"}:
+                    return fail(f"unsafe schedule decision={data.get('agent_loop_decision')}")
+                if not (data.get("available_slots_preview") or []):
+                    return fail("schedule response has no available slot preview")
+            if data.get("external_action_allowed") is not False:
+                return fail(f"external action allowed for intent={intent}")
+            if debug.get("database_write_performed") is not False or debug.get("llm_used") is not False:
+                return fail(f"unsafe debug flags for intent={intent}: {debug}")
+            if any(item.get("database_write") or item.get("external_action") for item in data.get("simulated_tool_plan") or []):
+                return fail(f"unsafe simulated tool plan for intent={intent}")
+        after_app = self._request("GET", f"/applications/{self.application_id}")
+        after_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        after_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if (
+            not self._success(after_app)
+            or not self._success(after_history)
+            or not self._success(after_slots)
+        ):
+            return fail("failed to load after-state snapshots")
+        if before_app.json().get("data") != after_app.json().get("data"):
+            return fail("application changed during simulation")
+        if before_history.json().get("data") != after_history.json().get("data"):
+            return fail("action history changed during simulation")
+        if before_slots.json().get("data") != after_slots.json().get("data"):
+            return fail("available slots changed during simulation")
+        return True
+
     def _test_duplicate_interview_availability_slot(self) -> bool:
         body = {
             "date": self.duplicate_slot_date,
@@ -1579,7 +1671,7 @@ class SmokeTestHarness:
             "jd_text": (
                 "岗位职责：负责基于 Python、FastAPI、RAG、LangGraph 的企业 AI 应用开发。"
                 "任职要求：熟悉 LLM API、向量检索、Prompt Engineering，有 1-3 年后端开发经验，"
-                "可接受杭州现场办公。"
+                "工作地点：杭州现场办公。"
             ),
             "status": "saved",
             "next_action": "Harness initial action",

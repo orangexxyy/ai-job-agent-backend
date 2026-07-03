@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 19A: add a rule-based Automation Policy Evaluator without external execution.
+Step 20: add a read-only one-turn Agent Loop Simulation.
 
 ## Completed In Step 1
 
@@ -395,6 +395,14 @@ Step 19A: add a rule-based Automation Policy Evaluator without external executio
 - Does not write action history, application state, or any database table.
 - Does not change HR draft, confirm reply, slot booking, or LangGraph preview behavior.
 - Next: Step 20 Agent Loop Simulation with an `automation_policy_node` before candidate actions.
+
+## Completed In Step 20
+
+- Added `POST /agent/loop/simulate` and rule-based observe / classify / policy / plan orchestration.
+- Reads application, candidate_profile, available slots, and recent action history without returning profile text.
+- Reuses Step 19A automation policy and returns only simulated tool plans.
+- Does not write database state, action history, book slots, call LLM, or execute external actions.
+- Next: Step 21 supervised low-risk auto-reply simulation, still without real external sending.
 
 ## Completed In Resume-Input-01
 

@@ -4,6 +4,10 @@
 
 依次评估项目介绍、薪资外包、面试时间、booking、apply_job 和平台验证码场景。检查风险等级、确认/通知要求，并确认 `external_action_allowed=false` 及三个 auto debug 均为 false。
 
+## Step 20: Agent Loop Simulation Demo
+
+调用 `POST /agent/loop/simulate` 展示项目、学历、学历证明、16k 承诺、单休、外包驻场、面试时间和验证码八类消息。对比 detected_intent、policy、agent_loop_decision 和 simulated_tool_plan，并确认 application、slot、history 均未变化。
+
 主线收口验收结果见 [Mainline Acceptance Report](mainline_acceptance_report.md)。需要快速复习项目表达时，可先读 [3-Minute Demo Pitch](demo_3_minute_pitch.md)。
 
 ## Step 18A: Action History Demo

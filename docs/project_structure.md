@@ -316,6 +316,15 @@ Step 17.2 不新增业务接口或数据库表；`scripts/api_smoke_test.py` 只
 | `app/routes/automation_policy_routes.py` | 提供只读策略评估 API |
 | `docs/automation_policy_design.md` | 说明风险等级、动作权限和 Agent Loop 关系 |
 
+## Step 20: Agent Loop Simulation Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/schemas/agent_loop_schema.py` | 定义单轮模拟请求和结果 |
+| `app/services/agent_loop_service.py` | 只读编排 observe、intent、policy 和 plan |
+| `app/routes/agent_loop_routes.py` | 提供 `/agent/loop/simulate` |
+| `docs/agent_loop_simulation_design.md` | 说明单轮模拟及 supervised agent 演进 |
+
 ## Step 18A: Application Action History Files
 
 | File | Responsibility |

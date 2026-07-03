@@ -6,6 +6,10 @@
 
 我没有只按 HR 消息关键词判断风险，还会只读结合 candidate_profile 的最低薪资、城市、外包、驻场、远程和加班偏好。踩到底线时，即使消息里也有 RAG / 项目等低风险词，最终仍按偏好冲突升级并要求用户确认。
 
+## Step 20: Agent Loop Simulation 怎么讲
+
+> 在 Step 20 中，我做了一个单轮 Agent Loop Simulation。它会读取 application、candidate_profile、available slots 和 action_history，先识别 HR 消息意图，再选择 proposed_action_type，调用 automation_policy 判断风险和权限，最后返回下一步计划。当前只是模拟，不自动发送、不自动投递、不自动确认面试。
+
 完整的三分钟项目讲法见 [3-Minute Demo Pitch](demo_3_minute_pitch.md)，主线验收证据见 [Mainline Acceptance Report](mainline_acceptance_report.md)。
 
 ## Step 18A: 为什么增加 Action History

@@ -1,5 +1,18 @@
 # API Examples
 
+## Step 20: Agent Loop Simulation
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "明天下午三点方便面试吗？",
+  "context_note": "仅模拟下一步决策，不执行外部动作",
+  "max_available_slots": 3
+}
+```
+
+调用 `POST /agent/loop/simulate` 后，可查看意图识别、Automation Policy、模拟工具计划和可用面试时间预览。该接口只读，不写数据库、不调用 LLM、不发送 HR 消息，也不自动确认面试。
+
 当前 Demo 的推荐接口顺序和 Legacy / Preview 分类见 [API Surface Guide](api_surface_guide.md)。`/hr/analyze` 与 `/hr/reply` 示例仅用于兼容旧版调用，新的 Demo 流程应使用 `/application_review/hr_reply_draft`，并在用户人工处理后调用 `/applications/{application_id}/confirm_hr_reply`。
 
 ## Step 19A: Automation Policy Evaluate

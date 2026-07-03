@@ -20,6 +20,14 @@
 
 重点确认 evaluator 不写数据库、不调用 LLM，所有外部动作均为 false。
 
+## Step 20: Agent Loop Simulation 阅读顺序
+
+1. `docs/agent_loop_simulation_design.md`
+2. `app/schemas/agent_loop_schema.py`
+3. `app/services/agent_loop_service.py`
+4. `app/routes/agent_loop_routes.py`
+5. `scripts/api_smoke_test.py`
+
 ## Step 18A: Action History 阅读顺序
 
 1. `docs/action_history_design.md`：先理解轻量追踪目标、隐私控制和非完整审计边界。
