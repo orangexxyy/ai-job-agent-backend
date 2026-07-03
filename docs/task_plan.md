@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 18A: add lightweight application action history for key internal state changes.
+Step 19A: add a rule-based Automation Policy Evaluator without external execution.
 
 ## Completed In Step 1
 
@@ -386,6 +386,15 @@ Step 18A: add lightweight application action history for key internal state chan
 - Repeated `confirm_hr_reply` calls with `already_confirmed=true` do not create duplicate history.
 - `external_action_performed` is enforced as false; no message sending, application, interview confirmation, calendar integration, or recruitment platform access was added.
 - This is lightweight engineering traceability, not a complete approval system or audit compliance implementation.
+
+## Completed In Step 19A
+
+- Added `POST /agent/automation_policy/evaluate` with low / medium / high / blocked policy rules.
+- Supports seven proposed action types and forces `external_action_allowed=false`.
+- Reads application and candidate_profile preferences when application_id is available, and returns preference_risk_flags without exposing profile text.
+- Does not write action history, application state, or any database table.
+- Does not change HR draft, confirm reply, slot booking, or LangGraph preview behavior.
+- Next: Step 20 Agent Loop Simulation with an `automation_policy_node` before candidate actions.
 
 ## Completed In Resume-Input-01
 

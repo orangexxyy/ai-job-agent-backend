@@ -82,6 +82,8 @@ booking 只是内部时间占用标记，不连接真实日历，也不自动确
 
 ## 8. 后续演进
 
+Step 19A 只做策略判断，不默认写 action history；后续 Agent Loop 中真正被采纳的 policy decision 才适合记录。
+
 - 增加更多受控 action type 和统一 action context。
 - 为 Step 19 automation_policy 提供风险等级、确认要求和允许动作的历史依据。
 - 为 Step 20 Agent Loop / checkpoint 提供失败排查、重复动作检测和状态恢复线索。

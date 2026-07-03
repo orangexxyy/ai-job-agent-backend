@@ -1,5 +1,9 @@
 # Demo Script
 
+## Step 19A: Automation Policy Demo
+
+依次评估项目介绍、薪资外包、面试时间、booking、apply_job 和平台验证码场景。检查风险等级、确认/通知要求，并确认 `external_action_allowed=false` 及三个 auto debug 均为 false。
+
 主线收口验收结果见 [Mainline Acceptance Report](mainline_acceptance_report.md)。需要快速复习项目表达时，可先读 [3-Minute Demo Pitch](demo_3_minute_pitch.md)。
 
 ## Step 18A: Action History Demo

@@ -293,6 +293,8 @@ Swagger 使用中英文 summary / description 标记接口用途，并通过 tag
 
 ## 后续可继续沉淀的工程设计点
 
+Step 19A 新增规则版 Automation Policy Evaluator，在动作进入未来 Agent Loop 前区分 low / medium / high / blocked，并输出用户确认和通知要求。详细设计见 [Automation Policy Evaluator Design](automation_policy_design.md)。当前只判断，不执行外部动作。
+
 Step 18A 已新增轻量 action history，用结构化记录替代只依赖 notes 的关键动作追踪。详细设计见 [Application Action History Design](action_history_design.md)。它只记录必要 preview/hash 和状态变化，`external_action_performed` 始终为 false，不是完整聊天、approval log 或审计合规系统。
 
 - HR intent routing：不同 HR 意图走不同回复策略。

@@ -94,6 +94,8 @@ Failed: 0
 
 ## 9. 后续建议
 
+Step 19A 已提供只读 Automation Policy Evaluator；外部执行型 automation policy 和 Agent Loop 仍未实现。
+
 - Step 18A：轻量 action history 已完成，当前覆盖 application_created、hr_reply_confirmed、interview_slot_booked。
 - Step 18B：action 写入一致性、错误处理与 retry policy。
 - Step 19：automation_policy 设计；外部发送继续默认关闭。

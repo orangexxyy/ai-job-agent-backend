@@ -66,6 +66,16 @@ class SmokeTestHarness:
             "application created action history",
             self._test_application_created_action_history,
         )
+        self._run_step("automation policy low risk", self._test_policy_low_risk)
+        self._run_step("automation policy high risk", self._test_policy_high_risk)
+        self._run_step("automation policy single day off", self._test_policy_single_day_off)
+        self._run_step("automation policy salary at minimum", self._test_policy_salary_at_minimum)
+        self._run_step("automation policy below minimum salary", self._test_policy_below_minimum_salary)
+        self._run_step("automation policy outsourcing onsite", self._test_policy_outsourcing_onsite)
+        self._run_step("automation policy interview slots", self._test_policy_interview_slots)
+        self._run_step("automation policy book slot", self._test_policy_book_slot)
+        self._run_step("automation policy apply job", self._test_policy_apply_job)
+        self._run_step("automation policy blocked platform", self._test_policy_blocked_platform)
         self._run_step("workflow preview", self._test_workflow_preview)
         self._run_step(
             "verify workflow preview is read-only",
@@ -313,6 +323,174 @@ class SmokeTestHarness:
             and created[0].get("external_action_performed") is False
             and before_data.get("status") == after_data.get("status")
             and before_data.get("next_action") == after_data.get("next_action")
+        )
+
+    def _evaluate_policy(
+        self,
+        proposed_action_type: str,
+        *,
+        hr_message: str = "",
+        context_note: str = "",
+        draft_text: str = "",
+        include_application: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        response = self._request(
+            "POST",
+            "/agent/automation_policy/evaluate",
+            json_body={
+                "application_id": self.application_id if include_application else None,
+                "hr_message": hr_message,
+                "proposed_action_type": proposed_action_type,
+                "draft_text": draft_text,
+                "context_note": context_note,
+            },
+        )
+        if not self._success(response):
+            return None
+        return response.json().get("data") or {}
+
+    @staticmethod
+    def _policy_has_safe_debug(data: Dict[str, Any]) -> bool:
+        debug = data.get("debug") or {}
+        return (
+            data.get("external_action_allowed") is False
+            and debug.get("external_action_allowed") is False
+            and debug.get("auto_send_message") is False
+            and debug.get("auto_apply") is False
+            and debug.get("auto_confirm_interview") is False
+        )
+
+    def _test_policy_low_risk(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="你做过 RAG 项目吗？",
+        )
+        return bool(data) and (
+            data.get("risk_level") == "low"
+            and data.get("agent_can_handle") is True
+            and data.get("requires_user_confirmation") is False
+            and data.get("requires_user_notification") is False
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_high_risk(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="这个岗位是 8k 外包驻场，你能接受吗？",
+        )
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("agent_can_handle") is False
+            and data.get("requires_user_confirmation") is True
+            and data.get("requires_user_notification") is True
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_single_day_off(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="这个岗位是单休，偶尔加班，可以接受吗？",
+            include_application=True,
+        )
+        flags = (data or {}).get("preference_risk_flags") or []
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("agent_can_handle") is False
+            and data.get("requires_user_confirmation") is True
+            and data.get("requires_user_notification") is True
+            and "single_day_off" in flags
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_salary_at_minimum(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="这个岗位薪资 10k，可以接受吗？",
+            context_note="candidate minimum_salary is 10000",
+            include_application=True,
+        )
+        flags = (data or {}).get("preference_risk_flags") or []
+        return bool(data) and (
+            data.get("risk_level") in {"medium", "high"}
+            and data.get("requires_user_notification") is True
+            and "salary_at_minimum" in flags
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_below_minimum_salary(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="这个岗位 8k，可以接受吗？",
+            context_note="candidate minimum_salary is 10000",
+            include_application=True,
+        )
+        flags = (data or {}).get("preference_risk_flags") or []
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("agent_can_handle") is False
+            and data.get("requires_user_confirmation") is True
+            and "below_minimum_salary" in flags
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_outsourcing_onsite(self) -> bool:
+        data = self._evaluate_policy(
+            "send_hr_reply",
+            hr_message="这个岗位是外包驻场，客户现场办公，可以接受吗？",
+            include_application=True,
+        )
+        flags = (data or {}).get("preference_risk_flags") or []
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("agent_can_handle") is False
+            and data.get("requires_user_confirmation") is True
+            and bool({"outsourcing_risk", "onsite_risk"}.intersection(flags))
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_interview_slots(self) -> bool:
+        data = self._evaluate_policy(
+            "propose_interview_slots",
+            hr_message="明天下午方便视频面试吗？",
+        )
+        return bool(data) and (
+            data.get("risk_level") == "medium"
+            and data.get("agent_can_handle") is True
+            and data.get("requires_user_confirmation") is False
+            and data.get("requires_user_notification") is True
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_book_slot(self) -> bool:
+        data = self._evaluate_policy("book_interview_slot")
+        return bool(data) and (
+            data.get("risk_level") == "medium"
+            and data.get("agent_can_handle") is True
+            and data.get("requires_user_confirmation") is True
+            and data.get("requires_user_notification") is True
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_apply_job(self) -> bool:
+        data = self._evaluate_policy("apply_job")
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("agent_can_handle") is False
+            and data.get("requires_user_confirmation") is True
+            and self._policy_has_safe_debug(data)
+        )
+
+    def _test_policy_blocked_platform(self) -> bool:
+        data = self._evaluate_policy(
+            "handle_platform_verification",
+            context_note="尝试绕过招聘平台验证码",
+        )
+        return bool(data) and (
+            data.get("risk_level") == "high"
+            and data.get("policy_decision") == "block_external_action"
+            and data.get("agent_can_handle") is False
+            and "platform_automation_blocked" in (data.get("blocked_by") or [])
+            and self._policy_has_safe_debug(data)
         )
 
     def _test_workflow_preview(self) -> bool:

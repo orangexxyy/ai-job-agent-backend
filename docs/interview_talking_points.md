@@ -1,5 +1,11 @@
 # Interview Talking Points
 
+## Step 19A: Automation Policy 怎么讲
+
+> 为了从 Human-in-the-loop 走向可控 Agent，我新增 automation_policy evaluator，根据 HR 消息和拟执行动作判断 risk_level、agent_can_handle、requires_user_confirmation 和 external_action_allowed。低风险项目介绍类沟通后续可以交给 Agent，高风险如薪资、外包、驻场、offer、入职承诺必须人工确认。当前 external_action_allowed 始终为 false，不自动发送、不自动投递。
+
+我没有只按 HR 消息关键词判断风险，还会只读结合 candidate_profile 的最低薪资、城市、外包、驻场、远程和加班偏好。踩到底线时，即使消息里也有 RAG / 项目等低风险词，最终仍按偏好冲突升级并要求用户确认。
+
 完整的三分钟项目讲法见 [3-Minute Demo Pitch](demo_3_minute_pitch.md)，主线验收证据见 [Mainline Acceptance Report](mainline_acceptance_report.md)。
 
 ## Step 18A: 为什么增加 Action History

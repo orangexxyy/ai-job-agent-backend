@@ -307,6 +307,15 @@ Step 16.5 是 docs-only 整理，不新增业务接口，不修改 service，不
 
 Step 17.2 不新增业务接口或数据库表；`scripts/api_smoke_test.py` 只调整可重复运行的测试 slot 唯一性、断言和清理逻辑。
 
+## Step 19A: Automation Policy Files
+
+| File | Responsibility |
+| --- | --- |
+| `app/schemas/automation_policy_schema.py` | 定义策略请求、决策和响应 |
+| `app/services/automation_policy_service.py` | 纯规则风险与权限判断，强制禁止外部动作 |
+| `app/routes/automation_policy_routes.py` | 提供只读策略评估 API |
+| `docs/automation_policy_design.md` | 说明风险等级、动作权限和 Agent Loop 关系 |
+
 ## Step 18A: Application Action History Files
 
 | File | Responsibility |

@@ -2,6 +2,18 @@
 
 当前 Demo 的推荐接口顺序和 Legacy / Preview 分类见 [API Surface Guide](api_surface_guide.md)。`/hr/analyze` 与 `/hr/reply` 示例仅用于兼容旧版调用，新的 Demo 流程应使用 `/application_review/hr_reply_draft`，并在用户人工处理后调用 `/applications/{application_id}/confirm_hr_reply`。
 
+## Step 19A: Automation Policy Evaluate
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "这个岗位是 8k 外包驻场，你能接受吗？",
+  "proposed_action_type": "send_hr_reply"
+}
+```
+
+预期为 high、`requires_user_confirmation=true`、`agent_can_handle=false`、`external_action_allowed=false`。接口只判断策略，不执行发送或状态变更。
+
 ## Step 18A: Application Action History
 
 ```bash

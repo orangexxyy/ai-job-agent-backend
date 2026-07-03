@@ -10,6 +10,16 @@
 0. `docs/mainline_acceptance_report.md`：查看当前主线哪些环节已通过、哪一项仍有 LLM 措辞稳定性风险。
 0. `docs/demo_3_minute_pitch.md`：在理解代码后，用三分钟版本复习项目定位、流程、设计和安全边界。
 
+## Step 19A: Automation Policy 阅读顺序
+
+1. `docs/automation_policy_design.md`
+2. `app/schemas/automation_policy_schema.py`
+3. `app/services/automation_policy_service.py`
+4. `app/routes/automation_policy_routes.py`
+5. `scripts/api_smoke_test.py`
+
+重点确认 evaluator 不写数据库、不调用 LLM，所有外部动作均为 false。
+
 ## Step 18A: Action History 阅读顺序
 
 1. `docs/action_history_design.md`：先理解轻量追踪目标、隐私控制和非完整审计边界。
