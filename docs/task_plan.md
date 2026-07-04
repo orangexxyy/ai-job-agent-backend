@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 25: add a Windows one-click launcher for the backend and frontend demo.
+Step 26: add a VSCode compound for one-click backend and frontend demo startup.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 25: add a Windows one-click launcher for the backend and frontend demo.
 
 ## Next Suggested Steps
 
-1. Step 26: explicit approval record or checkpoint / resume design without external sending.
-2. Step 27: action write consistency, error handling, and retry policy.
+1. Step 27: explicit approval record or checkpoint / resume design without external sending.
+2. Step 28: action write consistency, error handling, and retry policy.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -452,6 +452,23 @@ Step 25: add a Windows one-click launcher for the backend and frontend demo.
 - Documents execution-policy fallback and clear port-conflict behavior.
 - Does not change backend business logic, call LLM, or execute any recruitment-platform action.
 - Next: Step 26 can explore approval records or checkpoint / resume without enabling external sending.
+
+## Completed In Step 26
+
+- Initially preserved the FastAPI 8001 debug configuration; the later VSCode launch cleanup removed it so the Demo consistently uses 8002.
+- Added VSCode debug configurations for FastAPI 8002 and static frontend 5173.
+- Added the `AI Job Agent Full Demo` compound with `stopAll=true`.
+- Added a built-in `serverReadyAction` that attempts to open the frontend URL without a browser extension.
+- Did not add `tasks.json`; `debugpy` launches both Python modules directly.
+- Updated README, Demo, frontend guide, project structure, and task plan.
+- Does not change backend business logic, Agent risk rules, send-gate logic, LLM behavior, or external-action boundaries.
+- Next: Step 27 can explore approval records or checkpoint / resume without enabling external sending.
+
+## Maintenance: Education Basic Info Auto Reply
+
+- Enhanced the Step 21 rule template to parse education level, major, and target role from `candidate_profile.resume_text`.
+- Known low-risk resume facts are answered directly; partial facts are still returned without asking the HR to repeat the question.
+- Education proof, Xuexin screenshots, identity documents, and other private materials remain user-confirmed and are never uploaded or sent automatically.
 
 ## Completed In Resume-Input-01
 

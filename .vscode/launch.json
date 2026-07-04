@@ -1,8 +1,8 @@
-﻿{
+{
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "AI Job Agent Backend (FastAPI 8001)",
+      "name": "AI Job Agent Backend (FastAPI 8002)",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
@@ -12,11 +12,40 @@
         "--host",
         "127.0.0.1",
         "--port",
-        "8001"
+        "8002"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": true
+    },
+    {
+      "name": "AI Job Agent Frontend Demo (5173)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "http.server",
+      "args": [
+        "5173",
+        "-d",
+        "frontend_demo"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "justMyCode": true,
+      "serverReadyAction": {
+        "pattern": "Serving HTTP on .* port ([0-9]+)",
+        "uriFormat": "http://127.0.0.1:%s",
+        "action": "openExternally"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "AI Job Agent Full Demo",
+      "configurations": [
+        "AI Job Agent Backend (FastAPI 8002)",
+        "AI Job Agent Frontend Demo (5173)"
+      ],
+      "stopAll": true
     }
   ]
 }

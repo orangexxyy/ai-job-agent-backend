@@ -395,3 +395,9 @@ Step 23 不新增 route、schema、service 或数据库结构。
 - `scripts/start_demo.ps1`：Windows 一键启动 FastAPI 与静态前端，等待退出并只清理本次启动的进程树。
 
 该脚本是本地开发工具，不新增后端业务能力，也不执行真实外部动作。
+## Step 26 VSCode 配置
+
+- `.vscode/launch.json`：包含 FastAPI 8002、Frontend 5173 和 `AI Job Agent Full Demo` compound。
+- `.vscode/tasks.json`：本 Step 不需要，两个服务都由 `debugpy` launch configuration 启动。
+
+VSCode 配置只负责编排本地开发进程，不新增业务接口或外部自动化能力。

@@ -1,5 +1,14 @@
 # AI Job Agent Frontend Demo
 
+## VSCode 一键启动
+
+1. 打开 VSCode 左侧 Run and Debug。
+2. 选择 `AI Job Agent Full Demo`。
+3. 点击绿色播放按钮。
+4. 访问 `http://127.0.0.1:5173`。
+
+该 compound 会同时启动 FastAPI `8002` 和静态前端 `5173`，并通过 `serverReadyAction` 尝试打开浏览器。
+
 ## 一键启动
 
 ```powershell

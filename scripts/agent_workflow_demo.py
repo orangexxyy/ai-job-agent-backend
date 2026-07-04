@@ -151,6 +151,10 @@ class AgentWorkflowDemo:
             passed = passed and not any(
                 phrase in candidate for phrase in ("我接受", "可以接受", "我马上发")
             )
+        for required_text in case.get("required_text", []):
+            passed = passed and required_text in candidate
+        for forbidden_text in case.get("forbidden_text", []):
+            passed = passed and forbidden_text not in candidate
         debug = data.get("debug") or {}
         passed = passed and debug.get("real_message_sent") is False
         passed = passed and debug.get("slot_booked") is False
@@ -288,7 +292,7 @@ class AgentWorkflowDemo:
     def _cases() -> List[Dict[str, Any]]:
         return [
             {"name": "低风险项目经历", "hr_message": "你做过 RAG 项目吗？可以简单介绍一下吗？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True},
-            {"name": "低风险学历事实", "hr_message": "你是什么学历，什么专业？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True},
+            {"name": "低风险学历事实", "hr_message": "你是什么学历，什么专业？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True, "required_text": ["本科", "大数据技术应用"], "forbidden_text": ["请告诉我您重点想确认哪一项"]},
             {"name": "普通跟进", "hr_message": "你现在还在看新的工作机会吗？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True},
             {"name": "中风险面试时间建议", "hr_message": "明天下午方便视频面试吗？", "decisions": {"notify_and_auto_send_simulated"}, "simulated": True, "history": True, "notification": True},
             {"name": "高风险薪资承诺", "hr_message": "这个岗位 16k，你可以接受吗？", "decisions": {"requires_user_confirmation"}, "simulated": False, "history": False},

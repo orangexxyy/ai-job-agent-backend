@@ -133,10 +133,49 @@ def _project_reply(profile: Any) -> str:
 def _education_reply(profile: Any) -> str:
     if profile is None:
         return "您好，学历、专业和工作年限需要以我的真实简历为准，我可以按您关注的项目逐项说明。"
-    facts = _compact_excerpt(profile.resume_text, ("学历", "专业", "毕业", "工作年限"), 220)
+    resume_text = profile.resume_text or ""
+    education_level = _extract_education_level(resume_text)
+    major = _extract_major(resume_text)
+    target_role = _extract_target_role(resume_text, profile.target_roles)
+    facts = []
+    if education_level:
+        facts.append(f"我是{education_level}学历")
+    if major:
+        facts.append(f"专业是{major}")
+    if target_role:
+        facts.append(f"目前求职方向是{target_role}")
     if facts:
-        return f"您好，根据我的简历信息：{facts}。如需确认其他基础信息，我可以继续补充。"
-    return "您好，学历、专业和工作年限会严格以 candidate_profile 中的真实简历为准；请告诉我您重点想确认哪一项。"
+        return f"您好，{'，'.join(facts)}。"
+    return "您好，当前 candidate_profile 中没有可直接确认的学历、专业或工作年限信息，需要以真实简历为准。"
+
+
+def _extract_education_level(resume_text: str) -> Optional[str]:
+    levels = ("博士", "研究生", "硕士", "本科", "大专", "专科")
+    return next((level for level in levels if level in resume_text), None)
+
+
+def _extract_major(resume_text: str) -> Optional[str]:
+    explicit = re.search(
+        r"专业\s*(?:是|为|：|:)\s*([^，,。；;\n]{2,30})",
+        resume_text,
+    )
+    if explicit:
+        return explicit.group(1).strip()
+    suffix = re.search(
+        r"([A-Za-z0-9+#/\-\u4e00-\u9fff]{2,30})专业",
+        resume_text,
+    )
+    return suffix.group(1).strip() if suffix else None
+
+
+def _extract_target_role(resume_text: str, target_roles: Any) -> Optional[str]:
+    matched = re.search(
+        r"求职方向\s*(?:为|是|：|:)?\s*([^，,。；;\n]{2,50})",
+        resume_text,
+    )
+    if matched:
+        return matched.group(1).strip()
+    return target_roles[0].strip() if target_roles else None
 
 
 def _compact_excerpt(text: str, keywords: Tuple[str, ...], limit: int) -> str:

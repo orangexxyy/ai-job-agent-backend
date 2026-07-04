@@ -708,8 +708,15 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 3. 填入 Demo application id，依次点击低风险项目、薪资承诺和 Blocked 三个示例。
 4. 低风险应显示 `auto_send_simulated` 并新增 history；薪资应显示 `requires_user_confirmation`；验证码应显示 `blocked`。
 5. 检查 `External Action Performed` 始终为“否”，并用 `Load Action History` 查看内部记录。
+
+“学历事实”示例应直接从 `candidate_profile.resume_text` 回答已知学历和专业；“学历证明 / 学信网截图”仍必须要求用户确认，不能承诺发送材料。
 ## Step 25：一键启动 Demo
 
 在项目根目录运行 `.\scripts\start_demo.ps1`。脚本会分别打开 Backend 和 Frontend 日志窗口，并打开 `http://127.0.0.1:5173`。如果执行策略阻止脚本，使用 `powershell -ExecutionPolicy Bypass -File .\scripts\start_demo.ps1`。
 
 默认地址：Backend `http://127.0.0.1:8002`、Swagger `http://127.0.0.1:8002/docs`、Frontend `http://127.0.0.1:5173`。端口被占用时脚本只提示，不会强杀旧进程。
+## Step 26：VSCode 一键启动 Demo
+
+在 VSCode 左侧 Run and Debug 中选择 `AI Job Agent Full Demo`，点击绿色播放按钮。Compound 会同时运行 `AI Job Agent Backend (FastAPI 8002)` 和 `AI Job Agent Frontend Demo (5173)`，并尝试打开 `http://127.0.0.1:5173`。
+
+如果浏览器没有自动打开，手动访问前端地址即可。VSCode Demo 统一使用 FastAPI 8002；端口冲突时先关闭旧服务，不要强杀未知进程。
