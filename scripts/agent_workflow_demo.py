@@ -264,7 +264,7 @@ class AgentWorkflowDemo:
                 "RAG 项目未使用 LangGraph。",
                 "AI Job Agent 不自动投递、不自动发送 HR 消息、不自动确认面试。",
             ],
-            "resume_text": "程伟桔，本科，大数据技术应用专业，求职方向为 AI 应用开发工程师。",
+            "resume_text": "程伟桔，本科，数据科学与大数据技术，求职方向为 大模型应用开发工程师。",
             "project_context": (
                 "RAG 企业知识库项目使用 Python、FastAPI、FAISS、BM25、Reranker 和 React；"
                 "AI Job Agent 使用 FastAPI、SQLite、规则策略和 Agent Workflow。"
@@ -292,7 +292,7 @@ class AgentWorkflowDemo:
     def _cases() -> List[Dict[str, Any]]:
         return [
             {"name": "低风险项目经历", "hr_message": "你做过 RAG 项目吗？可以简单介绍一下吗？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True},
-            {"name": "低风险学历事实", "hr_message": "你是什么学历，什么专业？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True, "required_text": ["本科", "大数据技术应用"], "forbidden_text": ["请告诉我您重点想确认哪一项"]},
+            {"name": "低风险学历事实", "hr_message": "你是什么学历，什么专业？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True, "required_text": ["本科", "数据科学与大数据技术"], "forbidden_text": ["请告诉我您重点想确认哪一项"]},
             {"name": "普通跟进", "hr_message": "你现在还在看新的工作机会吗？", "decisions": {"auto_send_simulated"}, "simulated": True, "history": True},
             {"name": "中风险面试时间建议", "hr_message": "明天下午方便视频面试吗？", "decisions": {"notify_and_auto_send_simulated"}, "simulated": True, "history": True, "notification": True},
             {"name": "高风险薪资承诺", "hr_message": "这个岗位 16k，你可以接受吗？", "decisions": {"requires_user_confirmation"}, "simulated": False, "history": False},

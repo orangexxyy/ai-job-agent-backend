@@ -161,8 +161,19 @@ def _extract_major(resume_text: str) -> Optional[str]:
     )
     if explicit:
         return explicit.group(1).strip()
+    known_majors = (
+        "数据科学与大数据技术",
+        "大数据技术应用",
+        "大数据技术",
+    )
+    known_major = next(
+        (candidate for candidate in known_majors if candidate in resume_text),
+        None,
+    )
+    if known_major:
+        return known_major
     suffix = re.search(
-        r"([A-Za-z0-9+#/\-\u4e00-\u9fff]{2,30})专业",
+        r"(?:^|[，,。；;\n\s])([A-Za-z0-9+#/\-\u4e00-\u9fff]{2,30})专业",
         resume_text,
     )
     return suffix.group(1).strip() if suffix else None

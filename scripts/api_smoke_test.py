@@ -1122,7 +1122,7 @@ class SmokeTestHarness:
                 return fail("education candidate promises document submission")
             if strategy == "education_basic_info" and (
                 "本科" not in candidate
-                or "大数据技术应用" not in candidate
+                or "数据科学与大数据技术" not in candidate
                 or "请告诉我您重点想确认哪一项" in candidate
             ):
                 return fail("education candidate does not answer known resume facts")
@@ -1875,7 +1875,7 @@ class SmokeTestHarness:
                 "不会自动发送 HR 消息",
             ],
             "resume_text": (
-                "Demo candidate has 本科学历，大数据技术应用专业，求职方向为 AI 应用开发工程师。"
+                "Demo candidate has 本科学历，数据科学与大数据技术，求职方向为 大模型应用开发工程师。"
                 "Candidate built a FastAPI + RAG enterprise knowledge base demo "
                 "with document ingestion, hybrid retrieval, reranker, SQLite "
                 "conversation records, and human review. Candidate also built "

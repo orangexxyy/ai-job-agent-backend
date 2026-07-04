@@ -517,3 +517,9 @@ Step 27C: explicitly back up and apply a reviewed candidate profile draft.
 - Added `python-docx` and `pypdf` to `requirements.txt` for docx and text-based PDF extraction.
 - Documented that `current_resume.txt` can later support `candidate_profile.resume_text`, `project_context`, and `truth_boundaries`.
 - This step does not write database data, does not update `candidate_profile`, does not modify HR reply logic, does not call LLM, does not do OCR, and does not add frontend upload.
+## Maintenance: Education Auto Reply Major Extraction
+
+- Fixed `ask_education_or_basic_info` to prefer the complete major phrase from the applied `candidate_profile.resume_text`.
+- Supports explicit major labels, `xxx专业`, `数据科学与大数据技术`, `大数据技术应用`, and `大数据技术` without inventing absent facts.
+- Updated smoke and Demo fixtures to require `本科` and `数据科学与大数据技术` in the reply candidate.
+- Does not modify candidate_profile, Step 20 / Step 22, database state, LLM behavior, or external-action boundaries.
