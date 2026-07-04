@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 27C: explicitly back up and apply a reviewed candidate profile draft.
+Step 27.5: close Demo defaults and reinforce profile/availability safety boundaries.
 
 ## Completed In Step 1
 
@@ -65,7 +65,7 @@ Step 27C: explicitly back up and apply a reviewed candidate profile draft.
 ## Completed In Step 6
 
 - Added `scripts/api_smoke_test.py` as a local API integration smoke test harness.
-- The harness assumes FastAPI is already running and defaults to `http://127.0.0.1:8001`.
+- The harness assumes FastAPI is already running and defaults to `http://127.0.0.1:8002`.
 - Added optional `--base-url` support for testing another local base URL.
 - Covered the main API chain: `/health`, `/profile`, `/applications`, `/hr/analyze`, and `/hr/reply`.
 - Added application-context `/hr/reply` verification for `application_id`, `application_context`, `application_updated`, and `application_update_fields`.
@@ -501,7 +501,15 @@ Step 27C: explicitly back up and apply a reviewed candidate profile draft.
 
 - Added `scripts/apply_profile_draft.py` with dry-run as the default mode.
 - Rejects unsupported draft fields and validates with the existing `CandidateProfileInput` schema.
-- Requires `--apply` plus exact interactive `YES`; `--apply --yes` is a high-caution test mode.
+- Requires `--apply` plus exact interactive `YES`; non-interactive confirmation is not supported.
+
+## Completed In Step 27.5
+
+- Unified README, API examples, demo instructions, and smoke defaults on Demo port `8002`.
+- Removed the non-interactive `--yes` profile apply path; formal profile writes require a real interactive terminal and exact `YES`.
+- Default `available` slot queries now exclude slots whose start time has passed, so Agent previews cannot recommend historical times.
+- Kept booking Human-in-the-loop: no automatic booking, interview confirmation, HR sending, or external platform action was added.
+- The project remains a local presentation-grade Human-in-the-loop Demo, not a production-grade automatic job-search Agent.
 - Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
 - Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
 - Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.

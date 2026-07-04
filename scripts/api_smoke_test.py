@@ -13,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-DEFAULT_BASE_URL = "http://127.0.0.1:8001"
+DEFAULT_BASE_URL = "http://127.0.0.1:8002"
 TIMEOUT_SECONDS = 8
 
 PROFILE_FIELDS = [
@@ -46,6 +46,7 @@ class SmokeTestHarness:
         self.original_profile_exists = False
         self.application_id: Optional[int] = None
         self.interview_slot_id: Optional[int] = None
+        self.past_interview_slot_id: Optional[int] = None
         self.hr_reply_confirmed_history_count: Optional[int] = None
         self.timestamp = int(time.time())
         slot_base = datetime.now(timezone.utc) + timedelta(days=365)
@@ -54,6 +55,10 @@ class SmokeTestHarness:
         self.booked_slot_date = (slot_base + timedelta(days=2)).strftime("%Y-%m-%d")
         self.interview_slot_start = slot_base.strftime("%H:%M:%S")
         self.interview_slot_end = (slot_base + timedelta(minutes=30)).strftime("%H:%M:%S")
+        past_slot_base = datetime.now(timezone.utc) - timedelta(days=365)
+        self.past_interview_slot_date = past_slot_base.strftime("%Y-%m-%d")
+        self.past_interview_slot_start = past_slot_base.strftime("%H:%M:%S")
+        self.past_interview_slot_end = (past_slot_base + timedelta(minutes=30)).strftime("%H:%M:%S")
         self.confirmed_hr_reply_text = (
             "Thank you for the invitation. I reviewed the details and replied manually."
         )
@@ -120,6 +125,10 @@ class SmokeTestHarness:
         self._run_step(
             "project intro fact boundary",
             self._test_project_intro_fact_boundary,
+        )
+        self._run_step(
+            "past available interview slot is filtered",
+            self._test_past_available_slot_is_filtered,
         )
         self._run_step(
             "interview schedule without availability slot",
@@ -937,6 +946,43 @@ class SmokeTestHarness:
             and data.get("human_review_required") is True
             and all(item not in draft_text for item in forbidden)
             and ("确认一下日程" in draft_text or "稍后回复" in draft_text)
+        )
+
+    def _test_past_available_slot_is_filtered(self) -> bool:
+        response = self._request(
+            "POST",
+            "/interview_availability_slots",
+            json_body={
+                "date": self.past_interview_slot_date,
+                "start_time": self.past_interview_slot_start,
+                "end_time": self.past_interview_slot_end,
+                "timezone": "Asia/Shanghai",
+                "status": "available",
+                "note": f"HARNESS past slot {self.timestamp}",
+            },
+        )
+        if not self._success(response):
+            return False
+        self.past_interview_slot_id = (response.json().get("data") or {}).get("id")
+        if self.past_interview_slot_id is None:
+            return False
+
+        available = self._request(
+            "GET", "/interview_availability_slots?status=available&limit=100"
+        )
+        all_slots = self._request(
+            "GET", "/interview_availability_slots?status=all&limit=100"
+        )
+        if not self._success(available) or not self._success(all_slots):
+            return False
+
+        available_ids = {
+            item.get("id") for item in (available.json().get("data") or [])
+        }
+        all_ids = {item.get("id") for item in (all_slots.json().get("data") or [])}
+        return (
+            self.past_interview_slot_id not in available_ids
+            and self.past_interview_slot_id in all_ids
         )
 
     def _test_create_interview_availability_slot(self) -> bool:

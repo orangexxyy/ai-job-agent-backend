@@ -79,13 +79,13 @@
 启动 FastAPI：
 
 ```bash
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 打开 Swagger：
 
 ```text
-http://127.0.0.1:8001/docs
+http://127.0.0.1:8002/docs
 ```
 
 运行 smoke test：
@@ -97,7 +97,7 @@ python scripts/api_smoke_test.py
 如果本机系统 Python 缺依赖，可以使用项目虚拟环境：
 
 ```bash
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 ## 推荐演示顺序
@@ -287,7 +287,7 @@ python scripts/api_smoke_test.py
 
 ## 演示失败排查
 
-### 端口 8001 被占用
+### 端口 8002 被占用
 
 检查是否已有 uvicorn 进程占用端口。可以换端口，或停止旧服务后重启。
 
@@ -300,7 +300,7 @@ python scripts/api_smoke_test.py
 可以显式使用：
 
 ```bash
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 ### requirements 没安装
@@ -736,4 +736,4 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 
 先运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py` 查看 dry-run 摘要，此时数据库不变。人工核对后运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py --apply` 并输入 `YES`；脚本先备份旧 profile，再复用 profile service 写入并读回验证。
 
-`--apply --yes` 仅用于明确授权的自动验收，会输出 HIGH CAUTION。Agent Workflow 始终只读取正式 `candidate_profile`，不会直接读取 draft 或简历文件。
+正式应用不提供非交互确认参数。必须在交互终端运行 `--apply` 并由用户手动输入精确的 `YES`；Coding Agent 或自动化脚本不能代替用户确认。Agent Workflow 始终只读取正式 `candidate_profile`，不会直接读取 draft 或简历文件。

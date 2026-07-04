@@ -113,14 +113,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--draft", default=str(DEFAULT_DRAFT))
     parser.add_argument("--backup-dir", default=str(DEFAULT_BACKUP_DIR))
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--yes", action="store_true")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if args.yes and not args.apply:
-        print("Error: --yes is only valid together with --apply", file=sys.stderr)
+    if args.apply and not sys.stdin.isatty():
+        print(
+            "Error: --apply requires an interactive terminal and manual YES confirmation.",
+            file=sys.stderr,
+        )
+        print("applied: false")
         return 2
     draft_path = Path(args.draft)
     backup_dir = Path(args.backup_dir)
@@ -136,14 +139,11 @@ def main() -> int:
         print("applied: false")
         return 0
 
-    if args.yes:
-        print("HIGH CAUTION: --apply --yes bypasses interactive confirmation for testing.")
-    else:
-        confirmation = input("Type YES to back up and apply this draft: ").strip()
-        if confirmation != "YES":
-            print("Application cancelled; database was not changed.")
-            print("applied: false")
-            return 1
+    confirmation = input("Type YES to back up and apply this draft: ").strip()
+    if confirmation != "YES":
+        print("Application cancelled; database was not changed.")
+        print("applied: false")
+        return 1
 
     current = get_candidate_profile()
     backup_path = create_backup(current, backup_dir)

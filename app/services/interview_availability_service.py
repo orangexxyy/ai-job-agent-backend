@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from sqlite3 import Row
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.database import get_connection
 from app.schemas.interview_availability_schema import (
@@ -45,6 +46,23 @@ def _row_to_slot(row: Row) -> InterviewAvailabilitySlotItem:
     data = dict(row)
     data["note"] = data.get("note") or ""
     return InterviewAvailabilitySlotItem(**data)
+
+
+def _is_future_slot(slot: InterviewAvailabilitySlotItem) -> bool:
+    """判断 available slot 的开始时间是否仍在未来；无数据库写入或外部副作用。"""
+    try:
+        starts_at = datetime.fromisoformat(f"{slot.date}T{slot.start_time}")
+        if slot.timezone == "Asia/Shanghai":
+            slot_timezone = timezone(timedelta(hours=8), name="Asia/Shanghai")
+        elif slot.timezone in {"UTC", "Etc/UTC"}:
+            slot_timezone = timezone.utc
+        else:
+            slot_timezone = ZoneInfo(slot.timezone)
+    except (ValueError, ZoneInfoNotFoundError):
+        return False
+    if starts_at.tzinfo is None:
+        starts_at = starts_at.replace(tzinfo=slot_timezone)
+    return starts_at > datetime.now(slot_timezone)
 
 
 def create_interview_availability_slot(
@@ -101,14 +119,14 @@ def list_interview_availability_slots(
     status: Optional[str] = "available",
     limit: int = 50,
 ) -> List[InterviewAvailabilitySlotItem]:
-    """查询面试可用时间段列表。
+    """查询面试时间段；默认仅返回尚未开始的 available slots。
 
-    主要输入：可选 status 和 limit；默认只返回 status=available。
-    主要输出：按 date / start_time 排序的 InterviewAvailabilitySlotItem 列表。
-    副作用：只读 SQLite；不连接真实日历，不自动确认面试，不自动发送 HR 消息。
+    主要输入为 status 和 limit，输出按日期与开始时间排序的 slot 列表。
+    只读 SQLite，不预订时间、不确认面试，也不发送 HR 消息。
     """
     filters = []
-    params: Dict[str, Any] = {"limit": min(limit, 100)}
+    safe_limit = max(1, min(limit, 100))
+    params: Dict[str, Any] = {}
     if status and status != "all":
         _validate_status(status)
         filters.append("status = :status")
@@ -122,14 +140,16 @@ def list_interview_availability_slots(
             SELECT * FROM interview_availability_slots
             {where_clause}
             ORDER BY date ASC, start_time ASC, id ASC
-            LIMIT :limit
             """,
             params,
         ).fetchall()
     finally:
         connection.close()
 
-    return [_row_to_slot(row) for row in rows]
+    slots = [_row_to_slot(row) for row in rows]
+    if status == "available":
+        slots = [slot for slot in slots if _is_future_slot(slot)]
+    return slots[:safe_limit]
 
 
 def update_interview_availability_slot(

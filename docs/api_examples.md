@@ -56,7 +56,7 @@
 ## Step 18A: Application Action History
 
 ```bash
-curl "http://127.0.0.1:8001/applications/1/action_history?limit=50"
+curl "http://127.0.0.1:8002/applications/1/action_history?limit=50"
 ```
 
 关键响应示例：
@@ -96,7 +96,7 @@ curl "http://127.0.0.1:8001/applications/1/action_history?limit=50"
 Start the API server first:
 
 ```bash
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 Run the smoke test:
@@ -108,7 +108,7 @@ python scripts/api_smoke_test.py
 Or pass a custom local base URL:
 
 ```bash
-python scripts/api_smoke_test.py --base-url http://127.0.0.1:8001
+python scripts/api_smoke_test.py --base-url http://127.0.0.1:8002
 ```
 
 The harness covers:
@@ -133,7 +133,7 @@ It temporarily writes a test `candidate_profile`, attempts to restore the origin
 Analyzes one application record with local rule-based scoring. This endpoint is a candidate-side prioritization helper. It does not call DeepSeek / LLM and does not represent a recruitment decision.
 
 ```bash
-curl -X POST http://127.0.0.1:8001/job_match \
+curl -X POST http://127.0.0.1:8002/job_match \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"update_application\":true}"
 ```
@@ -382,7 +382,7 @@ The first version is template-based. It reads `candidate_profile`, reuses `/hr/a
 For `project_experience`, `technical_question`, and `business_proposal` intents, `/hr/reply` can use local profile context from `resume_text`, `project_context`, and `available_projects`. This is keyword-based snippet selection only. It is not RAG, does not use Embedding/vector search, and does not call an LLM.
 
 ```bash
-curl -X POST http://127.0.0.1:8001/hr/reply \
+curl -X POST http://127.0.0.1:8002/hr/reply \
   -H "Content-Type: application/json" \
   -d "{\"message\":\"Which RAG or Agent related projects have you built?\",\"company_name\":\"Example AI Company\",\"job_title\":\"AI Application Developer\",\"extra_context\":\"\"}"
 ```
@@ -420,7 +420,7 @@ When profile context is missing, the endpoint returns a conservative fallback as
 When `application_id` is provided, `/hr/reply` loads the matching application record, uses its company and job title as context, returns `application_context`, and safely updates only `last_hr_message` and `next_action`. It does not send messages, confirm interviews, or update application `status`.
 
 ```bash
-curl -X POST http://127.0.0.1:8001/hr/reply \
+curl -X POST http://127.0.0.1:8002/hr/reply \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"message\":\"方便明天下午视频面试吗？\",\"company_name\":\"\",\"job_title\":\"\",\"extra_context\":\"\"}"
 ```
@@ -470,7 +470,7 @@ Expected key result:
 Missing application result:
 
 ```bash
-curl -X POST http://127.0.0.1:8001/hr/reply \
+curl -X POST http://127.0.0.1:8002/hr/reply \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":999999,\"message\":\"方便明天下午视频面试吗？\"}"
 ```
@@ -724,7 +724,7 @@ Response:
 它不是 LangGraph，不调用 DeepSeek / LLM，不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间。
 
 ```bash
-curl -X POST http://127.0.0.1:8001/agent/workflow_preview \
+curl -X POST http://127.0.0.1:8002/agent/workflow_preview \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"方便介绍一下你做过的 RAG 或 Agent 项目吗？\"}"
 ```
@@ -793,7 +793,7 @@ Missing application result:
 它不实现 RAG，不使用 Playwright，不自动投递，不自动发送 HR 消息，不自动确认面试时间，也不写入 application。规则版 application review 节点不调用 LLM；HR reply package 节点可能在配置 API key 后通过 Step 15 调用一次 DeepSeek-compatible LLM，没有 API key 时会返回 `rule_fallback`。
 
 ```bash
-curl -X POST http://127.0.0.1:8001/agent/langgraph_workflow_preview \
+curl -X POST http://127.0.0.1:8002/agent/langgraph_workflow_preview \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"方便介绍一下你做过的 RAG 或 Agent 项目吗？\"}"
 ```
@@ -944,7 +944,7 @@ Expected key result:
 这不是 LLM 语义理解，不调用 DeepSeek，不做 RAG / Embedding，不抓取岗位。
 
 ```bash
-curl -X POST http://127.0.0.1:8001/applications \
+curl -X POST http://127.0.0.1:8002/applications \
   -H "Content-Type: application/json" \
   -d "{\"company_name\":\"星辰智能科技\",\"job_title\":\"AI 应用开发工程师\",\"source\":\"BOSS直聘\",\"jd_text\":\"岗位职责：负责基于 Python、FastAPI、RAG、LangGraph 的企业 AI 应用开发。任职要求：熟悉 LLM API、向量检索、Prompt Engineering，有 1-3 年后端开发经验，可接受杭州现场办公。\",\"status\":\"saved\",\"notes\":\"适合 AI 应用开发方向，后续重点跟进。\"}"
 ```
@@ -974,7 +974,7 @@ Expected key result:
 当 PATCH 更新 `jd_text` 时，系统会重新解析 JD 字段，但不会自动修改未传入的 `status`。
 
 ```bash
-curl -X PATCH http://127.0.0.1:8001/applications/1 \
+curl -X PATCH http://127.0.0.1:8002/applications/1 \
   -H "Content-Type: application/json" \
   -d "{\"jd_text\":\"岗位职责：支持 remote 远程协作，负责 Docker、React 和 FastAPI 相关 AI 应用开发。\"}"
 ```
@@ -998,7 +998,7 @@ Expected key result:
 ### 普通 follow-up review
 
 ```bash
-curl -X POST http://127.0.0.1:8001/application_review \
+curl -X POST http://127.0.0.1:8002/application_review \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"update_application\":false}"
 ```
@@ -1051,7 +1051,7 @@ curl -X POST http://127.0.0.1:8001/application_review \
 ### 高风险外包 / 驻场 follow-up review
 
 ```bash
-curl -X POST http://127.0.0.1:8001/application_review \
+curl -X POST http://127.0.0.1:8002/application_review \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"这个岗位是外包，需要长期驻场，可以接受吗？\",\"update_application\":false}"
 ```
@@ -1075,7 +1075,7 @@ curl -X POST http://127.0.0.1:8001/application_review \
 ### 无 API key 场景
 
 ```bash
-curl -X POST http://127.0.0.1:8001/application_review/llm_enhance \
+curl -X POST http://127.0.0.1:8002/application_review/llm_enhance \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"这个岗位需要长期驻场，你能接受吗？\",\"include_raw_prompt\":false}"
 ```
@@ -1129,7 +1129,7 @@ DEEPSEEK_MODEL=deepseek-chat
 ### 外包 / 驻场场景
 
 ```bash
-curl -X POST http://127.0.0.1:8001/application_review/hr_reply_draft \
+curl -X POST http://127.0.0.1:8002/application_review/hr_reply_draft \
   -H "Content-Type: application/json" \
   -d "{\"application_id\":1,\"hr_message\":\"这个岗位是外包项目，需要长期驻场客户现场，你能接受吗？\",\"draft_tone\":\"professional\",\"include_raw_prompt\":false}"
 ```
@@ -1186,7 +1186,7 @@ curl -X POST http://127.0.0.1:8001/application_review/hr_reply_draft \
 ### POST /interview_availability_slots
 
 ```bash
-curl -X POST http://127.0.0.1:8001/interview_availability_slots \
+curl -X POST http://127.0.0.1:8002/interview_availability_slots \
   -H "Content-Type: application/json" \
   -d "{\"date\":\"2026-06-20\",\"start_time\":\"14:00\",\"end_time\":\"16:00\",\"timezone\":\"Asia/Shanghai\",\"status\":\"available\",\"note\":\"Demo 可面试时间\"}"
 ```
@@ -1210,22 +1210,28 @@ Expected key result:
 
 ### GET /interview_availability_slots
 
-默认只返回 `status=available`：
+默认只返回 `status=available` 且开始时间仍在未来的 slots，避免 Agent 推荐历史时间：
 
 ```bash
-curl http://127.0.0.1:8001/interview_availability_slots
+curl http://127.0.0.1:8002/interview_availability_slots
 ```
 
 也可以查询其他状态：
 
 ```bash
-curl "http://127.0.0.1:8001/interview_availability_slots?status=expired"
+curl "http://127.0.0.1:8002/interview_availability_slots?status=expired"
+```
+
+如需查看包含历史 available slots 在内的审计视图，可显式使用 `status=all`。该查询只读，不会自动预订或确认面试：
+
+```bash
+curl "http://127.0.0.1:8002/interview_availability_slots?status=all"
 ```
 
 ### PATCH /interview_availability_slots/{slot_id}
 
 ```bash
-curl -X PATCH http://127.0.0.1:8001/interview_availability_slots/1 \
+curl -X PATCH http://127.0.0.1:8002/interview_availability_slots/1 \
   -H "Content-Type: application/json" \
   -d "{\"status\":\"expired\",\"note\":\"Demo 后过期\"}"
 ```
@@ -1281,7 +1287,7 @@ curl -X PATCH http://127.0.0.1:8001/interview_availability_slots/1 \
 该接口当前只记录“本轮 HR 回复已由用户处理 / 手动发送”及对应 application 状态，不是通用人工确认接口，也不提供完整 approval log / audit log。
 
 ```bash
-curl -X POST http://127.0.0.1:8001/applications/1/confirm_hr_reply \
+curl -X POST http://127.0.0.1:8002/applications/1/confirm_hr_reply \
   -H "Content-Type: application/json" \
   -d '{"draft_text":"您好，感谢您的邀请……","hr_message":"最近什么时候方便视频面试？","sent_channel":"manual","next_action":"wait_for_hr_response","note":"用户已人工确认并手动发送给 HR"}'
 ```
