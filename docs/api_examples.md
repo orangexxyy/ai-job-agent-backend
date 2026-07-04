@@ -1,5 +1,18 @@
 # API Examples
 
+## Step 21: Supervised Auto Reply Simulation
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "你做过 RAG 项目吗？",
+  "context_note": "只生成供用户审核的候选回复",
+  "max_available_slots": 3
+}
+```
+
+调用 `POST /agent/auto_reply/simulate`。低风险场景可能返回 `reply_available=true` 和 `reply_candidate`；薪资、外包、单休、隐私材料等场景要求用户确认，平台验证码等请求会被 blocked。候选文本不会自动发送。
+
 ## Step 20: Agent Loop Simulation
 
 ```json

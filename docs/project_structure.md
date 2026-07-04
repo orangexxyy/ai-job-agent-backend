@@ -348,3 +348,18 @@ Step 17.2 不新增业务接口或数据库表；`scripts/api_smoke_test.py` 只
 | `scripts/api_smoke_test.py` | 覆盖 project_intro 不混淆项目、面试时间有 / 无 slots、LangGraph 人工确认边界 |
 
 Step 16.7 不连接 Google Calendar，不连接真实招聘平台，不自动发送 HR 消息，不自动投递，不自动确认面试。
+## Step 21 新增文件
+
+- `app/schemas/auto_reply_schema.py`：定义 supervised auto reply 请求和响应结构。
+- `app/services/auto_reply_service.py`：复用 Step 20，执行低风险候选回复规则和安全 guard。
+- `app/routes/auto_reply_routes.py`：提供 `POST /agent/auto_reply/simulate`。
+- `docs/auto_reply_simulation_design.md`：记录生成规则、确认场景、阻断场景和只读边界。
+
+```text
+POST /agent/auto_reply/simulate
+-> auto_reply_routes.py
+-> auto_reply_service.py
+-> agent_loop_service.py
+-> automation_policy_service.py
+-> read-only profile / application / slots / history services
+```

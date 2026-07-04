@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 20: add a read-only one-turn Agent Loop Simulation.
+Step 21: add a read-only supervised auto-reply simulation for low-risk scenarios.
 
 ## Completed In Step 1
 
@@ -130,11 +130,10 @@ Step 20: add a read-only one-turn Agent Loop Simulation.
 
 ## Next Suggested Steps
 
-1. Step 18B: action write consistency, error handling, and retry policy.
-2. Step 19: automation_policy design; external sending remains disabled by default.
-3. Step 20: Agent Loop / LangGraph checkpoint and persistence demo.
-4. Step 21: MCP read-only server demo with safe read-only tools only.
-5. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
+1. Step 22: explicit approval record or checkpoint / resume design without external sending.
+2. Step 23: action write consistency, error handling, and retry policy.
+3. Later: MCP read-only server demo with safe read-only tools only.
+4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
 ## Do Not Do Yet
 
@@ -403,6 +402,16 @@ Step 20: add a read-only one-turn Agent Loop Simulation.
 - Reuses Step 19A automation policy and returns only simulated tool plans.
 - Does not write database state, action history, book slots, call LLM, or execute external actions.
 - Next: Step 21 supervised low-risk auto-reply simulation, still without real external sending.
+
+## Completed In Step 21
+
+- Added read-only `POST /agent/auto_reply/simulate`.
+- Reused Step 20 Agent Loop Simulation instead of duplicating intent and Automation Policy rules.
+- Added rule-based reply candidates for low-risk project, education, resume/link, general follow-up, and available interview-slot scenarios.
+- Salary, outsourcing, onsite, work schedule, privacy, offer, and other commitment scenarios remain user-confirmed; platform automation remains blocked.
+- Added smoke coverage for eight representative scenarios and read-only state snapshots.
+- Does not call LLM, write application / action history, book slots, send messages, apply to jobs, upload files, or access recruitment platforms.
+- Next: Step 22 can explore explicit user approval records or checkpoint/resume design without enabling external sending.
 
 ## Completed In Resume-Input-01
 

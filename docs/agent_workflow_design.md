@@ -345,6 +345,10 @@ observe -> classify intent -> propose action -> evaluate policy -> plan next ste
 
 Simulation 只读复用 application、candidate_profile、available slots、action history 和 automation policy，不改变现有 LangGraph preview，也不执行 tool plan。
 
+## Step 21: Supervised Auto Reply Simulation
+
+Step 21 在 Step 20 返回的 intent、policy、loop decision 和 slot preview 之上增加 reply guard。低风险内部场景可以生成规则版候选文本；现实承诺场景进入用户确认；平台自动化场景 blocked。该能力仍是独立只读 simulation，不改变当前 LangGraph 图，也不发送消息、不写状态、不调用 LLM。
+
 ## Step 18A: Lightweight Action History
 
 Step 18A 不改变当前 LangGraph workflow preview 的节点链路。它在 application 创建、用户确认 HR 回复、用户 booking 面试 slot 这三个业务服务成功写状态后，追加轻量 `application_action_history`。

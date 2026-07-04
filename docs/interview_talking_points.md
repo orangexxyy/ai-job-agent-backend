@@ -395,3 +395,6 @@ Step 16.7 的表达重点：
 可以这样说：
 
 > 这一步不是做自动日历，也不是自动约面试，而是把“事实边界”和“时间边界”补上。项目介绍不能混淆不同 Demo 的技术栈；面试时间不能凭空编造，必须来自用户维护的 available slots。最终发送和确认仍然 Human-in-the-loop。
+## Step 21：为什么是 Supervised Auto Reply Simulation
+
+可以这样表达：Step 20 只做 observe、intent、policy 和 plan，Step 21 才在低风险场景生成候选回复。我没有把“生成候选文本”等同于“自动发送”；薪资、外包、单休、隐私材料等仍停在人工确认，平台验证码直接阻断。面试时间也只引用 available slots，不会自动 book 或确认。

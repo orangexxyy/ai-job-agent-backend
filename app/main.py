@@ -4,6 +4,7 @@ from app.database import init_database
 from app.routes import (
     agent_routes,
     agent_loop_routes,
+    auto_reply_routes,
     application_review_routes,
     application_routes,
     automation_policy_routes,
@@ -73,4 +74,5 @@ app.include_router(application_review_routes.router)
 app.include_router(job_match_routes.router)
 app.include_router(agent_routes.router)
 app.include_router(agent_loop_routes.router)
+app.include_router(auto_reply_routes.router)
 app.include_router(interview_availability_routes.router)

@@ -684,3 +684,6 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 - 是否提出确认合同主体、驻场周期、薪资范围、职责等问题
 - `debug.auto_send_message=false`
 - application status 不变
+## Step 21：低风险自动回复模拟
+
+调用 `POST /agent/auto_reply/simulate`，依次演示项目经验、薪资和面试时间：项目经验可以生成供用户审核的 `reply_candidate`；薪资必须返回用户确认要求；面试时间只能引用 available slots，且不能 book。最后强调 `external_action_allowed=false`，系统没有发送任何消息。

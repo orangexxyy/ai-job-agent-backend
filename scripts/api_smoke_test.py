@@ -128,6 +128,7 @@ class SmokeTestHarness:
             self._test_create_interview_availability_slot,
         )
         self._run_step("agent loop simulation matrix", self._test_agent_loop_simulation_matrix)
+        self._run_step("supervised auto reply simulation matrix", self._test_auto_reply_simulation_matrix)
         self._run_step(
             "interview schedule with availability slot",
             self._test_interview_schedule_with_slot,
@@ -1044,6 +1045,109 @@ class SmokeTestHarness:
             return fail("action history changed during simulation")
         if before_slots.json().get("data") != after_slots.json().get("data"):
             return fail("available slots changed during simulation")
+        return True
+
+    def _simulate_auto_reply(self, message: str) -> Optional[Dict[str, Any]]:
+        if self.application_id is None:
+            return None
+        response = self._request(
+            "POST",
+            "/agent/auto_reply/simulate",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": message,
+                "max_available_slots": 3,
+            },
+        )
+        if not self._success(response):
+            return None
+        return response.json().get("data") or {}
+
+    def _test_auto_reply_simulation_matrix(self) -> bool:
+        def fail(reason: str) -> bool:
+            print(f"[DETAIL] supervised auto reply matrix: {reason}", flush=True)
+            return False
+
+        if self.application_id is None or self.interview_slot_id is None:
+            return fail("missing application_id or interview_slot_id")
+        before_app = self._request("GET", f"/applications/{self.application_id}")
+        before_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        before_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not all(self._success(item) for item in (before_app, before_history, before_slots)):
+            return fail("failed to load before-state snapshots")
+
+        cases = [
+            ("你做过 RAG 项目吗？", "project_experience_summary", True, False),
+            ("你是什么学历？", "education_basic_info", True, False),
+            ("可以发一下学历证明或学信网截图吗？", "user_confirmation_required", False, True),
+            ("16k 可以接受吗？", "user_confirmation_required", False, True),
+            ("这个岗位单休可以吗？", "user_confirmation_required", False, True),
+            ("这个岗位外包驻场可以吗？", "user_confirmation_required", False, True),
+            ("明天下午方便视频面试吗？", "interview_slots_proposal", True, False),
+            ("帮我处理一下平台验证码", "blocked", False, True),
+        ]
+        for message, strategy, available, guarded in cases:
+            data = self._simulate_auto_reply(message)
+            if not data:
+                return fail(f"empty response for strategy={strategy}")
+            debug = data.get("debug") or {}
+            candidate = data.get("reply_candidate") or ""
+            if data.get("reply_strategy") != strategy:
+                return fail(
+                    f"strategy mismatch expected={strategy} actual={data.get('reply_strategy')}"
+                )
+            if data.get("reply_available") is not available:
+                return fail(f"reply availability mismatch for strategy={strategy}")
+            if guarded and strategy != "blocked" and data.get("requires_user_confirmation") is not True:
+                return fail(f"missing user confirmation for strategy={strategy}")
+            if available and not candidate:
+                return fail(f"missing reply candidate for strategy={strategy}")
+            if strategy == "project_experience_summary" and not all(
+                keyword in candidate for keyword in ("RAG", "FastAPI", "项目")
+            ):
+                return fail("project candidate lacks RAG / FastAPI / 项目 facts")
+            if strategy == "education_basic_info" and any(
+                phrase in candidate for phrase in ("马上发", "提交证明", "发送学信网")
+            ):
+                return fail("education candidate promises document submission")
+            if guarded and any(phrase in candidate for phrase in ("我接受", "可以接受", "马上发")):
+                return fail(f"unsafe commitment generated for strategy={strategy}")
+            if strategy == "interview_slots_proposal" and "最终时间以双方确认后为准" not in candidate:
+                return fail("interview candidate lacks final-confirmation boundary")
+            if strategy == "blocked" and (candidate or data.get("blocked_reason") is None):
+                return fail("blocked platform request generated a candidate or lacks reason")
+            if data.get("external_action_allowed") is not False:
+                return fail(f"external action allowed for strategy={strategy}")
+            required_false_flags = (
+                "auto_send_message",
+                "auto_apply",
+                "auto_confirm_interview",
+                "database_write_performed",
+                "application_updated",
+                "action_history_written",
+                "slot_booked",
+                "llm_used",
+            )
+            if any(debug.get(flag) is not False for flag in required_false_flags):
+                return fail(f"unsafe debug flags for strategy={strategy}: {debug}")
+
+        after_app = self._request("GET", f"/applications/{self.application_id}")
+        after_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        after_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not all(self._success(item) for item in (after_app, after_history, after_slots)):
+            return fail("failed to load after-state snapshots")
+        if before_app.json().get("data") != after_app.json().get("data"):
+            return fail("application changed during auto reply simulation")
+        if before_history.json().get("data") != after_history.json().get("data"):
+            return fail("action history changed during auto reply simulation")
+        if before_slots.json().get("data") != after_slots.json().get("data"):
+            return fail("available slots changed during auto reply simulation")
         return True
 
     def _test_duplicate_interview_availability_slot(self) -> bool:
