@@ -687,3 +687,6 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 ## Step 21：低风险自动回复模拟
 
 调用 `POST /agent/auto_reply/simulate`，依次演示项目经验、薪资和面试时间：项目经验可以生成供用户审核的 `reply_candidate`；薪资必须返回用户确认要求；面试时间只能引用 available slots，且不能 book。最后强调 `external_action_allowed=false`，系统没有发送任何消息。
+## Step 22：最终回复发送门禁模拟
+
+先用项目经验问题演示 `auto_send_simulated` 和新增 history，再用薪资问题展示 `requires_user_confirmation`，最后用平台验证码展示 `blocked`。重点对比 action history：只有通过门禁的低风险或无需确认的 medium 场景会新增 `auto_reply_simulated_sent`，且 `external_action_performed=false`。

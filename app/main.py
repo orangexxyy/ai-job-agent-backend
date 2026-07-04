@@ -13,6 +13,7 @@ from app.routes import (
     interview_availability_routes,
     job_match_routes,
     profile_routes,
+    reply_send_gate_routes,
 )
 
 
@@ -75,4 +76,5 @@ app.include_router(job_match_routes.router)
 app.include_router(agent_routes.router)
 app.include_router(agent_loop_routes.router)
 app.include_router(auto_reply_routes.router)
+app.include_router(reply_send_gate_routes.router)
 app.include_router(interview_availability_routes.router)

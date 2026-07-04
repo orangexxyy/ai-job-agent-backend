@@ -1,5 +1,18 @@
 # API Examples
 
+## Step 22: Final Reply Send Gate Simulation
+
+```json
+{
+  "application_id": 1,
+  "hr_message": "你做过 RAG 项目吗？",
+  "context_note": "仅执行最终门禁模拟",
+  "max_available_slots": 3
+}
+```
+
+调用 `POST /agent/reply_send_gate/simulate`。低风险候选文本通过 final safety check 后可能返回 `final_send_decision=auto_send_simulated`，并写一条内部 action history；这不是消息发送回执，`external_action_performed` 始终为 false。
+
 ## Step 21: Supervised Auto Reply Simulation
 
 ```json

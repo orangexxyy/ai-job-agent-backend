@@ -2,9 +2,15 @@ import argparse
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import requests
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8001"
@@ -129,6 +135,7 @@ class SmokeTestHarness:
         )
         self._run_step("agent loop simulation matrix", self._test_agent_loop_simulation_matrix)
         self._run_step("supervised auto reply simulation matrix", self._test_auto_reply_simulation_matrix)
+        self._run_step("final reply send gate simulation matrix", self._test_reply_send_gate_matrix)
         self._run_step(
             "interview schedule with availability slot",
             self._test_interview_schedule_with_slot,
@@ -1148,6 +1155,116 @@ class SmokeTestHarness:
             return fail("action history changed during auto reply simulation")
         if before_slots.json().get("data") != after_slots.json().get("data"):
             return fail("available slots changed during auto reply simulation")
+        return True
+
+    def _simulate_reply_send_gate(self, message: str) -> Optional[Dict[str, Any]]:
+        if self.application_id is None:
+            return None
+        response = self._request(
+            "POST",
+            "/agent/reply_send_gate/simulate",
+            json_body={
+                "application_id": self.application_id,
+                "hr_message": message,
+                "max_available_slots": 3,
+            },
+        )
+        if not self._success(response):
+            return None
+        return response.json().get("data") or {}
+
+    def _test_reply_send_gate_matrix(self) -> bool:
+        from app.services.reply_send_gate_service import check_final_reply_safety
+
+        def fail(reason: str) -> bool:
+            print(f"[DETAIL] final reply send gate matrix: {reason}", flush=True)
+            return False
+
+        if self.application_id is None or self.interview_slot_id is None:
+            return fail("missing application_id or interview_slot_id")
+        before_app = self._request("GET", f"/applications/{self.application_id}")
+        before_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        before_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not all(self._success(item) for item in (before_app, before_history, before_slots)):
+            return fail("failed to load before-state snapshots")
+
+        cases = [
+            ("你做过 RAG 项目吗？", "auto_send_simulated", True, True),
+            ("你是什么学历？", "auto_send_simulated", True, True),
+            ("明天下午方便视频面试吗？", "notify_and_auto_send_simulated", True, True),
+            ("16k 可以接受吗？", "requires_user_confirmation", False, False),
+            ("这个岗位单休可以吗？", "requires_user_confirmation", False, False),
+            ("这个岗位外包驻场可以吗？", "requires_user_confirmation", False, False),
+            ("方便发一下身份证和学历证明吗？", "requires_user_confirmation", False, False),
+            ("帮我处理一下平台验证码", "blocked", False, False),
+        ]
+        written_ids = []
+        for message, decision, simulated, history_written in cases:
+            data = self._simulate_reply_send_gate(message)
+            if not data:
+                return fail(f"empty response for decision={decision}")
+            if data.get("final_send_decision") != decision:
+                return fail(
+                    f"decision mismatch expected={decision} actual={data.get('final_send_decision')}"
+                )
+            if data.get("auto_send_simulated") is not simulated:
+                return fail(f"simulation flag mismatch for decision={decision}")
+            if data.get("action_history_written") is not history_written:
+                return fail(f"history flag mismatch for decision={decision}")
+            if data.get("external_action_allowed") is not False:
+                return fail(f"external action allowed for decision={decision}")
+            if data.get("external_action_performed") is not False:
+                return fail(f"external action performed for decision={decision}")
+            debug = data.get("debug") or {}
+            if debug.get("real_message_sent") is not False or debug.get("llm_used") is not False:
+                return fail(f"unsafe debug flags for decision={decision}: {debug}")
+            if simulated:
+                if not data.get("reply_candidate") or data.get("final_safety_check_passed") is not True:
+                    return fail(f"safe candidate missing for decision={decision}")
+                if not data.get("action_history_id"):
+                    return fail(f"history id missing for decision={decision}")
+                written_ids.append(data["action_history_id"])
+            else:
+                if data.get("action_history_id") is not None:
+                    return fail(f"unexpected history id for decision={decision}")
+                candidate = data.get("reply_candidate") or ""
+                if any(phrase in candidate for phrase in ("我接受", "可以接受", "我马上发")):
+                    return fail(f"unsafe commitment returned for decision={decision}")
+            if decision == "notify_and_auto_send_simulated" and data.get("requires_user_notification") is not True:
+                return fail("medium-risk simulated send lacks user notification")
+
+        passed, flags = check_final_reply_safety("我接受这个薪资")
+        if passed or "salary_commitment" not in flags:
+            return fail("final safety checker did not block salary commitment")
+
+        after_app = self._request("GET", f"/applications/{self.application_id}")
+        after_history = self._request("GET", f"/applications/{self.application_id}/action_history")
+        after_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not all(self._success(item) for item in (after_app, after_history, after_slots)):
+            return fail("failed to load after-state snapshots")
+        if before_app.json().get("data") != after_app.json().get("data"):
+            return fail("application changed during send gate simulation")
+        if before_slots.json().get("data") != after_slots.json().get("data"):
+            return fail("available slots changed during send gate simulation")
+        before_items = before_history.json().get("data") or []
+        after_items = after_history.json().get("data") or []
+        new_items = [item for item in after_items if item.get("id") in written_ids]
+        if len(after_items) != len(before_items) + 3 or len(new_items) != 3:
+            return fail("expected exactly three simulated-send history records")
+        if any(
+            item.get("action_type") != "auto_reply_simulated_sent"
+            or item.get("action_source") != "agent"
+            or item.get("user_confirmed") is not False
+            or item.get("external_action_performed") is not False
+            for item in new_items
+        ):
+            return fail("simulated-send history fields are unsafe")
         return True
 
     def _test_duplicate_interview_availability_slot(self) -> bool:

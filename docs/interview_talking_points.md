@@ -398,3 +398,6 @@ Step 16.7 的表达重点：
 ## Step 21：为什么是 Supervised Auto Reply Simulation
 
 可以这样表达：Step 20 只做 observe、intent、policy 和 plan，Step 21 才在低风险场景生成候选回复。我没有把“生成候选文本”等同于“自动发送”；薪资、外包、单休、隐私材料等仍停在人工确认，平台验证码直接阻断。面试时间也只引用 available slots，不会自动 book 或确认。
+## Step 22：为什么 simulated send 仍不是真实发送
+
+可以这样表达：我在候选回复之后又加了一道 final safety gate，检查薪资、工作条件、隐私材料、offer 合同和平台操作承诺。通过门禁只写一条内部 `auto_reply_simulated_sent` 历史，用于验证决策链和可追踪性；它不会调用招聘平台，`external_action_performed` 始终为 false。

@@ -363,3 +363,17 @@ POST /agent/auto_reply/simulate
 -> automation_policy_service.py
 -> read-only profile / application / slots / history services
 ```
+## Step 22 新增文件
+
+- `app/schemas/reply_send_gate_schema.py`：定义最终门禁请求、决策和 history 写入结果。
+- `app/services/reply_send_gate_service.py`：复用 Step 21，执行 final safety check 和 simulated-send history 写入。
+- `app/routes/reply_send_gate_routes.py`：提供 `POST /agent/reply_send_gate/simulate`。
+- `docs/reply_send_gate_design.md`：记录门禁规则、决策枚举和外部动作边界。
+
+```text
+POST /agent/reply_send_gate/simulate
+-> reply_send_gate_routes.py
+-> reply_send_gate_service.py
+-> auto_reply_service.py (Step 21, read-only)
+-> action_history_service.py (only when gate passes)
+```

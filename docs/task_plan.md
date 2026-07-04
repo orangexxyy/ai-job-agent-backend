@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 21: add a read-only supervised auto-reply simulation for low-risk scenarios.
+Step 22: add a final reply send gate simulation with limited action-history writes.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 21: add a read-only supervised auto-reply simulation for low-risk scenarios
 
 ## Next Suggested Steps
 
-1. Step 22: explicit approval record or checkpoint / resume design without external sending.
-2. Step 23: action write consistency, error handling, and retry policy.
+1. Step 23: explicit approval record or checkpoint / resume design without external sending.
+2. Step 24: action write consistency, error handling, and retry policy.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -412,6 +412,16 @@ Step 21: add a read-only supervised auto-reply simulation for low-risk scenarios
 - Added smoke coverage for eight representative scenarios and read-only state snapshots.
 - Does not call LLM, write application / action history, book slots, send messages, apply to jobs, upload files, or access recruitment platforms.
 - Next: Step 22 can explore explicit user approval records or checkpoint/resume design without enabling external sending.
+
+## Completed In Step 22
+
+- Added `POST /agent/reply_send_gate/simulate` and reused Step 21 auto-reply simulation.
+- Added final text checks for salary, work-condition, privacy-material, offer / contract, and platform-operation commitments.
+- Added five final decisions: auto-send simulated, notify and auto-send simulated, requires confirmation, blocked, and no reply available.
+- Writes `auto_reply_simulated_sent` action history only when the gate allows simulated handling.
+- Keeps application and slots unchanged; `external_action_allowed=false` and `external_action_performed=false`.
+- Does not call LLM, send messages, apply to jobs, upload files, log in to platforms, or process CAPTCHA.
+- Next: Step 23 can explore approval records or checkpoint / resume without enabling external sending.
 
 ## Completed In Resume-Input-01
 
