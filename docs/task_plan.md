@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 27A: extract the private main resume source into current_resume.txt.
+Step 27B: build a private CandidateProfileInput draft from current_resume.txt.
 
 ## Completed In Step 1
 
@@ -130,7 +130,7 @@ Step 27A: extract the private main resume source into current_resume.txt.
 
 ## Next Suggested Steps
 
-1. Step 27B: generate a reviewable candidate_profile draft from current_resume.txt without database writes.
+1. Step 27C: design an explicit user-confirmed manual profile sync without automatic writes.
 2. Step 28: explicit approval record or checkpoint / resume design without external sending.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
@@ -479,6 +479,23 @@ Step 27A: extract the private main resume source into current_resume.txt.
 - PDF is not implemented in this Step; text-PDF support is future work and OCR remains out of scope.
 - Writes only ignored files under `docs/input`; does not create candidate_profile drafts, call `/profile`, write databases, call LLM, or execute external actions.
 - Next: Step 27B can generate a reviewable draft from current_resume.txt without automatic profile updates.
+
+## Completed In Step 27B
+
+- Added `scripts/build_profile_draft.py` and validated its output with the existing `CandidateProfileInput` schema.
+- Reads only private `current_resume.txt` and its extraction report; does not read the original DOCX directory.
+- Extracts education, major, target roles, technologies, known projects, resume text, project context, and fixed truth boundaries with local rules.
+- Uses null salary numbers and conservative Human-in-the-loop preference defaults when the resume does not explicitly establish a commitment.
+- Generates private `candidate_profile_draft.json` and `candidate_profile_draft_report.md` under ignored `docs/input/generated/`.
+- Does not call `/profile`, write SQLite, call LLM, or change the Agent Workflow fact source.
+- Next: Step 27C can design a user-confirmed manual sync without automatic profile updates.
+
+## Maintenance In Step 27B.1
+
+- Improved major extraction precedence without inventing text absent from `current_resume.txt`.
+- Prefers explicit major labels and longer known phrases before the shorter `大数据技术` fallback.
+- Adds `detected_major` to the private report and warns when only the shorter major phrase is available.
+- Does not write candidate_profile, SQLite, or any external system.
 
 ## Completed In Resume-Input-01
 

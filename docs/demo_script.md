@@ -725,3 +725,9 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 运行 `.\.venv\Scripts\python.exe scripts\extract_resume_sources.py`。默认跳过 `sample_resume.md`，优先选择本地带“新版简历”标识的 DOCX，生成私有 `current_resume.txt` 和 `resume_extract_report.md`。
 
 该步骤只准备后续 profile draft 的输入，不调用 `/profile`，不写数据库。前端和 Agent Workflow 仍然读取正式 `candidate_profile`，不会在请求期间读取 DOCX 或 `current_resume.txt`。
+
+## Step 27B：Candidate Profile Draft
+
+运行 `.\.venv\Scripts\python.exe scripts\build_profile_draft.py`，生成私有 `candidate_profile_draft.json` 和审核报告。重点查看学历、专业、目标岗位、项目、技术栈和 truth boundaries 是否与简历事实一致。
+
+该步骤不调用 `/profile`，因此前端与 Agent Workflow 不会自动切换到 draft。正式事实源仍是数据库中的 `candidate_profile`。
