@@ -731,3 +731,9 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 运行 `.\.venv\Scripts\python.exe scripts\build_profile_draft.py`，生成私有 `candidate_profile_draft.json` 和审核报告。重点查看学历、专业、目标岗位、项目、技术栈和 truth boundaries 是否与简历事实一致。
 
 该步骤不调用 `/profile`，因此前端与 Agent Workflow 不会自动切换到 draft。正式事实源仍是数据库中的 `candidate_profile`。
+
+## Step 27C：确认并应用 Profile Draft
+
+先运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py` 查看 dry-run 摘要，此时数据库不变。人工核对后运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py --apply` 并输入 `YES`；脚本先备份旧 profile，再复用 profile service 写入并读回验证。
+
+`--apply --yes` 仅用于明确授权的自动验收，会输出 HIGH CAUTION。Agent Workflow 始终只读取正式 `candidate_profile`，不会直接读取 draft 或简历文件。

@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 27B: build a private CandidateProfileInput draft from current_resume.txt.
+Step 27C: explicitly back up and apply a reviewed candidate profile draft.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 27B: build a private CandidateProfileInput draft from current_resume.txt.
 
 ## Next Suggested Steps
 
-1. Step 27C: design an explicit user-confirmed manual profile sync without automatic writes.
-2. Step 28: explicit approval record or checkpoint / resume design without external sending.
+1. Step 28: explicit approval record or checkpoint / resume design without external sending.
+2. Step 29: action write consistency, error handling, and retry policy.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -496,6 +496,16 @@ Step 27B: build a private CandidateProfileInput draft from current_resume.txt.
 - Prefers explicit major labels and longer known phrases before the shorter `大数据技术` fallback.
 - Adds `detected_major` to the private report and warns when only the shorter major phrase is available.
 - Does not write candidate_profile, SQLite, or any external system.
+
+## Completed In Step 27C
+
+- Added `scripts/apply_profile_draft.py` with dry-run as the default mode.
+- Rejects unsupported draft fields and validates with the existing `CandidateProfileInput` schema.
+- Requires `--apply` plus exact interactive `YES`; `--apply --yes` is a high-caution test mode.
+- Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
+- Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
+- Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.
+- This is a local Demo maintenance tool, not an automatic resume/profile production pipeline.
 
 ## Completed In Resume-Input-01
 
