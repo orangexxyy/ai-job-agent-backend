@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 26: add a VSCode compound for one-click backend and frontend demo startup.
+Step 27A: extract the private main resume source into current_resume.txt.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 26: add a VSCode compound for one-click backend and frontend demo startup.
 
 ## Next Suggested Steps
 
-1. Step 27: explicit approval record or checkpoint / resume design without external sending.
-2. Step 28: action write consistency, error handling, and retry policy.
+1. Step 27B: generate a reviewable candidate_profile draft from current_resume.txt without database writes.
+2. Step 28: explicit approval record or checkpoint / resume design without external sending.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -469,6 +469,16 @@ Step 26: add a VSCode compound for one-click backend and frontend demo startup.
 - Enhanced the Step 21 rule template to parse education level, major, and target role from `candidate_profile.resume_text`.
 - Known low-risk resume facts are answered directly; partial facts are still returned without asking the HR to repeat the question.
 - Education proof, Xuexin screenshots, identity documents, and other private materials remain user-confirmed and are never uploaded or sent automatically.
+
+## Completed In Step 27A
+
+- Added `scripts/extract_resume_sources.py` using standard-library ZIP and XML parsing for DOCX.
+- Defaults to the private real DOCX marked by the candidate name or “新版简历”; skips `sample_resume.md` unless explicitly selected or it is the only source.
+- Supports DOCX, Markdown, and TXT without installing dependencies.
+- Reports discovered, selected, and skipped sources plus key-information detection.
+- PDF is not implemented in this Step; text-PDF support is future work and OCR remains out of scope.
+- Writes only ignored files under `docs/input`; does not create candidate_profile drafts, call `/profile`, write databases, call LLM, or execute external actions.
+- Next: Step 27B can generate a reviewable draft from current_resume.txt without automatic profile updates.
 
 ## Completed In Resume-Input-01
 

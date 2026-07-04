@@ -401,3 +401,11 @@ Step 23 不新增 route、schema、service 或数据库结构。
 - `.vscode/tasks.json`：本 Step 不需要，两个服务都由 `debugpy` launch configuration 启动。
 
 VSCode 配置只负责编排本地开发进程，不新增业务接口或外部自动化能力。
+## Step 27A 新增文件
+
+- `scripts/extract_resume_sources.py`：自动选择本地正式简历来源，使用标准库解析 DOCX，并生成纯文本和报告。
+- `docs/input/resume_source/`：私有原始简历目录；`sample_resume.md` 仅用于测试。
+- `docs/input/current_resume.txt`：抽取后的私有标准简历文本。
+- `docs/input/resume_extract_report.md`：来源选择、跳过原因、字符数、warnings 和关键词检测报告。
+
+`docs/input/*` 继续由 `.gitignore` 保护。Agent service 不读取这些文件；正式运行事实源是 `candidate_profile`。

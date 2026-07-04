@@ -720,3 +720,8 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 在 VSCode 左侧 Run and Debug 中选择 `AI Job Agent Full Demo`，点击绿色播放按钮。Compound 会同时运行 `AI Job Agent Backend (FastAPI 8002)` 和 `AI Job Agent Frontend Demo (5173)`，并尝试打开 `http://127.0.0.1:5173`。
 
 如果浏览器没有自动打开，手动访问前端地址即可。VSCode Demo 统一使用 FastAPI 8002；端口冲突时先关闭旧服务，不要强杀未知进程。
+## Step 27A：简历事实源抽取
+
+运行 `.\.venv\Scripts\python.exe scripts\extract_resume_sources.py`。默认跳过 `sample_resume.md`，优先选择本地带“新版简历”标识的 DOCX，生成私有 `current_resume.txt` 和 `resume_extract_report.md`。
+
+该步骤只准备后续 profile draft 的输入，不调用 `/profile`，不写数据库。前端和 Agent Workflow 仍然读取正式 `candidate_profile`，不会在请求期间读取 DOCX 或 `current_resume.txt`。
