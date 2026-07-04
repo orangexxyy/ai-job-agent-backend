@@ -701,3 +701,15 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 7. 最后查看 Demo Summary 和 action history 核验结果。
 
 演示时必须说明：`auto_send_simulated` 是内部决策模拟，不是 HR 消息真实发送；`external_action_performed=false`。
+## Step 24：轻量前端 Demo
+
+1. 启动后端：`.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002`。
+2. 直接打开 `frontend_demo/index.html`；如遇 `file://` 限制，运行 `.\.venv\Scripts\python.exe -m http.server 5173 -d frontend_demo`。
+3. 填入 Demo application id，依次点击低风险项目、薪资承诺和 Blocked 三个示例。
+4. 低风险应显示 `auto_send_simulated` 并新增 history；薪资应显示 `requires_user_confirmation`；验证码应显示 `blocked`。
+5. 检查 `External Action Performed` 始终为“否”，并用 `Load Action History` 查看内部记录。
+## Step 25：一键启动 Demo
+
+在项目根目录运行 `.\scripts\start_demo.ps1`。脚本会分别打开 Backend 和 Frontend 日志窗口，并打开 `http://127.0.0.1:5173`。如果执行策略阻止脚本，使用 `powershell -ExecutionPolicy Bypass -File .\scripts\start_demo.ps1`。
+
+默认地址：Backend `http://127.0.0.1:8002`、Swagger `http://127.0.0.1:8002/docs`、Frontend `http://127.0.0.1:5173`。端口被占用时脚本只提示，不会强杀旧进程。

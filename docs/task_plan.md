@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 23: polish and close the Step 18-22 Agent Workflow demo.
+Step 25: add a Windows one-click launcher for the backend and frontend demo.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 23: polish and close the Step 18-22 Agent Workflow demo.
 
 ## Next Suggested Steps
 
-1. Step 24: explicit approval record or checkpoint / resume design without external sending.
-2. Step 25: action write consistency, error handling, and retry policy.
+1. Step 26: explicit approval record or checkpoint / resume design without external sending.
+2. Step 27: action write consistency, error handling, and retry policy.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -432,6 +432,26 @@ Step 23: polish and close the Step 18-22 Agent Workflow demo.
 - Added `docs/agent_workflow_demo_cases.md` and synchronized README, Demo, interview, workflow, API surface, structure, and task-plan documents.
 - This is Demo polish only: no new API, service capability, database schema, LLM call, message sending, application, platform login, CAPTCHA handling, or external action.
 - Next: Step 24 can explore approval records or checkpoint / resume without enabling external sending.
+
+## Completed In Step 24
+
+- Added `frontend_demo/index.html` using static HTML, CSS, and JavaScript without React / Vite dependencies.
+- Added nine HR-message examples, structured decision output, raw JSON, and application action-history display.
+- Calls only existing Final Reply Send Gate and Action History APIs.
+- Added restricted local-demo CORS for `file://`, `127.0.0.1:5173`, and `localhost:5173` origins.
+- Added `frontend_demo/README.md` and synchronized README, Demo, project-structure, and task-plan documents.
+- Does not add business APIs, LLM calls, real message sending, application, uploads, platform login, CAPTCHA handling, or external actions.
+- Next: Step 25 can explore approval records or checkpoint / resume without enabling external sending.
+
+## Completed In Step 25
+
+- Added `scripts/start_demo.ps1` for Windows one-click FastAPI and static frontend startup.
+- Checks the fixed project root, `.venv` Python, and local port availability before launching.
+- Opens separate Backend / Frontend log windows and opens the frontend browser URL.
+- Stops only the process trees started by the launcher; it does not kill unrelated Python processes.
+- Documents execution-policy fallback and clear port-conflict behavior.
+- Does not change backend business logic, call LLM, or execute any recruitment-platform action.
+- Next: Step 26 can explore approval records or checkpoint / resume without enabling external sending.
 
 ## Completed In Resume-Input-01
 

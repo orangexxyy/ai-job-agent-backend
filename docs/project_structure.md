@@ -14,6 +14,7 @@ ai_job_agent/
 │  ├─ schemas/
 │  └─ services/
 ├─ scripts/
+├─ frontend_demo/
 ├─ docs/
 ├─ README.md
 ├─ AGENTS.md
@@ -383,3 +384,14 @@ POST /agent/reply_send_gate/simulate
 - `docs/agent_workflow_demo_cases.md`：记录 low / medium / high / blocked 演示矩阵和预期结果。
 
 Step 23 不新增 route、schema、service 或数据库结构。
+## Step 24 新增目录
+
+- `frontend_demo/index.html`：无构建依赖的静态 Agent Workflow 工作台。
+- `frontend_demo/README.md`：直接打开和本地 HTTP server 两种启动方式。
+
+前端只调用现有 `reply_send_gate` 和 `action_history` API。`app/main.py` 仅增加 `null`、`127.0.0.1:5173` 和 `localhost:5173` 本地来源的受限 CORS，不新增业务接口。
+## Step 25 新增文件
+
+- `scripts/start_demo.ps1`：Windows 一键启动 FastAPI 与静态前端，等待退出并只清理本次启动的进程树。
+
+该脚本是本地开发工具，不新增后端业务能力，也不执行真实外部动作。

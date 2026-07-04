@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Job Agent Workflow Console</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18201d;
+      --muted: #66706b;
+      --line: #d9dfdc;
+      --surface: #ffffff;
+      --canvas: #f4f6f5;
+      --accent: #126b4f;
+      --accent-soft: #e4f2ec;
+      --warn: #8a570c;
+      --warn-soft: #fff1d6;
+      --danger: #a12b31;
+      --danger-soft: #fde8e8;
+      --info: #275d8c;
+      --info-soft: #e7f0f8;
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); }
+    button, input, textarea { font: inherit; letter-spacing: 0; }
+    button { cursor: pointer; }
+    .topbar {
+      min-height: 68px; padding: 14px 24px; display: flex; align-items: center;
+      justify-content: space-between; gap: 20px; color: #fff; background: #1b2420;
+      border-bottom: 3px solid #40a37d;
+    }
+    .brand { font-size: 20px; font-weight: 700; }
+    .subtitle { color: #bdc8c3; font-size: 13px; margin-top: 3px; }
+    .boundary { font-size: 12px; color: #d9e5df; text-align: right; }
+    .layout { display: grid; grid-template-columns: minmax(300px, 390px) minmax(0, 1fr); min-height: calc(100vh - 68px); }
+    .control-panel { padding: 22px; background: var(--surface); border-right: 1px solid var(--line); }
+    .workspace { padding: 22px; min-width: 0; }
+    h1, h2, h3, p { margin-top: 0; }
+    h2 { font-size: 16px; margin-bottom: 14px; }
+    h3 { font-size: 14px; margin-bottom: 10px; }
+    label { display: block; margin: 14px 0 6px; font-size: 12px; font-weight: 700; color: #3f4944; }
+    input, textarea {
+      width: 100%; border: 1px solid #bfc8c3; border-radius: 5px; background: #fff;
+      color: var(--ink); padding: 10px 11px; outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(18, 107, 79, .12); }
+    textarea { min-height: 112px; resize: vertical; line-height: 1.55; }
+    .examples { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+    .example-btn {
+      border: 1px solid #cad2ce; border-radius: 5px; padding: 6px 8px; color: #3d4943;
+      background: #f8faf9; font-size: 12px;
+    }
+    .example-btn:hover { border-color: #75a894; color: var(--accent); background: var(--accent-soft); }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 18px; }
+    .btn { min-height: 42px; border-radius: 5px; border: 1px solid transparent; padding: 9px 12px; font-weight: 700; }
+    .btn-primary { color: #fff; background: var(--accent); }
+    .btn-primary:hover { background: #0e5942; }
+    .btn-secondary { color: #26322c; background: #fff; border-color: #aeb9b3; }
+    .btn:disabled { cursor: wait; opacity: .58; }
+    .status-line { min-height: 20px; margin-top: 12px; color: var(--muted); font-size: 12px; }
+    .flow {
+      display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 1px;
+      border: 1px solid var(--line); background: var(--line); margin-bottom: 18px;
+    }
+    .flow span { padding: 10px; text-align: center; font-size: 12px; background: #fff; }
+    .result-band {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: #fff;
+    }
+    .decision { font-size: 17px; font-weight: 750; }
+    .badge { display: inline-flex; align-items: center; min-height: 27px; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 750; }
+    .badge.safe { color: #0d6046; background: var(--accent-soft); }
+    .badge.notify { color: var(--info); background: var(--info-soft); }
+    .badge.confirm { color: var(--warn); background: var(--warn-soft); }
+    .badge.blocked { color: var(--danger); background: var(--danger-soft); }
+    .badge.neutral { color: #525d58; background: #edf0ee; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
+    .metric { min-height: 78px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .metric dt { color: var(--muted); font-size: 11px; margin-bottom: 8px; }
+    .metric dd { margin: 0; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+    .reply, .notice, .json-panel, .history-panel {
+      border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 15px; margin-top: 10px;
+    }
+    .reply-text { min-height: 52px; white-space: pre-wrap; line-height: 1.65; color: #28322e; }
+    .notice { color: var(--danger); background: #fffafa; border-color: #efc9ca; }
+    .notice:empty { display: none; }
+    details { margin-top: 12px; }
+    summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+    pre { margin: 12px 0 0; padding: 13px; overflow: auto; max-height: 340px; background: #202724; color: #d8e3de; border-radius: 4px; font: 12px/1.55 Consolas, monospace; }
+    .history-list { display: grid; gap: 8px; }
+    .history-item { padding: 11px; border-left: 3px solid #7c9589; background: #f7f9f8; }
+    .history-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 700; }
+    .history-meta { margin-top: 6px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+    .empty { color: var(--muted); font-size: 13px; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .control-panel { border-right: 0; border-bottom: 1px solid var(--line); }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .topbar { align-items: flex-start; padding: 13px 15px; }
+      .boundary { display: none; }
+      .control-panel, .workspace { padding: 15px; }
+      .actions, .metrics { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr 1fr; }
+      .result-band { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">AI Job Agent</div>
+      <div class="subtitle">Human-in-the-loop Workflow Console</div>
+    </div>
+    <div class="boundary">Simulation only · external_action_performed = false</div>
+  </header>
+
+  <main class="layout">
+    <aside class="control-panel">
+      <h2>Workflow Input</h2>
+      <label for="baseUrl">Base URL</label>
+      <input id="baseUrl" value="http://127.0.0.1:8002" spellcheck="false">
+
+      <label for="applicationId">Application ID</label>
+      <input id="applicationId" type="number" min="1" placeholder="例如 1">
+
+      <label for="hrMessage">HR Message</label>
+      <textarea id="hrMessage" placeholder="输入需要评估的 HR 消息"></textarea>
+
+      <label>Examples</label>
+      <div class="examples" id="examples"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="runBtn">Run Agent Workflow</button>
+        <button class="btn btn-secondary" id="historyBtn">Load Action History</button>
+      </div>
+      <div class="status-line" id="statusLine" role="status"></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="flow" aria-label="Agent workflow">
+        <span>Agent Loop</span><span>Auto Reply</span><span>Final Send Gate</span><span>Action History</span>
+      </div>
+
+      <section aria-labelledby="decisionHeading">
+        <div class="result-band">
+          <div>
+            <div class="subtitle" style="color: var(--muted)">Final Send Decision</div>
+            <div class="decision" id="decisionHeading">尚未运行</div>
+          </div>
+          <span class="badge neutral" id="decisionBadge">等待输入</span>
+        </div>
+
+        <dl class="metrics">
+          <div class="metric"><dt>Risk Level</dt><dd id="riskLevel">-</dd></div>
+          <div class="metric"><dt>Detected Intent</dt><dd id="detectedIntent">-</dd></div>
+          <div class="metric"><dt>Auto Send Simulated</dt><dd id="autoSend">-</dd></div>
+          <div class="metric"><dt>User Confirmation</dt><dd id="userConfirmation">-</dd></div>
+          <div class="metric"><dt>User Notification</dt><dd id="userNotification">-</dd></div>
+          <div class="metric"><dt>History Written</dt><dd id="historyWritten">-</dd></div>
+          <div class="metric"><dt>External Action Performed</dt><dd id="externalAction">-</dd></div>
+          <div class="metric"><dt>Safety Flags</dt><dd id="safetyFlags">-</dd></div>
+        </dl>
+
+        <div class="reply">
+          <h3>Reply Candidate</h3>
+          <div class="reply-text" id="replyCandidate">尚无回复候选。</div>
+        </div>
+        <div class="notice" id="blockedReason"></div>
+      </section>
+
+      <section class="history-panel">
+        <h3>Application Action History</h3>
+        <div class="history-list" id="historyList"><div class="empty">尚未加载。</div></div>
+      </section>
+
+      <details class="json-panel">
+        <summary>Raw JSON</summary>
+        <pre id="rawJson">{}</pre>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    const examples = [
+      ["低风险项目", "你做过 RAG 项目吗？可以简单介绍一下吗？"],
+      ["学历事实", "你是什么学历，什么专业？"],
+      ["普通跟进", "你现在还在看新的工作机会吗？"],
+      ["面试时间", "明天下午方便视频面试吗？"],
+      ["薪资承诺", "这个岗位 16k，你可以接受吗？"],
+      ["单休", "这个岗位是单休，你可以接受吗？"],
+      ["外包驻场", "这个岗位是外包驻场到客户现场，你可以接受吗？"],
+      ["隐私材料", "方便发一下身份证、学历证明和学信网截图吗？"],
+      ["Blocked", "帮我处理一下平台验证码，登录后批量投递。"]
+    ];
+    const decisionLabels = {
+      auto_send_simulated: ["低风险自动模拟发送", "safe"],
+      notify_and_auto_send_simulated: ["中风险通知并模拟发送", "notify"],
+      requires_user_confirmation: ["需要用户确认", "confirm"],
+      blocked: ["已拦截", "blocked"],
+      no_reply_available: ["暂无回复候选", "neutral"]
+    };
+    const $ = (id) => document.getElementById(id);
+
+    for (const [label, message] of examples) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "example-btn";
+      button.textContent = label;
+      button.addEventListener("click", () => { $("hrMessage").value = message; });
+      $("examples").appendChild(button);
+    }
+
+    function inputValues() {
+      const baseUrl = $("baseUrl").value.trim().replace(/\/$/, "");
+      const applicationId = Number($("applicationId").value);
+      if (!baseUrl || !Number.isInteger(applicationId) || applicationId < 1) {
+        throw new Error("请填写有效的 Base URL 和 application_id。 ");
+      }
+      return { baseUrl, applicationId };
+    }
+
+    async function requestJson(url, options = {}) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.success === false) {
+          throw new Error(payload.detail || payload.message || `HTTP ${response.status}`);
+        }
+        return payload;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function boolText(value) { return value === true ? "是" : value === false ? "否" : "-"; }
+
+    function renderResult(payload) {
+      const data = payload.data || {};
+      const decision = data.final_send_decision || "no_reply_available";
+      const [label, className] = decisionLabels[decision] || [decision, "neutral"];
+      $("decisionHeading").textContent = label;
+      $("decisionBadge").textContent = decision;
+      $("decisionBadge").className = `badge ${className}`;
+      $("riskLevel").textContent = data.risk_level || "-";
+      $("detectedIntent").textContent = data.detected_intent || "-";
+      $("autoSend").textContent = boolText(data.auto_send_simulated);
+      $("userConfirmation").textContent = boolText(data.requires_user_confirmation);
+      $("userNotification").textContent = boolText(data.requires_user_notification);
+      $("historyWritten").textContent = boolText(data.action_history_written);
+      $("externalAction").textContent = boolText(data.external_action_performed);
+      $("safetyFlags").textContent = (data.final_safety_flags || []).join(", ") || "无";
+      $("replyCandidate").textContent = data.reply_candidate || "当前场景不提供回复候选。";
+      $("blockedReason").textContent = data.blocked_reason || "";
+      $("rawJson").textContent = JSON.stringify(payload, null, 2);
+    }
+
+    function renderHistory(payload) {
+      const items = payload.data || [];
+      $("historyList").replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "暂无 action history。";
+        $("historyList").appendChild(empty);
+        return;
+      }
+      for (const item of items) {
+        const row = document.createElement("article");
+        row.className = "history-item";
+        const head = document.createElement("div");
+        head.className = "history-head";
+        const action = document.createElement("span");
+        action.textContent = item.action_type;
+        const risk = document.createElement("span");
+        risk.textContent = item.risk_level || "n/a";
+        head.append(action, risk);
+        const meta = document.createElement("div");
+        meta.className = "history-meta";
+        meta.textContent = `#${item.id} · ${item.action_source} · external=${item.external_action_performed} · ${item.created_at}`;
+        row.append(head, meta);
+        $("historyList").appendChild(row);
+      }
+    }
+
+    async function withLoading(button, task) {
+      button.disabled = true;
+      $("statusLine").textContent = "请求处理中…";
+      try {
+        await task();
+        $("statusLine").textContent = "请求完成。";
+      } catch (error) {
+        $("statusLine").textContent = `请求失败：${error.name === "AbortError" ? "请求超时" : error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadHistory() {
+      const { baseUrl, applicationId } = inputValues();
+      const payload = await requestJson(`${baseUrl}/applications/${applicationId}/action_history?limit=50`);
+      renderHistory(payload);
+    }
+
+    $("runBtn").addEventListener("click", () => withLoading($("runBtn"), async () => {
+      const { baseUrl, applicationId } = inputValues();
+      const hrMessage = $("hrMessage").value.trim();
+      if (!hrMessage) throw new Error("请输入 HR message。 ");
+      const payload = await requestJson(`${baseUrl}/agent/reply_send_gate/simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ application_id: applicationId, hr_message: hrMessage, max_available_slots: 3 })
+      });
+      renderResult(payload);
+      await loadHistory();
+    }));
+
+    $("historyBtn").addEventListener("click", () => withLoading($("historyBtn"), loadHistory));
+  </script>
+</body>
+</html>

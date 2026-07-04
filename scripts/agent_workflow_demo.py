@@ -99,7 +99,12 @@ class AgentWorkflowDemo:
             return False
 
         base_date = datetime.now(timezone.utc).date() + timedelta(days=2 + self.timestamp % 20)
-        slot_specs = [(0, "10:00", "11:00"), (0, "15:00", "16:00"), (1, "14:00", "15:00")]
+        second = self.timestamp % 60
+        slot_specs = [
+            (0, f"10:00:{second:02d}", f"11:00:{second:02d}"),
+            (0, f"15:00:{second:02d}", f"16:00:{second:02d}"),
+            (1, f"14:00:{second:02d}", f"15:00:{second:02d}"),
+        ]
         for day_offset, start, end in slot_specs:
             slot_date = (base_date + timedelta(days=day_offset)).isoformat()
             response = self._request(

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_database
 from app.routes import (
@@ -58,6 +59,14 @@ app = FastAPI(
     description="Human-in-the-loop AI job search assistant MVP.",
     version="0.1.0",
     openapi_tags=OPENAPI_TAGS,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["null", "http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 
