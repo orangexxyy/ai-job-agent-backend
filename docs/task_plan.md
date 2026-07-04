@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 22: add a final reply send gate simulation with limited action-history writes.
+Step 23: polish and close the Step 18-22 Agent Workflow demo.
 
 ## Completed In Step 1
 
@@ -130,8 +130,8 @@ Step 22: add a final reply send gate simulation with limited action-history writ
 
 ## Next Suggested Steps
 
-1. Step 23: explicit approval record or checkpoint / resume design without external sending.
-2. Step 24: action write consistency, error handling, and retry policy.
+1. Step 24: explicit approval record or checkpoint / resume design without external sending.
+2. Step 25: action write consistency, error handling, and retry policy.
 3. Later: MCP read-only server demo with safe read-only tools only.
 4. Later: Playwright dry-run job collection with manual confirmation and no automatic application.
 
@@ -422,6 +422,16 @@ Step 22: add a final reply send gate simulation with limited action-history writ
 - Keeps application and slots unchanged; `external_action_allowed=false` and `external_action_performed=false`.
 - Does not call LLM, send messages, apply to jobs, upload files, log in to platforms, or process CAPTCHA.
 - Next: Step 23 can explore approval records or checkpoint / resume without enabling external sending.
+
+## Completed In Step 23
+
+- Added `scripts/agent_workflow_demo.py` as a repeatable HTTP Demo runner for Step 18-22.
+- Added low, medium, high, privacy-sensitive, and blocked HR message cases.
+- Verifies final send decisions and `auto_reply_simulated_sent` action history records.
+- Backs up and restores candidate_profile, then closes the Demo application and expires Demo slots.
+- Added `docs/agent_workflow_demo_cases.md` and synchronized README, Demo, interview, workflow, API surface, structure, and task-plan documents.
+- This is Demo polish only: no new API, service capability, database schema, LLM call, message sending, application, platform login, CAPTCHA handling, or external action.
+- Next: Step 24 can explore approval records or checkpoint / resume without enabling external sending.
 
 ## Completed In Resume-Input-01
 

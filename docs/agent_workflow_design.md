@@ -357,3 +357,14 @@ Step 18A 不改变当前 LangGraph workflow preview 的节点链路。它在 app
 ## Step 22: Final Reply Send Gate Simulation
 
 Step 22 在 Step 21 的 `reply_candidate` 后增加 final safety check。门禁依次考虑 blocked、用户确认、候选文本可用性、文本风险和 policy risk level。通过门禁只会记录 simulated-send history，`external_action_performed=false`；当前 LangGraph 图不变，也没有真实 send node。
+## Step 23: Complete Demo Chain
+
+```text
+HR message
+-> Agent Loop Simulation
+-> Auto Reply Simulation
+-> Final Reply Send Gate Simulation
+-> Application Action History
+```
+
+Step 23 没有增加新的业务节点，而是用 `scripts/agent_workflow_demo.py` 把 Step 18-22 串成可重复演示的链路。Low、medium、high 和 blocked 四类场景分别验证内部模拟处理、用户通知、Human-in-the-loop 和直接阻断。整个链路没有真实 send tool，也没有招聘平台登录或投递节点。

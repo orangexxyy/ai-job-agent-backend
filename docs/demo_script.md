@@ -690,3 +690,14 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 ## Step 22：最终回复发送门禁模拟
 
 先用项目经验问题演示 `auto_send_simulated` 和新增 history，再用薪资问题展示 `requires_user_confirmation`，最后用平台验证码展示 `blocked`。重点对比 action history：只有通过门禁的低风险或无需确认的 medium 场景会新增 `auto_reply_simulated_sent`，且 `external_action_performed=false`。
+## Step 23：完整 Agent Workflow Demo
+
+1. 启动 `127.0.0.1:8002` FastAPI 服务。
+2. 运行 `.\.venv\Scripts\python.exe scripts\agent_workflow_demo.py --base-url http://127.0.0.1:8002`。
+3. 观察 low risk 的项目、学历和普通跟进返回 `auto_send_simulated`。
+4. 观察 medium 面试建议返回 `notify_and_auto_send_simulated`，但 slot 没有被 book。
+5. 观察薪资、单休和外包驻场返回 `requires_user_confirmation`。
+6. 观察隐私材料不产生发送类 history，平台验证码场景直接 blocked。
+7. 最后查看 Demo Summary 和 action history 核验结果。
+
+演示时必须说明：`auto_send_simulated` 是内部决策模拟，不是 HR 消息真实发送；`external_action_performed=false`。

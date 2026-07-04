@@ -401,3 +401,16 @@ Step 16.7 的表达重点：
 ## Step 22：为什么 simulated send 仍不是真实发送
 
 可以这样表达：我在候选回复之后又加了一道 final safety gate，检查薪资、工作条件、隐私材料、offer 合同和平台操作承诺。通过门禁只写一条内部 `auto_reply_simulated_sent` 历史，用于验证决策链和可追踪性；它不会调用招聘平台，`external_action_performed` 始终为 false。
+## Step 23：Agent Workflow Demo 讲法
+
+### 30 秒版本
+
+我把求职沟通拆成可控 Agent Workflow：先识别 HR 意图，再通过 Automation Policy 判断风险，低风险生成候选回复，最终经过 Send Gate。Low risk 只做内部模拟处理，high risk 必须人工确认，验证码和平台自动化直接 blocked；所有决策都有 action history，且没有真实发送。
+
+### 1 分钟版本
+
+这个项目不是直接让 LLM 自由操作招聘平台。我先建立 candidate_profile 和 application 事实源，再用 Agent Loop 做 intent、policy 和 plan。Step 21 只生成规则版 reply_candidate，Step 22 再检查薪资、工作条件、隐私材料、offer 合同和平台操作风险。通过门禁只写 simulated-send history；薪资、外包、单休等进入 Human-in-the-loop，验证码和批量投递直接阻断。
+
+### 3 分钟版本
+
+可以按 `docs/agent_workflow_demo_cases.md` 的四类风险逐步展示。Low risk 项目经验、学历和普通跟进会形成候选回复；medium 面试建议只引用用户维护的 available slots，并要求通知用户；high risk 不会生成“我接受”一类承诺；blocked 场景不继续执行。最后展示 action history，说明记录里的 `user_confirmed=false` 和 `external_action_performed=false`，证明这是可观测的决策模拟，而不是平台自动化。

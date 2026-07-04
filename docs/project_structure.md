@@ -377,3 +377,9 @@ POST /agent/reply_send_gate/simulate
 -> auto_reply_service.py (Step 21, read-only)
 -> action_history_service.py (only when gate passes)
 ```
+## Step 23 新增文件
+
+- `scripts/agent_workflow_demo.py`：准备独立 Demo fixture，运行九类 HR 场景并核验 action history。
+- `docs/agent_workflow_demo_cases.md`：记录 low / medium / high / blocked 演示矩阵和预期结果。
+
+Step 23 不新增 route、schema、service 或数据库结构。
