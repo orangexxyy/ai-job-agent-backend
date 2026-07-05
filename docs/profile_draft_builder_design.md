@@ -59,7 +59,7 @@ dry-run、未输入 `YES`、保存失败或读回验证失败都不会写 histor
 
 ## Step 29A：本地 Review API 与前端审核
 
-`GET /profile_draft/review` 由后端读取默认私有 draft 并使用 `CandidateProfileInput` 校验。响应只包含 `draft_exists`、结构化字段、最多 500 字符的 `resume_text_preview` / `project_context_preview` 和原文长度，不返回完整正文，也不写数据库或 history。draft 不存在时返回 `draft_exists=false`，不把缺失文件包装成不清楚的 500 错误。
+`GET /profile_draft/review` 由后端读取默认私有 draft 并使用 `CandidateProfileInput` 校验。响应只包含 `draft_exists`、结构化字段、最多 500 字符的 `resume_text_preview` / `project_context_preview` 和原文长度，不返回完整正文，也不写数据库或 history。preview 会轻量替换手机号、邮箱和 GitHub URL / 字段；length 仍表示脱敏前的原始文本长度。draft 不存在时返回 `draft_exists=false`，不把缺失文件包装成不清楚的 500 错误。
 
 `POST /profile_draft/apply` 的请求体只允许 `confirmation_text`，不接受前端上传的 profile 内容或文件路径。只有精确等于 `YES` 时，后端才重新读取默认 draft，并复用与 CLI 相同的备份、保存、读回验证和 history 写入逻辑。前端还会在发送请求前执行输入确认和浏览器 confirm 二次确认。
 

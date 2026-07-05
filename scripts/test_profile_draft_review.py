@@ -43,7 +43,13 @@ def main() -> int:
         profile_draft_service.DEFAULT_DRAFT_PATH = draft_path
         profile_draft_service.DEFAULT_BACKUP_DIR = backup_dir
 
-        resume_text = "Synthetic resume fact. " + ("R" * 700)
+        phone = "13800138000"
+        email = "candidate@example.com"
+        github_url = "https://github.com/example/candidate-project"
+        resume_text = (
+            f"Synthetic resume fact. 手机：{phone} 邮箱：{email}\n"
+            f"GitHub：{github_url}\n" + ("R" * 700)
+        )
         project_context = "Synthetic project fact. " + ("P" * 700)
         draft = CandidateProfileInput(
             expected_salary_min=None,
@@ -102,6 +108,12 @@ def main() -> int:
                 or "project_context" in review_data
                 or resume_text in response_text
                 or project_context in response_text
+                or phone in response_text
+                or email in response_text
+                or github_url in response_text
+                or "[PHONE_REDACTED]" not in response_text
+                or "[EMAIL_REDACTED]" not in response_text
+                or "[GITHUB_REDACTED]" not in response_text
                 or review_data.get("resume_text_length") != len(resume_text)
                 or review_data.get("project_context_length") != len(project_context)
                 or len(review_data.get("resume_text_preview") or "") > 503
@@ -218,6 +230,7 @@ def main() -> int:
         print("[PASS] missing draft returned draft_exists=false without writes")
         print("[PASS] client-provided paths and non-local clients were rejected")
         print("[PASS] GET review returned previews without database writes")
+        print("[PASS] preview redacted phone, email, and GitHub details")
         print("[PASS] invalid confirmation was rejected without history")
         print("[PASS] client-provided profile fields were rejected")
         print("[PASS] confirmed apply saved profile and wrote one safe history row")

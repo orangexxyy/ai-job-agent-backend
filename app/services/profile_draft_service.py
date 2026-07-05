@@ -1,4 +1,5 @@
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,19 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DRAFT_PATH = PROJECT_ROOT / "docs/input/generated/candidate_profile_draft.json"
 DEFAULT_BACKUP_DIR = PROJECT_ROOT / "docs/input/generated/profile_backups"
 PREVIEW_LENGTH = 500
+PHONE_PATTERN = re.compile(
+    r"(?<!\d)(?:\+?86[-\s]?)?1[3-9]\d(?:[-\s]?\d){8}(?!\d)"
+)
+EMAIL_PATTERN = re.compile(
+    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE
+)
+GITHUB_URL_PATTERN = re.compile(
+    r"(?:https?://)?(?:www\.)?github\.com(?:/[^\s,，;；)\]}>]+)?",
+    re.IGNORECASE,
+)
+GITHUB_FIELD_PATTERN = re.compile(
+    r"(?im)^\s*github(?:\s*(?:url|链接|地址|主页))?\s*[:：]\s*.*$"
+)
 
 
 @dataclass(frozen=True)
@@ -43,7 +57,11 @@ def _profile_input_fields() -> set[str]:
 
 
 def _preview(text: str) -> str:
-    compact = " ".join((text or "").split())
+    redacted = PHONE_PATTERN.sub("[PHONE_REDACTED]", text or "")
+    redacted = EMAIL_PATTERN.sub("[EMAIL_REDACTED]", redacted)
+    redacted = GITHUB_URL_PATTERN.sub("[GITHUB_REDACTED]", redacted)
+    redacted = GITHUB_FIELD_PATTERN.sub("[GITHUB_REDACTED]", redacted)
+    compact = " ".join(redacted.split())
     if not compact:
         return ""
     preview_length = min(PREVIEW_LENGTH, max(1, len(compact) // 2))
@@ -77,7 +95,7 @@ def get_profile_draft_review(
 ) -> ProfileDraftReviewData:
     """生成不含完整简历正文的 profile draft 审核视图。
 
-    主要输入为可选 draft 路径，输出结构化字段、文本预览和长度。
+    主要输入为可选 draft 路径，输出结构化字段、轻量脱敏预览和原文长度。
     只读本地文件，不写 SQLite/history，不调用 LLM，也不执行外部动作。
     """
     resolved_draft_path = draft_path or DEFAULT_DRAFT_PATH
