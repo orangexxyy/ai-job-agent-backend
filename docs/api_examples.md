@@ -1317,3 +1317,30 @@ curl -X POST http://127.0.0.1:8002/applications/1/confirm_hr_reply \
 ```
 
 不存在的 application 返回 404，空白 `draft_text` 返回 422，`offer / rejected / closed` 终态返回 409。重复提交相同草稿不会重复追加记录，而是返回 `already_confirmed=true`。
+## Step 29A: Profile Draft Review
+
+以下接口只面向本机 Demo。后端固定读取默认私有 draft，客户端不能上传简历、指定路径或提交完整 profile；非本机 client 会被拒绝。
+
+### GET /profile_draft/review
+
+```bash
+curl http://127.0.0.1:8002/profile_draft/review
+```
+
+响应包含 `draft_exists`、target roles、projects、truth boundaries、偏好字段、最多 500 字符的预览和文本长度，不包含完整 `resume_text` / `project_context`。默认 draft 不存在时返回 HTTP 200 和 `draft_exists=false`，方便前端给出明确提示；该请求不写数据库或 history。
+
+GET 不接受 `draft_path` 或其他 query 参数。下面的请求会返回 422：
+
+```bash
+curl "http://127.0.0.1:8002/profile_draft/review?draft_path=other.json"
+```
+
+### POST /profile_draft/apply
+
+```bash
+curl -X POST http://127.0.0.1:8002/profile_draft/apply \
+  -H "Content-Type: application/json" \
+  -d "{\"confirmation_text\":\"YES\"}"
+```
+
+只有精确的 `YES` 才会执行，请求 body 的额外字段会被拒绝。后端备份旧 profile、保存默认 draft、读回验证，并在成功后写一条不含完整正文的 `profile_apply_history`。该操作不会投递、发送 HR 消息或确认面试。

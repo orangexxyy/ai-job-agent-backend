@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,36 +16,14 @@ if str(PROJECT_ROOT) not in sys.path:
 os.environ.setdefault("PYTHON_DOTENV_DISABLED", "1")
 
 from app.schemas.profile_schema import CandidateProfileInput
-from app.database import init_database
-from app.services.profile_apply_history_service import create_profile_apply_history
-from app.services.profile_service import get_candidate_profile, save_candidate_profile
+from app.services.profile_draft_service import (
+    apply_profile_draft,
+    load_profile_draft,
+)
 
 
 DEFAULT_DRAFT = Path("docs/input/generated/candidate_profile_draft.json")
 DEFAULT_BACKUP_DIR = Path("docs/input/generated/profile_backups")
-
-
-def model_dump(model: Any) -> dict[str, Any]:
-    return model.model_dump() if hasattr(model, "model_dump") else model.dict()
-
-
-def profile_input_fields() -> set[str]:
-    fields = getattr(CandidateProfileInput, "model_fields", None)
-    if fields is None:
-        fields = CandidateProfileInput.__fields__
-    return set(fields)
-
-
-def load_draft(path: Path) -> CandidateProfileInput:
-    if not path.is_file():
-        raise FileNotFoundError(f"draft does not exist: {path}")
-    raw = json.loads(path.read_text(encoding="utf-8-sig"))
-    if not isinstance(raw, dict):
-        raise ValueError("draft JSON root must be an object")
-    extra_fields = sorted(set(raw) - profile_input_fields())
-    if extra_fields:
-        raise ValueError(f"draft contains unsupported fields: {', '.join(extra_fields)}")
-    return CandidateProfileInput(**raw)
 
 
 def preview(text: str, limit: int = 500) -> str:
@@ -81,33 +57,6 @@ def print_application_summary(
     print(f"will_write_database: {str(will_write).lower()}")
 
 
-def create_backup(profile: Any, backup_dir: Path) -> Path | None:
-    if profile is None:
-        print("no existing candidate_profile found; backup skipped")
-        return None
-    backup_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    backup_path = backup_dir / f"candidate_profile_backup_{stamp}.json"
-    counter = 1
-    while backup_path.exists():
-        backup_path = backup_dir / f"candidate_profile_backup_{stamp}_{counter}.json"
-        counter += 1
-    backup_path.write_text(
-        json.dumps(model_dump(profile), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    print(f"backup_path: {backup_path}")
-    return backup_path
-
-
-def verify_applied_profile(draft: CandidateProfileInput) -> bool:
-    saved = get_candidate_profile()
-    if saved is None:
-        return False
-    saved_input = CandidateProfileInput(**model_dump(saved))
-    return model_dump(saved_input) == model_dump(draft)
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Dry-run or explicitly apply a reviewed candidate profile draft."
@@ -130,8 +79,8 @@ def main() -> int:
     draft_path = Path(args.draft)
     backup_dir = Path(args.backup_dir)
     try:
-        draft = load_draft(draft_path)
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        draft = load_profile_draft(draft_path)
+    except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
@@ -147,33 +96,25 @@ def main() -> int:
         print("applied: false")
         return 1
 
-    init_database()
-    current = get_candidate_profile()
-    backup_path = create_backup(current, backup_dir)
-    profile_id = save_candidate_profile(draft)
-    verified = verify_applied_profile(draft)
-    history = None
-    if verified:
-        history = create_profile_apply_history(
-            draft_path=str(draft_path),
-            backup_path=str(backup_path) if backup_path is not None else None,
-            profile_verified=True,
-            user_confirmed=True,
-            external_action_performed=False,
-            detail_json={
-                "target_roles_count": len(draft.target_roles),
-                "available_projects_count": len(draft.available_projects),
-                "truth_boundaries_count": len(draft.truth_boundaries),
-                "resume_text_length": len(draft.resume_text),
-                "project_context_length": len(draft.project_context),
-            },
+    try:
+        outcome = apply_profile_draft(
+            confirmation_text="YES",
+            draft_path=draft_path,
+            backup_dir=backup_dir,
         )
-    print(f"profile_id: {profile_id}")
-    print(f"backup_created: {str(backup_path is not None).lower()}")
-    print(f"profile_verified: {str(verified).lower()}")
-    print(f"profile_apply_history_id: {history.id if history is not None else None}")
-    print(f"applied: {str(verified).lower()}")
-    return 0 if verified else 1
+    except (OSError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if outcome.backup_path is None:
+        print("no existing candidate_profile found; backup skipped")
+    else:
+        print(f"backup_path: {outcome.backup_path}")
+    print(f"profile_id: {outcome.profile_id}")
+    print(f"backup_created: {str(outcome.backup_created).lower()}")
+    print(f"profile_verified: {str(outcome.profile_verified).lower()}")
+    print(f"profile_apply_history_id: {outcome.profile_apply_history_id}")
+    print(f"applied: {str(outcome.applied).lower()}")
+    return 0 if outcome.applied else 1
 
 
 if __name__ == "__main__":

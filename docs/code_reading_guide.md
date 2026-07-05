@@ -49,6 +49,18 @@
 
 阅读重点：这不是 application action history，不新增 API，也不是完整 profile 版本管理或生产级 audit log。
 
+## Step 29A: Profile Draft Review 阅读顺序
+
+1. `docs/profile_draft_builder_design.md`：理解本地审核、摘要输出和二次确认边界。
+2. `app/schemas/profile_draft_schema.py`：确认 POST 只接收 `confirmation_text`，response 不含完整正文。
+3. `app/services/profile_draft_service.py`：查看 CLI / API 共享的 load、backup、save、verify 和 history 流程。
+4. `app/routes/profile_draft_routes.py`：查看默认路径固定、拒绝 query 参数并限制 loopback client 的本地 Review API。
+5. `scripts/apply_profile_draft.py`：确认 CLI 仍要求交互终端和手动 `YES`。
+6. `frontend_demo/index.html`：查看结构化展示和双重确认。
+7. `scripts/test_profile_draft_review.py`：查看临时文件与 SQLite 下的 API、隐私和写入条件验收。
+
+阅读重点：前端不能提交完整 profile 或文件路径；GET 缺失时返回 `draft_exists=false` 且保持只读，POST 仅在精确确认后应用默认 draft。
+
 1. `README.md`
 2. `docs/project_structure.md`
 3. `app/main.py`

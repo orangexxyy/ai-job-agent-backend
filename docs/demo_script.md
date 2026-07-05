@@ -737,3 +737,12 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 先运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py` 查看 dry-run 摘要，此时数据库不变。人工核对后运行 `.\.venv\Scripts\python.exe scripts\apply_profile_draft.py --apply` 并输入 `YES`；脚本先备份旧 profile，再复用 profile service 写入并读回验证。
 
 正式应用不提供非交互确认参数。必须在交互终端运行 `--apply` 并由用户手动输入精确的 `YES`；Coding Agent 或自动化脚本不能代替用户确认。Agent Workflow 始终只读取正式 `candidate_profile`，不会直接读取 draft 或简历文件。
+
+## Step 29A：前端审核 Profile Draft
+
+1. 启动 FastAPI 8002 和 `frontend_demo` 5173，打开 `http://127.0.0.1:5173`。
+2. 在 Profile Draft Review 区域点击 `Load Draft Review`，检查 target roles、projects、truth boundaries、偏好、文本预览和长度。若默认 draft 不存在，页面显示明确提示并禁用 Apply。
+3. 点击 `Apply Reviewed Draft`，输入精确的 `YES`，再通过浏览器 confirm。
+4. 查看 `applied`、`profile_verified`、`backup_created`、`profile_apply_history_id` 和 `external_action_performed=false`。
+
+页面及 Raw JSON 不会显示完整 `resume_text` / `project_context`，也不能上传简历、传入文件路径或提交完整 profile。API 只接受本机访问；该流程只应用本地默认 draft，不投递、不发送 HR 消息、不确认面试。

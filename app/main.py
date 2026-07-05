@@ -14,6 +14,7 @@ from app.routes import (
     interview_availability_routes,
     job_match_routes,
     profile_routes,
+    profile_draft_routes,
     reply_send_gate_routes,
 )
 
@@ -26,6 +27,10 @@ OPENAPI_TAGS = [
     {
         "name": "profile",
         "description": "候选人档案 / Candidate Profile",
+    },
+    {
+        "name": "profile_draft",
+        "description": "本地候选人画像草稿审核 / Local Profile Draft Review",
     },
     {
         "name": "applications",
@@ -77,6 +82,7 @@ def on_startup() -> None:
 
 app.include_router(health_routes.router)
 app.include_router(profile_routes.router)
+app.include_router(profile_draft_routes.router)
 app.include_router(hr_routes.router)
 app.include_router(application_routes.router)
 app.include_router(automation_policy_routes.router)

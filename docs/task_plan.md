@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 28A: record minimal local history after a user-confirmed and verified profile apply.
+Step 29A: expose local profile draft review and confirmed apply through the Demo frontend.
 
 ## Completed In Step 1
 
@@ -520,6 +520,17 @@ Step 28A: record minimal local history after a user-confirmed and verified profi
 - `apply_profile_draft.py` writes one history row only after interactive `YES`, save, and read-back verification succeed.
 - Added a temporary-database script test covering dry-run, cancellation, successful apply, detail minimization, and external-action rejection.
 - This is local Demo operation history, not production audit logging, multi-user permissions, or complete profile version management.
+
+## Completed In Step 29A
+
+- Added `GET /profile_draft/review` for schema-validated structured fields, bounded previews, and text lengths without returning complete profile text.
+- Missing default drafts return `draft_exists=false`; client-provided paths and non-loopback clients are rejected.
+- Added `POST /profile_draft/apply`; the request contains only `confirmation_text` and rejects every value except exact `YES`.
+- Extracted draft loading, backup, save, read-back verification, and history creation into a shared service used by both API and CLI.
+- Kept CLI dry-run and interactive TTY confirmation unchanged; `--yes` was not restored.
+- Added a Profile Draft Review section to the static frontend with typed `YES` plus browser confirm before apply.
+- Added a dedicated TestClient script using a temporary draft, backup directory, and SQLite database; the generic smoke test does not read or apply the real private draft.
+- This remains a local Human-in-the-loop Demo, not authenticated profile administration, production audit logging, or version management.
 - Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
 - Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
 - Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.

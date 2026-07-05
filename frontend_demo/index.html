@@ -94,6 +94,21 @@
     .history-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 700; }
     .history-meta { margin-top: 6px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
     .empty { color: var(--muted); font-size: 13px; }
+    .profile-review { padding: 26px 22px 34px; border-top: 1px solid var(--line); background: #fff; }
+    .profile-review-inner { max-width: 1240px; margin: 0 auto; }
+    .section-head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 18px; }
+    .section-head p { color: var(--muted); font-size: 13px; line-height: 1.55; margin-bottom: 0; }
+    .profile-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
+    .review-block { min-width: 0; padding-top: 14px; border-top: 1px solid var(--line); }
+    .review-block.wide { grid-column: 1 / -1; }
+    .review-list { margin: 0; padding-left: 20px; color: #34403a; line-height: 1.65; }
+    .review-list:empty::after { content: "暂无"; color: var(--muted); }
+    .preview-text { white-space: pre-wrap; line-height: 1.65; overflow-wrap: anywhere; color: #34403a; }
+    .policy-list { display: grid; gap: 10px; }
+    .policy-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; font-size: 13px; }
+    .policy-row strong { color: var(--muted); }
+    .apply-result { margin-top: 18px; padding: 14px 0; border-top: 1px solid var(--line); }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .control-panel { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -106,6 +121,10 @@
       .actions, .metrics { grid-template-columns: 1fr; }
       .flow { grid-template-columns: 1fr 1fr; }
       .result-band { align-items: flex-start; flex-direction: column; }
+      .section-head { flex-direction: column; }
+      .review-grid { grid-template-columns: 1fr; }
+      .review-block.wide { grid-column: auto; }
+      .policy-row { grid-template-columns: 1fr; gap: 4px; }
     }
   </style>
 </head>
@@ -184,6 +203,65 @@
     </section>
   </main>
 
+  <section class="profile-review" aria-labelledby="profileReviewHeading">
+    <div class="profile-review-inner">
+      <div class="section-head">
+        <div>
+          <h2 id="profileReviewHeading">Profile Draft Review</h2>
+          <p>本地 Demo。仅在用户二次确认后应用正式 candidate_profile；不会自动投递、发送 HR 消息或确认面试。</p>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-secondary" id="loadDraftBtn">Load Draft Review</button>
+          <button class="btn btn-primary" id="applyDraftBtn" disabled>Apply Reviewed Draft</button>
+        </div>
+      </div>
+      <div class="status-line" id="profileStatusLine" role="status">尚未加载 draft。</div>
+
+      <div class="review-grid">
+        <section class="review-block">
+          <h3>Target Roles</h3>
+          <ul class="review-list" id="draftTargetRoles"></ul>
+        </section>
+        <section class="review-block">
+          <h3>Available Projects</h3>
+          <ul class="review-list" id="draftProjects"></ul>
+        </section>
+        <section class="review-block wide">
+          <h3>Truth Boundaries</h3>
+          <ul class="review-list" id="draftTruthBoundaries"></ul>
+        </section>
+        <section class="review-block">
+          <h3>Resume Preview <span class="subtitle" id="resumeLength"></span></h3>
+          <div class="preview-text" id="resumePreview">尚未加载。</div>
+        </section>
+        <section class="review-block">
+          <h3>Project Context Preview <span class="subtitle" id="projectLength"></span></h3>
+          <div class="preview-text" id="projectPreview">尚未加载。</div>
+        </section>
+        <section class="review-block wide">
+          <h3>Preferences And Policies</h3>
+          <div class="policy-list" id="draftPolicies"></div>
+        </section>
+      </div>
+
+      <div class="apply-result">
+        <h3>Apply Result</h3>
+        <dl class="metrics">
+          <div class="metric"><dt>Applied</dt><dd id="draftApplied">-</dd></div>
+          <div class="metric"><dt>Profile Verified</dt><dd id="draftVerified">-</dd></div>
+          <div class="metric"><dt>Backup Created</dt><dd id="draftBackup">-</dd></div>
+          <div class="metric"><dt>History ID</dt><dd id="draftHistoryId">-</dd></div>
+          <div class="metric"><dt>External Action</dt><dd id="draftExternalAction">-</dd></div>
+        </dl>
+      </div>
+
+      <details class="json-panel">
+        <summary>Profile Draft Raw JSON</summary>
+        <pre id="profileRawJson">{}</pre>
+      </details>
+    </div>
+  </section>
+
   <script>
     const examples = [
       ["低风险项目", "你做过 RAG 项目吗？可以简单介绍一下吗？"],
@@ -215,12 +293,18 @@
     }
 
     function inputValues() {
-      const baseUrl = $("baseUrl").value.trim().replace(/\/$/, "");
+      const baseUrl = baseUrlValue();
       const applicationId = Number($("applicationId").value);
-      if (!baseUrl || !Number.isInteger(applicationId) || applicationId < 1) {
+      if (!Number.isInteger(applicationId) || applicationId < 1) {
         throw new Error("请填写有效的 Base URL 和 application_id。 ");
       }
       return { baseUrl, applicationId };
+    }
+
+    function baseUrlValue() {
+      const baseUrl = $("baseUrl").value.trim().replace(/\/$/, "");
+      if (!baseUrl) throw new Error("请填写有效的 Base URL。 ");
+      return baseUrl;
     }
 
     async function requestJson(url, options = {}) {
@@ -288,6 +372,68 @@
       }
     }
 
+    function renderList(id, values) {
+      const list = $(id);
+      list.replaceChildren();
+      for (const value of values || []) {
+        const item = document.createElement("li");
+        item.textContent = value;
+        list.appendChild(item);
+      }
+    }
+
+    function renderDraftReview(payload) {
+      const data = payload.data || {};
+      const draftExists = data.draft_exists === true;
+      $("applyDraftBtn").disabled = !draftExists;
+      renderList("draftTargetRoles", data.target_roles);
+      renderList("draftProjects", data.available_projects);
+      renderList("draftTruthBoundaries", data.truth_boundaries);
+      $("resumePreview").textContent = data.resume_text_preview || "暂无预览。";
+      $("projectPreview").textContent = data.project_context_preview || "暂无预览。";
+      $("resumeLength").textContent = `(${data.resume_text_length || 0} chars)`;
+      $("projectLength").textContent = `(${data.project_context_length || 0} chars)`;
+
+      const policies = [
+        ["Salary", data.salary_note],
+        ["Availability", data.availability_note],
+        ["Relocation", data.relocation_policy],
+        ["Outsourcing", data.outsourcing_policy],
+        ["Onsite", data.onsite_policy],
+        ["Remote", data.remote_policy],
+        ["Overtime", data.overtime_policy],
+        ["Business Trip", data.business_trip_policy]
+      ];
+      $("draftPolicies").replaceChildren();
+      for (const [label, value] of policies) {
+        const row = document.createElement("div");
+        row.className = "policy-row";
+        const name = document.createElement("strong");
+        name.textContent = label;
+        const text = document.createElement("span");
+        text.textContent = value || "未设置";
+        row.append(name, text);
+        $("draftPolicies").appendChild(row);
+      }
+      const safeData = { ...data };
+      delete safeData.resume_text;
+      delete safeData.project_context;
+      $("profileRawJson").textContent = JSON.stringify({ ...payload, data: safeData }, null, 2);
+      if (!draftExists) {
+        $("profileStatusLine").textContent = "默认本地 Profile Draft 不存在，请先运行 draft builder。";
+      }
+    }
+
+    function renderDraftApply(payload) {
+      const data = payload.data || {};
+      $("draftApplied").textContent = boolText(data.applied);
+      $("draftVerified").textContent = boolText(data.profile_verified);
+      $("draftBackup").textContent = boolText(data.backup_created);
+      $("draftHistoryId").textContent = data.profile_apply_history_id ?? "-";
+      $("draftExternalAction").textContent = boolText(data.external_action_performed);
+      $("profileRawJson").textContent = JSON.stringify(payload, null, 2);
+    }
+
     async function withLoading(button, task) {
       button.disabled = true;
       $("statusLine").textContent = "请求处理中…";
@@ -307,6 +453,26 @@
       renderHistory(payload);
     }
 
+    async function withProfileLoading(button, task) {
+      button.disabled = true;
+      $("profileStatusLine").textContent = "请求处理中…";
+      try {
+        await task();
+        if ($("profileStatusLine").textContent === "请求处理中…") {
+          $("profileStatusLine").textContent = "请求完成。";
+        }
+      } catch (error) {
+        $("profileStatusLine").textContent = `请求失败：${error.name === "AbortError" ? "请求超时" : error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadDraftReview() {
+      const payload = await requestJson(`${baseUrlValue()}/profile_draft/review`);
+      renderDraftReview(payload);
+    }
+
     $("runBtn").addEventListener("click", () => withLoading($("runBtn"), async () => {
       const { baseUrl, applicationId } = inputValues();
       const hrMessage = $("hrMessage").value.trim();
@@ -321,6 +487,21 @@
     }));
 
     $("historyBtn").addEventListener("click", () => withLoading($("historyBtn"), loadHistory));
+    $("loadDraftBtn").addEventListener("click", () => withProfileLoading($("loadDraftBtn"), loadDraftReview));
+    $("applyDraftBtn").addEventListener("click", () => withProfileLoading($("applyDraftBtn"), async () => {
+      const confirmationText = window.prompt("输入 YES 以确认应用当前本地 Profile Draft：", "");
+      if (confirmationText !== "YES") throw new Error("未输入精确的 YES，已取消应用。 ");
+      if (!window.confirm("将备份旧 profile、应用当前 draft 并记录最小操作留痕。确认继续吗？")) {
+        throw new Error("用户已取消应用。 ");
+      }
+      const payload = await requestJson(`${baseUrlValue()}/profile_draft/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation_text: confirmationText })
+      });
+      renderDraftApply(payload);
+      await loadDraftReview();
+    }));
   </script>
 </body>
 </html>
