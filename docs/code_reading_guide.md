@@ -38,6 +38,17 @@
 6. `application_routes.py`：查看只读查询接口。
 7. `scripts/api_smoke_test.py`：查看写入、去重、外部动作 false 和查询只读验收。
 
+## Step 28A: Profile Apply History 阅读顺序
+
+1. `docs/profile_draft_builder_design.md`：先理解私有草稿、人工确认和最小留痕边界。
+2. `app/models.py` 与 `app/database.py`：查看独立 history 表和幂等初始化。
+3. `app/schemas/profile_apply_history_schema.py`：查看不包含简历正文的记录结构。
+4. `app/services/profile_apply_history_service.py`：确认 detail 白名单、确认/验证条件和外部动作拒绝。
+5. `scripts/apply_profile_draft.py`：查看 history 只在保存并读回验证成功后写入。
+6. `scripts/test_profile_apply_history.py`：查看临时数据库下的 dry-run、取消、成功和隐私边界验收。
+
+阅读重点：这不是 application action history，不新增 API，也不是完整 profile 版本管理或生产级 audit log。
+
 1. `README.md`
 2. `docs/project_structure.md`
 3. `app/main.py`

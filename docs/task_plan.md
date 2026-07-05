@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 27.5: close Demo defaults and reinforce profile/availability safety boundaries.
+Step 28A: record minimal local history after a user-confirmed and verified profile apply.
 
 ## Completed In Step 1
 
@@ -510,6 +510,16 @@ Step 27.5: close Demo defaults and reinforce profile/availability safety boundar
 - Default `available` slot queries now exclude slots whose start time has passed, so Agent previews cannot recommend historical times.
 - Kept booking Human-in-the-loop: no automatic booking, interview confirmation, HR sending, or external platform action was added.
 - The project remains a local presentation-grade Human-in-the-loop Demo, not a production-grade automatic job-search Agent.
+
+## Completed In Step 28A
+
+- Added an independent `profile_apply_history` SQLite table instead of reusing application-scoped action history.
+- Added schema and service functions for creating and listing lightweight profile apply records.
+- History creation requires both user confirmation and successful profile verification; `external_action_performed=true` is rejected.
+- `detail_json` accepts only counts and text lengths, never full `resume_text` or `project_context`.
+- `apply_profile_draft.py` writes one history row only after interactive `YES`, save, and read-back verification succeed.
+- Added a temporary-database script test covering dry-run, cancellation, successful apply, detail minimization, and external-action rejection.
+- This is local Demo operation history, not production audit logging, multi-user permissions, or complete profile version management.
 - Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
 - Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
 - Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.

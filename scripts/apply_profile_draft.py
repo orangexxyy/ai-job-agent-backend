@@ -18,6 +18,8 @@ if str(PROJECT_ROOT) not in sys.path:
 os.environ.setdefault("PYTHON_DOTENV_DISABLED", "1")
 
 from app.schemas.profile_schema import CandidateProfileInput
+from app.database import init_database
+from app.services.profile_apply_history_service import create_profile_apply_history
 from app.services.profile_service import get_candidate_profile, save_candidate_profile
 
 
@@ -145,13 +147,31 @@ def main() -> int:
         print("applied: false")
         return 1
 
+    init_database()
     current = get_candidate_profile()
     backup_path = create_backup(current, backup_dir)
     profile_id = save_candidate_profile(draft)
     verified = verify_applied_profile(draft)
+    history = None
+    if verified:
+        history = create_profile_apply_history(
+            draft_path=str(draft_path),
+            backup_path=str(backup_path) if backup_path is not None else None,
+            profile_verified=True,
+            user_confirmed=True,
+            external_action_performed=False,
+            detail_json={
+                "target_roles_count": len(draft.target_roles),
+                "available_projects_count": len(draft.available_projects),
+                "truth_boundaries_count": len(draft.truth_boundaries),
+                "resume_text_length": len(draft.resume_text),
+                "project_context_length": len(draft.project_context),
+            },
+        )
     print(f"profile_id: {profile_id}")
     print(f"backup_created: {str(backup_path is not None).lower()}")
     print(f"profile_verified: {str(verified).lower()}")
+    print(f"profile_apply_history_id: {history.id if history is not None else None}")
     print(f"applied: {str(verified).lower()}")
     return 0 if verified else 1
 

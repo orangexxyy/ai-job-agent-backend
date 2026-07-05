@@ -9,6 +9,7 @@ from app.models import (
     APPLICATIONS_TABLE_SQL,
     CANDIDATE_PROFILE_TABLE_SQL,
     INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL,
+    PROFILE_APPLY_HISTORY_TABLE_SQL,
 )
 
 
@@ -36,14 +37,18 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_database() -> None:
-    with get_connection() as connection:
+    connection = get_connection()
+    try:
         connection.execute(CANDIDATE_PROFILE_TABLE_SQL)
         connection.execute(APPLICATIONS_TABLE_SQL)
         connection.execute(INTERVIEW_AVAILABILITY_SLOTS_TABLE_SQL)
         connection.execute(APPLICATION_ACTION_HISTORY_TABLE_SQL)
         connection.execute(APPLICATION_ACTION_HISTORY_INDEX_SQL)
+        connection.execute(PROFILE_APPLY_HISTORY_TABLE_SQL)
         _ensure_optional_columns(connection, "applications", APPLICATION_OPTIONAL_COLUMNS)
         connection.commit()
+    finally:
+        connection.close()
 
 
 def _ensure_optional_columns(

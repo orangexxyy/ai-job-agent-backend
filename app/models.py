@@ -87,3 +87,17 @@ APPLICATION_ACTION_HISTORY_INDEX_SQL = """
 CREATE INDEX IF NOT EXISTS idx_application_action_history_application_id_id
 ON application_action_history (application_id, id DESC);
 """
+
+
+PROFILE_APPLY_HISTORY_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS profile_apply_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    draft_path TEXT NOT NULL,
+    backup_path TEXT,
+    profile_verified INTEGER NOT NULL,
+    user_confirmed INTEGER NOT NULL,
+    external_action_performed INTEGER NOT NULL,
+    detail_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+"""
