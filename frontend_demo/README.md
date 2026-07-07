@@ -47,3 +47,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start_demo.ps1
 - `GET /applications/{application_id}/action_history`
 
 页面不包含真实发送、自动投递、附件上传、平台登录或验证码处理能力。`external_action_performed` 必须保持为 false。
+
+## Candidate Preference Form
+
+页面中的 `Candidate Preference Form / 求职偏好事实源` 使用现有 `GET /profile` 和 `POST /profile`。点击 Load Preferences 可反复查看当前偏好；保存前页面会重新读取最新完整 profile，仅覆盖偏好白名单，并保留 resume_text、project_context、target_roles、available_projects 和其他 truth boundaries。
+
+表单支持薪资数值、城市数组、异地说明，以及外包、驻场、远程、工作制、出差和隐私材料的分场景偏好。隐私材料只替换 `隐私材料偏好：` 条目，不上传任何文件。
+
+这些偏好只用于生成需要人工审核的敏感回复候选。页面不会发送 HR 消息、投递简历、确认面试或执行平台操作，`external_action_performed` 始终为 false。

@@ -746,3 +746,13 @@ Step 16.7 后，面试时间回复必须基于手动维护的 `interview_availab
 4. 查看 `applied`、`profile_verified`、`backup_created`、`profile_apply_history_id` 和 `external_action_performed=false`。
 
 页面及 Raw JSON 不会显示完整 `resume_text` / `project_context`，也不能上传简历、传入文件路径或提交完整 profile。API 只接受本机访问；该流程只应用本地默认 draft，不投递、不发送 HR 消息、不确认面试。
+
+## Step 30A：Candidate Preference Form
+
+1. 在前端点击 `Load Preferences`，确认薪资、城市、外包、驻场、远程、工作制、出差和隐私边界已从正式 candidate_profile 回填。
+2. 修改偏好后点击 `Save Preferences`，阅读“将更新求职偏好事实源”的确认提示。
+3. 保存完成后观察 `updated = true` 和本次白名单字段列表；页面不会显示或修改完整 resume/project 文本。
+4. 使用“单休”“外包驻场”“薪资低于底线”“隐私材料”等 HR 示例运行 Agent Workflow。
+5. 观察明确偏好会产生可审核候选，但 `requires_user_confirmation=true`、`auto_send_simulated=false`、`action_history_written=false`、`external_action_performed=false`。
+
+Step 29A 用于完整 draft 审核入库，Step 30A 只维护偏好白名单。偏好为空或“我自己回答”时，敏感问题仍不生成候选。

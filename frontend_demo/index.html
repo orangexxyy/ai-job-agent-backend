@@ -24,7 +24,7 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; color: var(--ink); background: var(--canvas); }
-    button, input, textarea { font: inherit; letter-spacing: 0; }
+    button, input, textarea, select { font: inherit; letter-spacing: 0; }
     button { cursor: pointer; }
     .topbar {
       min-height: 68px; padding: 14px 24px; display: flex; align-items: center;
@@ -41,11 +41,11 @@
     h2 { font-size: 16px; margin-bottom: 14px; }
     h3 { font-size: 14px; margin-bottom: 10px; }
     label { display: block; margin: 14px 0 6px; font-size: 12px; font-weight: 700; color: #3f4944; }
-    input, textarea {
+    input, textarea, select {
       width: 100%; border: 1px solid #bfc8c3; border-radius: 5px; background: #fff;
       color: var(--ink); padding: 10px 11px; outline: none;
     }
-    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(18, 107, 79, .12); }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(18, 107, 79, .12); }
     textarea { min-height: 112px; resize: vertical; line-height: 1.55; }
     .examples { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
     .example-btn {
@@ -109,6 +109,14 @@
     .policy-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; font-size: 13px; }
     .policy-row strong { color: var(--muted); }
     .apply-result { margin-top: 18px; padding: 14px 0; border-top: 1px solid var(--line); }
+    .preference-form { padding: 26px 22px 38px; border-top: 1px solid var(--line); background: var(--canvas); }
+    .preference-inner { max-width: 1240px; margin: 0 auto; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
+    .form-group { min-width: 0; padding-top: 14px; border-top: 1px solid var(--line); }
+    .form-group.wide { grid-column: 1 / -1; }
+    .field-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .field-note { margin-top: 6px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .preference-result { margin-top: 16px; color: #34403a; font-size: 13px; }
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .control-panel { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -125,6 +133,8 @@
       .review-grid { grid-template-columns: 1fr; }
       .review-block.wide { grid-column: auto; }
       .policy-row { grid-template-columns: 1fr; gap: 4px; }
+      .form-grid, .field-grid { grid-template-columns: 1fr; }
+      .form-group.wide { grid-column: auto; }
     }
   </style>
 </head>
@@ -262,6 +272,132 @@
     </div>
   </section>
 
+  <section class="preference-form" aria-labelledby="preferenceHeading">
+    <div class="preference-inner">
+      <div class="section-head">
+        <div>
+          <h2 id="preferenceHeading">Candidate Preference Form / 求职偏好事实源</h2>
+          <p>仅维护 candidate_profile 的偏好白名单字段。不会编辑简历正文、项目事实或完整 profile，也不会自动发送任何回复。</p>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-secondary" id="loadPreferencesBtn">Load Preferences</button>
+          <button class="btn btn-primary" id="savePreferencesBtn" disabled>Save Preferences</button>
+        </div>
+      </div>
+      <div class="status-line" id="preferenceStatusLine" role="status">尚未加载求职偏好。</div>
+
+      <div class="form-grid">
+        <section class="form-group wide">
+          <h3>薪资偏好</h3>
+          <div class="field-grid">
+            <div><label for="expectedSalaryMin">期望薪资下限</label><input id="expectedSalaryMin" type="number" min="0" step="500"></div>
+            <div><label for="expectedSalaryMax">期望薪资上限</label><input id="expectedSalaryMax" type="number" min="0" step="500"></div>
+            <div><label for="minimumSalary">最低可接受底线</label><input id="minimumSalary" type="number" min="0" step="500"></div>
+          </div>
+          <label for="salaryNote">补充说明</label>
+          <textarea id="salaryNote" placeholder="例如：根据岗位职责、地点和整体薪酬结构综合确认。"></textarea>
+          <div class="field-note">数字允许为空，系统不会自动补默认值或代替用户作薪资承诺。</div>
+        </section>
+
+        <section class="form-group">
+          <h3>城市偏好</h3>
+          <label for="preferredCities">偏好城市</label>
+          <textarea id="preferredCities" placeholder="杭州, 上海"></textarea>
+          <label for="acceptableCities">可接受城市</label>
+          <textarea id="acceptableCities" placeholder="其他 AI 岗位匹配城市"></textarea>
+          <label for="relocationPolicy">异地 / 搬迁说明</label>
+          <textarea id="relocationPolicy"></textarea>
+        </section>
+
+        <section class="form-group">
+          <h3>外包偏好</h3>
+          <label for="outsourcingStatus">状态</label>
+          <select id="outsourcingStatus">
+            <option value="">未设置</option>
+            <option>可接受外包，但需了解项目和管理方式</option>
+            <option>不接受外包</option>
+            <option>需要具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="outsourcingDetail">补充说明</label>
+          <textarea id="outsourcingDetail"></textarea>
+
+          <h3>驻场偏好</h3>
+          <label for="onsiteStatus">状态</label>
+          <select id="onsiteStatus">
+            <option value="">未设置</option>
+            <option>可接受短期驻场</option>
+            <option>不接受长期驻场</option>
+            <option>需要具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="onsiteDetail">补充说明</label>
+          <textarea id="onsiteDetail"></textarea>
+        </section>
+
+        <section class="form-group">
+          <h3>远程 / 线下偏好</h3>
+          <label for="remoteStatus">状态</label>
+          <select id="remoteStatus">
+            <option value="">未设置</option>
+            <option>接受线下办公</option>
+            <option>接受混合办公</option>
+            <option>优先远程或混合</option>
+            <option>需要具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="remoteDetail">补充说明</label>
+          <textarea id="remoteDetail"></textarea>
+        </section>
+
+        <section class="form-group">
+          <h3>工作制 / 单休 / 加班偏好</h3>
+          <label for="overtimeStatus">状态</label>
+          <select id="overtimeStatus">
+            <option value="">未设置</option>
+            <option>双休优先，可接受偶尔加班</option>
+            <option>不接受单休或大小周</option>
+            <option>单休/大小周需要结合薪资和岗位具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="overtimeDetail">补充说明</label>
+          <textarea id="overtimeDetail"></textarea>
+        </section>
+
+        <section class="form-group">
+          <h3>出差偏好</h3>
+          <label for="businessTripStatus">状态</label>
+          <select id="businessTripStatus">
+            <option value="">未设置</option>
+            <option>可接受短期低频出差</option>
+            <option>不接受长期或高频出差</option>
+            <option>需要具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="businessTripDetail">补充说明</label>
+          <textarea id="businessTripDetail"></textarea>
+        </section>
+
+        <section class="form-group">
+          <h3>隐私材料偏好</h3>
+          <label for="privacyStatus">提供边界</label>
+          <select id="privacyStatus">
+            <option value="">未设置</option>
+            <option>隐私材料仅在确认公司真实性和用途后由用户手动提供</option>
+            <option>面试前不提供身份证、银行卡、薪资流水等敏感材料</option>
+            <option>需要具体确认</option>
+            <option>我自己回答</option>
+          </select>
+          <label for="privacyDetail">用户手动确认说明</label>
+          <textarea id="privacyDetail"></textarea>
+          <div class="field-note">只替换 truth_boundaries 中“隐私材料偏好：”条目，不上传或发送任何材料。</div>
+        </section>
+      </div>
+
+      <div class="preference-result" id="preferenceResult">updated = false</div>
+    </div>
+  </section>
+
   <script>
     const examples = [
       ["低风险项目", "你做过 RAG 项目吗？可以简单介绍一下吗？"],
@@ -282,6 +418,15 @@
       no_reply_available: ["暂无回复候选", "neutral"]
     };
     const $ = (id) => document.getElementById(id);
+    const profileInputFields = [
+      "expected_salary_min", "expected_salary_max", "minimum_salary", "salary_note",
+      "availability_note", "preferred_cities", "acceptable_cities", "relocation_policy",
+      "outsourcing_policy", "onsite_policy", "remote_policy", "overtime_policy",
+      "business_trip_policy", "target_roles", "available_projects", "truth_boundaries",
+      "resume_text", "project_context"
+    ];
+    const privacyPrefix = "隐私材料偏好：";
+    let loadedPreferenceProfile = null;
 
     for (const [label, message] of examples) {
       const button = document.createElement("button");
@@ -473,6 +618,174 @@
       renderDraftReview(payload);
     }
 
+    function parsePolicy(value) {
+      const text = (value || "").trim();
+      const status = text.match(/偏好状态\s*[：:]\s*([^\n；;]+)/);
+      const detail = text.match(/补充说明\s*[：:]\s*([\s\S]*)/);
+      return {
+        status: status ? status[1].trim() : "",
+        detail: detail ? detail[1].trim() : (status ? "" : text)
+      };
+    }
+
+    function formatPolicy(statusId, detailId) {
+      const status = $(statusId).value;
+      const detail = $(detailId).value.trim();
+      if (!status) return detail;
+      return `偏好状态：${status}${detail ? `\n补充说明：${detail}` : ""}`;
+    }
+
+    function populatePolicy(value, statusId, detailId) {
+      const parsed = parsePolicy(value);
+      const select = $(statusId);
+      select.value = [...select.options].some(option => option.value === parsed.status)
+        ? parsed.status
+        : "";
+      $(detailId).value = parsed.detail;
+    }
+
+    function parseCities(value) {
+      return (value || "")
+        .split(/[,，\n]/)
+        .map(item => item.trim())
+        .filter((item, index, all) => item && all.indexOf(item) === index);
+    }
+
+    function optionalNumber(id) {
+      const raw = $(id).value.trim();
+      if (!raw) return null;
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 0) throw new Error("薪资字段必须是非负整数或留空。 ");
+      return value;
+    }
+
+    function populatePreferences(profile) {
+      loadedPreferenceProfile = profile;
+      $("expectedSalaryMin").value = profile.expected_salary_min ?? "";
+      $("expectedSalaryMax").value = profile.expected_salary_max ?? "";
+      $("minimumSalary").value = profile.minimum_salary ?? "";
+      $("salaryNote").value = profile.salary_note || "";
+      $("preferredCities").value = (profile.preferred_cities || []).join(", ");
+      $("acceptableCities").value = (profile.acceptable_cities || []).join(", ");
+      $("relocationPolicy").value = profile.relocation_policy || "";
+      populatePolicy(profile.outsourcing_policy, "outsourcingStatus", "outsourcingDetail");
+      populatePolicy(profile.onsite_policy, "onsiteStatus", "onsiteDetail");
+      populatePolicy(profile.remote_policy, "remoteStatus", "remoteDetail");
+      populatePolicy(profile.overtime_policy, "overtimeStatus", "overtimeDetail");
+      populatePolicy(profile.business_trip_policy, "businessTripStatus", "businessTripDetail");
+
+      const privacyBoundary = (profile.truth_boundaries || [])
+        .find(item => item.startsWith(privacyPrefix)) || "";
+      const privacyText = privacyBoundary.slice(privacyPrefix.length);
+      const separator = privacyText.indexOf("；补充说明：");
+      const privacyStatus = separator >= 0 ? privacyText.slice(0, separator) : privacyText;
+      const privacyDetail = separator >= 0 ? privacyText.slice(separator + 6) : "";
+      const privacySelect = $("privacyStatus");
+      privacySelect.value = [...privacySelect.options].some(option => option.value === privacyStatus)
+        ? privacyStatus
+        : "";
+      $("privacyDetail").value = privacyDetail;
+      $("savePreferencesBtn").disabled = false;
+      $("preferenceResult").textContent = "updated = false";
+    }
+
+    async function loadPreferences() {
+      const payload = await requestJson(`${baseUrlValue()}/profile`);
+      populatePreferences(payload.data || {});
+      $("preferenceStatusLine").textContent = "求职偏好已加载，可反复修改并保存。";
+    }
+
+    function preferenceUpdates(latestProfile) {
+      const expectedMin = optionalNumber("expectedSalaryMin");
+      const expectedMax = optionalNumber("expectedSalaryMax");
+      const minimum = optionalNumber("minimumSalary");
+      if (expectedMin !== null && expectedMax !== null && expectedMin > expectedMax) {
+        throw new Error("期望薪资下限不能高于上限。 ");
+      }
+      if (minimum !== null && expectedMax !== null && minimum > expectedMax) {
+        throw new Error("最低薪资底线不能高于期望薪资上限。 ");
+      }
+
+      const boundaries = (latestProfile.truth_boundaries || [])
+        .filter(item => !item.startsWith(privacyPrefix));
+      const privacyStatus = $("privacyStatus").value;
+      const privacyDetail = $("privacyDetail").value.trim();
+      if (privacyStatus) {
+        boundaries.push(
+          `${privacyPrefix}${privacyStatus}${privacyDetail ? `；补充说明：${privacyDetail}` : ""}`
+        );
+      }
+      return {
+        expected_salary_min: expectedMin,
+        expected_salary_max: expectedMax,
+        minimum_salary: minimum,
+        salary_note: $("salaryNote").value.trim(),
+        preferred_cities: parseCities($("preferredCities").value),
+        acceptable_cities: parseCities($("acceptableCities").value),
+        relocation_policy: $("relocationPolicy").value.trim(),
+        outsourcing_policy: formatPolicy("outsourcingStatus", "outsourcingDetail"),
+        onsite_policy: formatPolicy("onsiteStatus", "onsiteDetail"),
+        remote_policy: formatPolicy("remoteStatus", "remoteDetail"),
+        overtime_policy: formatPolicy("overtimeStatus", "overtimeDetail"),
+        business_trip_policy: formatPolicy("businessTripStatus", "businessTripDetail"),
+        truth_boundaries: boundaries
+      };
+    }
+
+    async function savePreferences() {
+      if (!loadedPreferenceProfile) throw new Error("请先加载当前求职偏好。 ");
+      const confirmed = window.confirm(
+        "这会更新 candidate_profile 中的求职偏好事实源，后续 Agent 生成 HR 回复候选时会参考这些偏好。是否继续？"
+      );
+      if (!confirmed) throw new Error("用户已取消保存。 ");
+
+      const latestPayload = await requestJson(`${baseUrlValue()}/profile`);
+      const latest = latestPayload.data || {};
+      const updates = preferenceUpdates(latest);
+      const payload = {};
+      for (const field of profileInputFields) payload[field] = latest[field];
+      Object.assign(payload, updates);
+
+      const protectedFields = ["resume_text", "project_context", "target_roles", "available_projects"];
+      if (protectedFields.some(field => JSON.stringify(payload[field]) !== JSON.stringify(latest[field]))) {
+        throw new Error("事实源保护校验失败，已停止保存。 ");
+      }
+      const existingBoundaries = (latest.truth_boundaries || [])
+        .filter(item => !item.startsWith(privacyPrefix));
+      const updatedBoundaries = (payload.truth_boundaries || [])
+        .filter(item => !item.startsWith(privacyPrefix));
+      if (JSON.stringify(existingBoundaries) !== JSON.stringify(updatedBoundaries)) {
+        throw new Error("truth_boundaries 主体保护校验失败，已停止保存。 ");
+      }
+      await requestJson(`${baseUrlValue()}/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const verifiedPayload = await requestJson(`${baseUrlValue()}/profile`);
+      const verified = verifiedPayload.data || {};
+      const verificationFailed = Object.entries(updates).some(
+        ([field, value]) => JSON.stringify(verified[field]) !== JSON.stringify(value)
+      );
+      if (verificationFailed) throw new Error("偏好保存后的读回验证失败。 ");
+      populatePreferences(verified);
+      const updatedFields = Object.keys(updates);
+      $("preferenceResult").textContent = `updated = true · fields = ${updatedFields.join(", ")}`;
+      $("preferenceStatusLine").textContent = "求职偏好事实源已保存并重新读取验证。";
+    }
+
+    async function withPreferenceLoading(button, task) {
+      button.disabled = true;
+      $("preferenceStatusLine").textContent = "请求处理中…";
+      try {
+        await task();
+      } catch (error) {
+        $("preferenceStatusLine").textContent = `请求失败：${error.name === "AbortError" ? "请求超时" : error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
     $("runBtn").addEventListener("click", () => withLoading($("runBtn"), async () => {
       const { baseUrl, applicationId } = inputValues();
       const hrMessage = $("hrMessage").value.trim();
@@ -487,6 +800,8 @@
     }));
 
     $("historyBtn").addEventListener("click", () => withLoading($("historyBtn"), loadHistory));
+    $("loadPreferencesBtn").addEventListener("click", () => withPreferenceLoading($("loadPreferencesBtn"), loadPreferences));
+    $("savePreferencesBtn").addEventListener("click", () => withPreferenceLoading($("savePreferencesBtn"), savePreferences));
     $("loadDraftBtn").addEventListener("click", () => withProfileLoading($("loadDraftBtn"), loadDraftReview));
     $("applyDraftBtn").addEventListener("click", () => withProfileLoading($("applyDraftBtn"), async () => {
       const confirmationText = window.prompt("输入 YES 以确认应用当前本地 Profile Draft：", "");

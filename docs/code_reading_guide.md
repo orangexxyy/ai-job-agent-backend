@@ -61,6 +61,18 @@
 
 阅读重点：前端不能提交完整 profile 或文件路径；GET 缺失时返回 `draft_exists=false` 且保持只读，POST 仅在精确确认后应用默认 draft。
 
+## Step 30A: Candidate Preference Form 阅读顺序
+
+1. `app/schemas/profile_schema.py`：确认 Step 30A 复用现有字段，不新增数据库结构。
+2. `frontend_demo/index.html`：查看 GET 最新 profile、白名单合并、事实源保护和保存后验证。
+3. `app/services/automation_policy_service.py`：回看薪资底线、外包、驻场和工作制风险识别。
+4. `app/services/auto_reply_service.py`：查看敏感 intent 如何优先读取明确偏好并生成保守候选。
+5. `app/services/reply_send_gate_service.py`：确认 preference candidate 仍停在人工确认且不写 simulated-send history。
+6. `scripts/api_smoke_test.py`：查看空偏好、拒绝、具体确认、自己回答和 Final Gate 边界矩阵。
+7. `scripts/agent_workflow_demo.py`：查看前端 Demo 使用的明确偏好 fixture。
+
+阅读重点：Step 30A 不是完整 profile 编辑器；偏好是敏感回复候选的事实源之一，不是自动发送授权。
+
 1. `README.md`
 2. `docs/project_structure.md`
 3. `app/main.py`

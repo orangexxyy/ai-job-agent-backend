@@ -414,3 +414,9 @@ Step 16.7 的表达重点：
 ### 3 分钟版本
 
 可以按 `docs/agent_workflow_demo_cases.md` 的四类风险逐步展示。Low risk 项目经验、学历和普通跟进会形成候选回复；medium 面试建议只引用用户维护的 available slots，并要求通知用户；high risk 不会生成“我接受”一类承诺；blocked 场景不继续执行。最后展示 action history，说明记录里的 `user_confirmed=false` 和 `external_action_performed=false`，证明这是可观测的决策模拟，而不是平台自动化。
+
+## Step 30A：求职偏好事实源
+
+我没有让 Agent 在薪资、外包、驻场、单休或隐私材料问题上自行猜测。前端只允许用户维护 candidate_profile 的偏好白名单，保存时会重新读取完整 profile 并保留简历、项目和 truth boundaries 主体内容。Agent 可以依据明确偏好生成礼貌拒绝或进一步确认的候选文本，但这些敏感候选始终需要用户确认，Final Send Gate 不会模拟自动发送。
+
+Step 29A 解决的是完整 candidate_profile draft 的人工审核入库；Step 30A 解决的是入库后求职偏好的动态维护。当前仍不是生产级用户画像系统，没有多用户权限、版本回滚或招聘平台自动化。

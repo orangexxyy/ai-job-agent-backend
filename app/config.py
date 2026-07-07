@@ -1,10 +1,12 @@
 from pathlib import Path
 
-from dotenv import load_dotenv
 import os
 
+from dotenv import load_dotenv
 
-load_dotenv()
+
+if os.getenv("PYTHON_DOTENV_DISABLED", "").lower() not in {"1", "true", "yes"}:
+    load_dotenv()
 
 
 class Settings:

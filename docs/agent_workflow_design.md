@@ -368,3 +368,18 @@ HR message
 ```
 
 Step 23 没有增加新的业务节点，而是用 `scripts/agent_workflow_demo.py` 把 Step 18-22 串成可重复演示的链路。Low、medium、high 和 blocked 四类场景分别验证内部模拟处理、用户通知、Human-in-the-loop 和直接阻断。整个链路没有真实 send tool，也没有招聘平台登录或投递节点。
+
+## Step 30A：Preference-based Sensitive Reply Candidate
+
+Step 30A 在 Step 21 Auto Reply Simulation 的通用敏感场景拦截前，先读取 candidate_profile 中已经由用户确认的偏好。薪资使用数值范围和最低底线；外包、驻场、工作制使用规范 policy；隐私材料只读取 `隐私材料偏好：` truth boundary。
+
+```text
+HR sensitive message
+-> Agent Loop intent + Automation Policy
+-> read confirmed candidate preference
+-> optional conservative reply_candidate
+-> requires_user_confirmation = true
+-> Final Send Gate stops before simulated send
+```
+
+偏好为空、语义不明确或“我自己回答”时不生成候选。即使有候选，也不会模拟自动发送、写 action history、修改 application、上传材料或执行招聘平台动作。Step 30A 没有改变 Final Send Gate 的风险优先级。

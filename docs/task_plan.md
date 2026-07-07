@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-Step 29A: expose local profile draft review and confirmed apply through the Demo frontend.
+Step 30A: maintain candidate preference facts and draft guarded sensitive replies.
 
 ## Completed In Step 1
 
@@ -531,6 +531,17 @@ Step 29A: expose local profile draft review and confirmed apply through the Demo
 - Added a Profile Draft Review section to the static frontend with typed `YES` plus browser confirm before apply.
 - Added a dedicated TestClient script using a temporary draft, backup directory, and SQLite database; the generic smoke test does not read or apply the real private draft.
 - This remains a local Human-in-the-loop Demo, not authenticated profile administration, production audit logging, or version management.
+
+## Completed In Step 30A
+
+- Added a local Candidate Preference Form for salary, cities, relocation, outsourcing, onsite, remote, work schedule, business trips, and privacy-material boundaries.
+- The frontend re-reads the latest complete profile before saving, then replaces only preference whitelist fields and preserves resume/project facts.
+- Privacy preference updates only the `隐私材料偏好：` truth-boundary entry and preserves all other truth boundaries.
+- Added preference-based candidates for salary, outsourcing/onsite, overtime/work schedule, and privacy-material intents.
+- Empty or self-answer preferences still produce no candidate; explicit preferences produce conservative text without acceptance or material-submission promises.
+- Every sensitive candidate remains user-confirmed and cannot trigger simulated sending, action history, or external actions.
+- Step 29A reviews and applies a complete profile draft; Step 30A dynamically maintains preference whitelist fields only.
+- This remains a local Demo, not production user profiling, multi-user authorization, rollback/version management, or recruitment-platform automation.
 - Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
 - Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
 - Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.

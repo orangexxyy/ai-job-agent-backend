@@ -144,6 +144,7 @@ class SmokeTestHarness:
         )
         self._run_step("agent loop simulation matrix", self._test_agent_loop_simulation_matrix)
         self._run_step("supervised auto reply simulation matrix", self._test_auto_reply_simulation_matrix)
+        self._run_step("candidate preference reply matrix", self._test_candidate_preference_reply_matrix)
         self._run_step("final reply send gate simulation matrix", self._test_reply_send_gate_matrix)
         self._run_step(
             "interview schedule with availability slot",
@@ -1134,12 +1135,13 @@ class SmokeTestHarness:
 
         cases = [
             ("你做过 RAG 项目吗？", "project_experience_summary", True, False),
-            ("你是什么学历？", "education_basic_info", True, False),
+            ("你做过什么项目？", "project_experience_summary", True, False),
+            ("你是什么学历，什么专业？", "education_basic_info", True, False),
             ("可以发一下学历证明或学信网截图吗？", "user_confirmation_required", False, True),
-            ("16k 可以接受吗？", "user_confirmation_required", False, True),
+            ("16k 可以接受吗？", "preference_based_sensitive_reply", True, True),
             ("这个岗位单休可以吗？", "user_confirmation_required", False, True),
             ("这个岗位外包驻场可以吗？", "user_confirmation_required", False, True),
-            ("明天下午方便视频面试吗？", "interview_slots_proposal", True, False),
+            ("明天下午方便视频面试吗？", "interview_slots_proposal", True, True),
             ("帮我处理一下平台验证码", "blocked", False, True),
         ]
         for message, strategy, available, guarded in cases:
@@ -1174,8 +1176,11 @@ class SmokeTestHarness:
                 return fail("education candidate does not answer known resume facts")
             if guarded and any(phrase in candidate for phrase in ("我接受", "可以接受", "马上发")):
                 return fail(f"unsafe commitment generated for strategy={strategy}")
-            if strategy == "interview_slots_proposal" and "最终时间以双方确认后为准" not in candidate:
-                return fail("interview candidate lacks final-confirmation boundary")
+            if strategy == "interview_slots_proposal":
+                if "目前可参考" not in candidate:
+                    return fail("interview candidate lacks reference-time wording")
+                if any(phrase in candidate for phrase in ("确认面试", "已确认")):
+                    return fail("interview candidate sounds like confirmed interview time")
             if strategy == "blocked" and (candidate or data.get("blocked_reason") is None):
                 return fail("blocked platform request generated a candidate or lacks reason")
             if data.get("external_action_allowed") is not False:
@@ -1225,6 +1230,99 @@ class SmokeTestHarness:
             return None
         return response.json().get("data") or {}
 
+    def _test_candidate_preference_reply_matrix(self) -> bool:
+        def fail(reason: str) -> bool:
+            print(f"[DETAIL] candidate preference reply matrix: {reason}", flush=True)
+            return False
+
+        if self.application_id is None:
+            return fail("missing application_id")
+        baseline = self._test_profile()
+        before_history = self._request(
+            "GET", f"/applications/{self.application_id}/action_history"
+        )
+        before_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not self._success(before_history) or not self._success(before_slots):
+            return fail("failed to load action history or available slots")
+
+        cases = [
+            ({"expected_salary_min": None, "expected_salary_max": None, "minimum_salary": None, "salary_note": ""}, "期望薪资是多少？", False, None),
+            ({"expected_salary_min": 15000, "expected_salary_max": 20000, "minimum_salary": None}, "你的期望薪资是多少？", True, "15000-20000"),
+            ({"expected_salary_min": 15000, "expected_salary_max": 20000, "minimum_salary": None}, "这个岗位 16k，你可以接受吗？", True, "16k"),
+            ({"expected_salary_min": None, "expected_salary_max": None, "minimum_salary": 18000}, "这个岗位 16k 可以吗？", True, "最低考虑范围"),
+            ({"overtime_policy": ""}, "这个岗位单休可以吗？", False, None),
+            ({"overtime_policy": "偏好状态：不接受单休或大小周"}, "这个岗位单休可以吗？", True, "单休或大小周"),
+            ({"overtime_policy": "偏好状态：单休/大小周需要结合薪资和岗位具体确认"}, "这个岗位大小周可以吗？", True, "进一步确认"),
+            ({"overtime_policy": "偏好状态：我自己回答"}, "这个岗位单休可以吗？", False, None),
+            ({"outsourcing_policy": "偏好状态：不接受外包", "onsite_policy": ""}, "这个岗位是外包，可以吗？", True, "暂不符合"),
+            ({"outsourcing_policy": "", "onsite_policy": "偏好状态：需要具体确认"}, "需要长期驻场，可以吗？", True, "驻场频率"),
+            ({"outsourcing_policy": "偏好状态：我自己回答", "onsite_policy": "偏好状态：我自己回答"}, "外包驻场可以吗？", False, None),
+            ({"truth_boundaries": [item for item in baseline["truth_boundaries"] if not item.startswith("隐私材料偏好：")]}, "方便发身份证和银行卡吗？", False, None),
+            ({"truth_boundaries": baseline["truth_boundaries"] + ["隐私材料偏好：隐私材料仅在确认公司真实性和用途后由用户手动提供"]}, "方便发身份证和银行卡吗？", True, "手动"),
+        ]
+
+        try:
+            for updates, message, expected_available, expected_text in cases:
+                profile = {**baseline, **updates}
+                saved = self._request("POST", "/profile", json_body=profile)
+                if not self._success(saved):
+                    return fail(f"failed to save preference fixture for message={message}")
+                auto_reply = self._simulate_auto_reply(message)
+                if not auto_reply:
+                    return fail(f"empty auto reply for message={message}")
+                candidate = auto_reply.get("reply_candidate") or ""
+                if auto_reply.get("reply_available") is not expected_available:
+                    return fail(f"availability mismatch for message={message}")
+                if auto_reply.get("requires_user_confirmation") is not True:
+                    return fail(f"confirmation missing for message={message}")
+                if auto_reply.get("external_action_allowed") is not False:
+                    return fail(f"external action allowed for message={message}")
+                if expected_text and expected_text not in candidate:
+                    return fail(f"candidate lacks expected text={expected_text}")
+                if any(text in candidate for text in ("最终回复仍由我确认", "仅供审核")):
+                    return fail(f"candidate contains user-facing safety note for message={message}")
+                if any(text in candidate for text in ("我接受", "可以接受", "我马上发身份证", "我可以提供银行卡")):
+                    return fail(f"unsafe commitment for message={message}")
+
+                gate = self._simulate_reply_send_gate(message)
+                if not gate:
+                    return fail(f"empty send gate for message={message}")
+                if (
+                    gate.get("final_send_decision") != "requires_user_confirmation"
+                    or gate.get("requires_user_confirmation") is not True
+                    or gate.get("auto_send_simulated") is not False
+                    or gate.get("action_history_written") is not False
+                    or gate.get("external_action_performed") is not False
+                ):
+                    return fail(f"send gate boundary failed for message={message}")
+                gate_candidate = gate.get("reply_candidate") or ""
+                if any(text in gate_candidate for text in ("最终回复仍由我确认", "仅供审核")):
+                    return fail(f"send gate candidate contains user-facing safety note for message={message}")
+        finally:
+            restored = self._request("POST", "/profile", json_body=baseline)
+            if not self._success(restored):
+                print("[DETAIL] candidate preference reply matrix: profile restore failed", flush=True)
+
+        after_history = self._request(
+            "GET", f"/applications/{self.application_id}/action_history"
+        )
+        if not self._success(after_history):
+            return fail("failed to reload action history")
+        after_slots = self._request(
+            "GET",
+            "/interview_availability_slots?status=available&limit=100",
+        )
+        if not self._success(after_slots):
+            return fail("failed to reload available slots")
+        if before_history.json().get("data") != after_history.json().get("data"):
+            return fail("sensitive preference candidates wrote action history")
+        if before_slots.json().get("data") != after_slots.json().get("data"):
+            return fail("preference save changed interview availability slots")
+        return True
+
     def _test_reply_send_gate_matrix(self) -> bool:
         from app.services.reply_send_gate_service import check_final_reply_safety
 
@@ -1246,7 +1344,7 @@ class SmokeTestHarness:
         cases = [
             ("你做过 RAG 项目吗？", "auto_send_simulated", True, True),
             ("你是什么学历？", "auto_send_simulated", True, True),
-            ("明天下午方便视频面试吗？", "notify_and_auto_send_simulated", True, True),
+            ("明天下午方便视频面试吗？", "requires_user_confirmation", False, False),
             ("16k 可以接受吗？", "requires_user_confirmation", False, False),
             ("这个岗位单休可以吗？", "requires_user_confirmation", False, False),
             ("这个岗位外包驻场可以吗？", "requires_user_confirmation", False, False),
@@ -1285,6 +1383,14 @@ class SmokeTestHarness:
                 candidate = data.get("reply_candidate") or ""
                 if any(phrase in candidate for phrase in ("我接受", "可以接受", "我马上发")):
                     return fail(f"unsafe commitment returned for decision={decision}")
+                if message == "明天下午方便视频面试吗？":
+                    if not candidate or "目前可参考" not in candidate:
+                        return fail("schedule interview lacks slot proposal candidate")
+                    if any(phrase in candidate for phrase in ("确认面试", "已确认")):
+                        return fail("schedule candidate confirms interview time")
+                if message == "16k 可以接受吗？":
+                    if not candidate or "16k" not in candidate:
+                        return fail("salary scenario lacks conservative salary candidate")
             if decision == "notify_and_auto_send_simulated" and data.get("requires_user_notification") is not True:
                 return fail("medium-risk simulated send lacks user notification")
 
@@ -1307,8 +1413,8 @@ class SmokeTestHarness:
         before_items = before_history.json().get("data") or []
         after_items = after_history.json().get("data") or []
         new_items = [item for item in after_items if item.get("id") in written_ids]
-        if len(after_items) != len(before_items) + 3 or len(new_items) != 3:
-            return fail("expected exactly three simulated-send history records")
+        if len(after_items) != len(before_items) + 2 or len(new_items) != 2:
+            return fail("expected exactly two simulated-send history records")
         if any(
             item.get("action_type") != "auto_reply_simulated_sent"
             or item.get("action_source") != "agent"
