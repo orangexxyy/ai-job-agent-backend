@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Job Agent Step Closeout"
+  short_description: "Close out each Step with tests, docs, safety, and Git checks"
+  default_prompt: "Use $ai-job-agent-step-closeout to close out the current AI Job Agent step and produce the standardized acceptance report."

@@ -2,6 +2,17 @@
 
 This project is an AI Job Agent for human-in-the-loop job search assistance. Future Codex, Claude Code, or other AI coding tools must follow these rules.
 
+## Required Context
+
+Before planning or implementing project work, read:
+
+1. `AGENTS.md`.
+2. `README.md`.
+3. `docs/task_plan.md`.
+4. `WORK_HANDOFF_AI_JOB_AGENT.md` when it exists locally.
+
+Treat `WORK_HANDOFF_AI_JOB_AGENT.md` as private local handoff context. Read only what is necessary for the current task, do not copy personal or private content into public project documentation, and never commit the file.
+
 ## Hard Boundaries
 
 - Do not copy third-party project source code.
@@ -17,30 +28,20 @@ This project is an AI Job Agent for human-in-the-loop job search assistance. Fut
 
 - Explain the plan before each meaningful change.
 - Implement one small feature at a time.
-- Keep Step 1 focused on the FastAPI skeleton and `candidate_profile`.
+- Keep implementation inside the currently confirmed Step and user-approved scope.
 - Update `README.md` and `docs/task_plan.md` when important behavior changes.
 - Provide test commands after changes.
 - Prefer simple, readable implementations before adding frameworks or abstractions.
 
-## Current Scope
+## Current Stage and Project Classification
 
-Allowed in Step 1:
+The project is currently completed through **Step 30A**.
 
-- FastAPI skeleton
-- SQLite initialization
-- `candidate_profile` save and read
-- Placeholder LLM service wrapper
-- Basic docs
+The current project is a **rule-driven Human-in-the-loop Agentic Workflow Demo**. It combines rule-based baselines, predefined workflow orchestration, LangGraph workflow preview, risk and policy evaluation, simulated Agent loops, optional read-only LLM enhancement, and user-reviewable reply candidates.
 
-Not allowed in Step 1:
+It is **not a complete Tool-Using Agent**. It does not autonomously choose and operate real external tools, continuously execute an open-ended multi-turn plan, connect to real recruitment platforms, submit applications, send HR messages, or confirm interviews.
 
-- `/job_match` full logic
-- `/business_proposal` full logic
-- `/hr/reply` full logic
-- Playwright
-- RAG
-- Frontend
-- Real DeepSeek calls
+Step 30A adds a local Candidate Preference Form and guarded sensitive-reply candidates based on user-confirmed preference fields. These candidates remain subject to Human-in-the-loop review and do not perform external actions. `README.md` and `docs/task_plan.md` are the sources of truth for the detailed completed scope and current truthful boundaries.
 
 ## Project-scoped Autonomy Mode / 项目范围内自主开发模式
 
@@ -86,13 +87,18 @@ This autonomy only applies inside this project, only within the currently confir
 
 ### Step Completion Output Requirements
 
-After each Step, output:
+After each Step, use the project skill `.agents/skills/ai-job-agent-step-closeout/SKILL.md` and output:
 
 - modified file list
 - core implementation summary
-- test commands
+- test commands and results
+- updated documents
+- documents checked but not updated
+- `git diff --stat`
+- `git status --short`
+- unresolved issues
 - current unimplemented boundaries
-- suggested next step
+- whether `git commit` or `git push` was executed
 
 ### Long-term Principles
 
