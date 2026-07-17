@@ -420,3 +420,29 @@ Step 16.7 的表达重点：
 我没有让 Agent 在薪资、外包、驻场、单休或隐私材料问题上自行猜测。前端只允许用户维护 candidate_profile 的偏好白名单，保存时会重新读取完整 profile 并保留简历、项目和 truth boundaries 主体内容。Agent 可以依据明确偏好生成礼貌拒绝或进一步确认的候选文本，但这些敏感候选始终需要用户确认，Final Send Gate 不会模拟自动发送。
 
 Step 29A 解决的是完整 candidate_profile draft 的人工审核入库；Step 30A 解决的是入库后求职偏好的动态维护。当前仍不是生产级用户画像系统，没有多用户权限、版本回滚或招聘平台自动化。
+
+### 面试官可能追问与回答
+
+**为什么不新建 preference 表或专用 API？**
+
+Step 30A 先复用现有 candidate_profile schema 和 `GET /profile`、`POST /profile`，目的是用最小改动验证“已确认偏好能否约束回复候选”。前端保存前会重新读取最新完整 profile，只覆盖偏好白名单。这个实现适合本地单用户 Demo，但并发覆盖、字段级权限和版本管理都不够；如果进入多用户或多人协作场景，再拆 preference-only API、乐观锁和更新历史。
+
+**如何避免表单覆盖简历和项目事实？**
+
+页面不允许自由提交完整 profile。它先加载最新 profile，保存时只替换薪资、城市和 policy 等白名单字段；隐私偏好只替换带固定前缀的 truth-boundary 条目，其余 `resume_text`、`project_context`、target roles、projects 和 truth boundaries 都保留。保存后还会重新读取验证。
+
+**为什么有明确偏好仍然需要人工确认？**
+
+偏好是生成候选的事实依据，不是执行授权。薪资、工作制、驻场、隐私材料和面试时间都会形成现实承诺，而且 HR 的上下文可能不完整，所以系统只生成保守文本，Final Send Gate 继续保持 `requires_user_confirmation=true`，不执行外部动作。
+
+**薪资为什么不能直接判断接受或拒绝？**
+
+数值只是一部分，还可能涉及薪资结构、试用期、地点、职责和加班强度。达到期望范围时只建议继续沟通；低于最低底线时询问是否有调整空间。系统不会生成“我接受”或“没问题”这类承诺。
+
+**这算 Tool-Calling Agent 吗？**
+
+当前更准确的说法是受控型 Agentic Workflow：规则、状态事实源、候选生成和人工门禁由固定流程编排。还没有让模型在工具白名单中自主选择调用，因此不能描述成完整 Tool-Using Agent。后续即使增加 Tool Calling，也必须保留工具白名单、Final Send Gate 和人工确认。
+
+**你怎么证明安全边界不是只写在文档里？**
+
+Smoke test 覆盖明确偏好、空偏好、“我自己回答”、薪资范围与底线、外包驻场、单休、隐私材料和面试 available slot；敏感候选会断言用户确认标志，并验证 `auto_send_simulated=false`、`action_history_written=false`、`external_action_performed=false`。Demo runner 再从 HTTP 主链展示这些结果。

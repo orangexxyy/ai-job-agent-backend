@@ -86,11 +86,13 @@ Low risk 可以在内部模拟处理；无需确认的 medium 场景会先通知
 
 访问 `http://127.0.0.1:5173`。页面包含 Final Send Gate、Action History、本地 Profile Draft Review 和 Candidate Preference Form。偏好表单先读取最新完整 profile，只更新薪资、城市、外包、驻场、远程、工作制、出差和隐私边界等白名单字段，不允许编辑或清空简历与项目事实源。前端不会上传简历，也不包含真实发送或招聘平台操作。
 
-### Candidate Preference Form
+### Candidate Preference Form / Step 30A 收口
 
 Step 30A 将 candidate_profile 中用户已确认的求职偏好作为 Agent 处理薪资、外包/驻场、单休/加班和隐私材料问题时的事实源之一。明确偏好可以生成礼貌拒绝、进一步确认或范围说明等 `reply_candidate`；偏好为空或标记为“我自己回答”时不生成候选。
 
 所有 preference-based candidate 都只供人工审核，始终 `requires_user_confirmation=true`、`auto_send_simulated=false`、`external_action_performed=false`。Step 29A 负责完整 candidate_profile draft 的审核入库；Step 30A 只动态维护求职偏好白名单，不是自由编辑完整 profile。
+
+Step 30A 的设计价值、测试口径、3 分钟项目讲法和常见面试追问已完成 docs-only 收口。可直接结合 [3-Minute Demo Pitch](docs/demo_3_minute_pitch.md) 与 [Interview Talking Points](docs/interview_talking_points.md) 练习；这些材料不会把本地 Demo 描述为自动求职或生产级 Agent。
 
 Windows 下一键启动前后端：
 

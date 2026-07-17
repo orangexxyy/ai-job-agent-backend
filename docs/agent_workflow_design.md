@@ -383,3 +383,34 @@ HR sensitive message
 ```
 
 偏好为空、语义不明确或“我自己回答”时不生成候选。即使有候选，也不会模拟自动发送、写 action history、修改 application、上传材料或执行招聘平台动作。Step 30A 没有改变 Final Send Gate 的风险优先级。
+
+## 当前主链的规则、状态与 LLM 分工
+
+Step 30A 的 Final Send Gate Demo 主链当前是确定性实现，不调用 LLM：
+
+```text
+HR message
+-> SQLite 读取 application / candidate_profile / available slots / recent history
+-> 关键词规则识别主要 intent
+-> Automation Policy 使用关键词、正则、数值比较和偏好冲突规则评估风险
+-> Python 条件分支选择下一步策略
+-> 已确认事实 + 规则模板生成 reply_candidate
+-> Final Send Gate 使用正则检查现实承诺和敏感动作
+-> 用户人工确认
+```
+
+各部分职责如下：
+
+- 数据库负责提供真实状态，不负责判断：`candidate_profile` 是候选人事实和偏好来源，`applications` 是岗位与流程状态，`interview_availability_slots` 是可引用时间来源。
+- 规则负责当前主链的 intent、风险等级、偏好比较、动态分支和最终安全门禁；薪资数值比较、隐私材料限制和禁止外部动作属于必须稳定、可解释、可测试的硬边界。
+- 模板负责把结构化事实转换成保守的 `reply_candidate`；自然语言结果不代表使用了 LLM。
+- 用户负责现实承诺与最终发送决定；已填写偏好是候选生成依据，不是发送授权。
+- LLM 目前只存在于独立的只读增强路径，例如 `/application_review/llm_enhance`，以及配置 API key 后可能调用 LLM 的 HR reply draft / LangGraph preview 节点。LLM 不参与 Step 30A 的 Agent Loop、Preference-based Reply Candidate 或 Final Send Gate。
+
+当前代码会预加载少量核心状态，再根据 intent 只使用相关字段。对于本地单用户 SQLite Demo，这种方式简单且成本可控；它不等于把全部简历、偏好和历史都放进 LLM prompt。若数据规模、隐私范围或工具数量增长，应改为按需读取并坚持最小必要上下文。
+
+## 与 Tool-Using Agent 的差距
+
+当前 `simulated_tool_plan` 用于解释固定流程会使用哪些内部能力，不代表模型已经在运行时自主选择工具。当前工具、顺序和分支仍由代码预先编排，因此项目应描述为 Human-in-the-loop Agentic Workflow，而不是自主 Tool-Using Agent。
+
+后续受控 Tool-Calling MVP 可以把 `get_candidate_profile`、`get_application_detail`、`list_interview_availability_slots`、`get_recent_action_history` 和 `evaluate_automation_policy` 暴露为只读工具白名单，让 LLM 根据问题和工具结果选择下一步。Automation Policy、参数校验、最大调用步数、Final Send Gate 和人工确认仍需保留；真实发送、投递、面试确认、材料上传和招聘平台操作不得作为第一阶段工具开放。

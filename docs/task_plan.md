@@ -502,6 +502,10 @@ Step 30A: maintain candidate preference facts and draft guarded sensitive replie
 - Added `scripts/apply_profile_draft.py` with dry-run as the default mode.
 - Rejects unsupported draft fields and validates with the existing `CandidateProfileInput` schema.
 - Requires `--apply` plus exact interactive `YES`; non-interactive confirmation is not supported.
+- Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
+- Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
+- Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.
+- This is a local Demo maintenance tool, not an automatic resume/profile production pipeline.
 
 ## Completed In Step 27.5
 
@@ -542,10 +546,14 @@ Step 30A: maintain candidate preference facts and draft guarded sensitive replie
 - Every sensitive candidate remains user-confirmed and cannot trigger simulated sending, action history, or external actions.
 - Step 29A reviews and applies a complete profile draft; Step 30A dynamically maintains preference whitelist fields only.
 - This remains a local Demo, not production user profiling, multi-user authorization, rollback/version management, or recruitment-platform automation.
-- Backs up the existing formal profile under ignored `docs/input/generated/profile_backups/` before writing.
-- Reuses `save_candidate_profile()` and verifies all input fields through `get_candidate_profile()` after saving.
-- Disables dotenv loading, calls no LLM or external API, and does not change Agent Workflow logic.
-- This is a local Demo maintenance tool, not an automatic resume/profile production pipeline.
+
+### Step 30A Docs-only Closure
+
+- Updated the 3-minute pitch to reflect the implemented Automation Policy, Agent Loop, Final Send Gate, Candidate Preference Form, and current test boundaries.
+- Added interview follow-up answers covering schema/API tradeoffs, whitelist preservation, salary semantics, Human-in-the-loop authorization, Agent terminology, and test evidence.
+- Documented the exact runtime split between SQLite state reads, deterministic rules, reply templates, optional read-only LLM enhancement, and user approval.
+- Clarified that the current `simulated_tool_plan` is explanatory rather than model-selected Tool Calling, and recorded a controlled read-only Tool-Calling direction without implementing Step 31.
+- Synchronized README links and wording without changing APIs, database schema, runtime behavior, dependencies, or external-action permissions.
 
 ## Completed In Resume-Input-01
 
